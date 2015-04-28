@@ -23,11 +23,4 @@ TARGET_LINK_LIBRARIES(AdExpSim
 	AdExpSimCore
 )
 
-# Copy the scripts
-FILE(COPY
-		script/AdExpPlot
-	DESTINATION
-		./
-)
-
 INSTALL_TARGETS(/bin AdExpSim)
