@@ -27,26 +27,138 @@
 #ifndef _ADEXPSIM_STATE_HPP_
 #define _ADEXPSIM_STATE_HPP_
 
+#include <cstdint>
+
 #include "Parameters.hpp"
 #include "Types.hpp"
 
 namespace AdExpSim {
 
-struct State {
-	Val v;   // Current membrane potential [V]
-	Val gE;  // Conductance of the exitatory channel [S]
-	Val gI;  // Conductance of the inhibitory channle [S]
-	Val w;   // Adaptation current [A]
+/**
+ * Vector data type which can be used for storing the internal state.
+ */
+typedef Val Vec4 __attribute__ ((vector_size (sizeof(Val) * 4)));
 
+class State {
+private:
+	/**
+	 * Internal state vector. Use the Vec4 type which if possible uses the
+	 * processor vector extensions.
+	 */
+	Vec4 s;
+
+public:
 	/**
 	 * Default constructor
 	 */
 	State() : State(0.0) {}
 
 	/**
-	 * Constructor of the State variable with an initial membrane potential.
+	 * Vector constructor.
+	 *
+	 * @param s is the vector containing the state with which this class should
+	 * be initialized.
 	 */
-	State(Val v) : v(v), gE(0.0), gI(0.0), w(0.0) {}
+	State(Vec4 s) : s(s) {}
+
+	/**
+	 * Constructor of the State variable with an initial membrane potential.
+	 *
+	 * @param v is the initial membrane potential.
+	 */
+	State(Val v) : s(Vec4{v, 0.0, 0.0, 0.0}) {}
+
+	void v(Val v) {
+		s[0] = v;
+	}
+
+	void gE(Val gE) {
+		s[1] = gE;
+	}
+
+	void gI(Val gI) {
+		s[2] = gI;
+	}
+
+	void w(Val w) {
+		s[3] = w;
+	}
+
+	Val& v() {
+		return s[0];
+	}
+
+	Val& gE() {
+		return s[1];
+	}
+
+	Val& gI() {
+		return s[2];
+	}
+
+	Val& w() {
+		return s[3];
+	}
+
+	const Val& v() const {
+		return s[0];
+	}
+
+	const Val& gE() const {
+		return s[1];
+	}
+
+	const Val& gI() const {
+		return s[2];
+	}
+
+	const Val& w() const {
+		return s[3];
+	}
+
+	friend void operator+=(State &s1, const State &s2) {
+		s1.s += s2.s;
+	}
+
+	friend void operator-=(State &s1, const State &s2) {
+		s1.s -= s2.s;
+	}
+
+	friend void operator*=(State &s1, const State &s2) {
+		s1.s *= s2.s;
+	}
+
+	friend void operator/=(State &s1, const State &s2) {
+		s1.s /= s2.s;
+	}
+
+	friend State operator+(const State &s1, const State &s2) {
+		return State(s1.s + s2.s);
+	}
+
+	friend State operator-(const State &s1, const State &s2) {
+		return State(s1.s - s2.s);
+	}
+
+	friend State operator*(const State &s1, const State &s2) {
+		return State(s1.s * s2.s);
+	}
+
+	friend State operator/(const State &s1, const State &s2) {
+		return State(s1.s / s2.s);
+	}
+
+	friend State operator*(Val v, const State &s) {
+		return State(v * s.s);
+	}
+
+	friend State operator*(const State &s, Val v) {
+		return State(s.s * v);
+	}
+
+	friend State operator/(const State &s, Val v) {
+		return State(s.s / v);
+	}
 };
 
 struct AuxiliaryState {
@@ -57,6 +169,15 @@ struct AuxiliaryState {
 
 	AuxiliaryState() : iL(0.0), iE(0.0), iI(0.0), iTh(0.0) {}
 };
+
+class NullRecorder {
+public:
+	void record(Time, const State &, const AuxiliaryState &)
+	{
+		// Discard everything
+	}
+};
+
 
 class StateRecorder {
 private:
@@ -76,10 +197,10 @@ public:
 	void record(Time ts, const State &state, const AuxiliaryState &auxState)
 	{
 		t.push_back(ts);
-		v.push_back(state.v);
-		gE.push_back(state.gE);
-		gI.push_back(state.gI);
-		w.push_back(state.w);
+		v.push_back(state.v());
+		gE.push_back(state.gE());
+		gI.push_back(state.gI());
+		w.push_back(state.w());
 	}
 };
 
@@ -122,8 +243,8 @@ public:
 	void record(Time ts, const State &state, const AuxiliaryState &auxState)
 	{
 		// Record the standard parameters
-		os << ts << sep << state.v << sep << state.gE << sep << state.gI << sep
-		   << state.w;
+		os << ts << sep << state.v() << sep << state.gE() << sep << state.gI()
+		   << sep << state.w();
 
 		// Record the auxiliary parameters
 		if (recordAux) {
@@ -168,17 +289,17 @@ public:
 
 		// Write the timestamp and the data
 		os.write((char *)&t, sizeof(Val));
-		os.write((char *)&state.v, sizeof(Val));
-		os.write((char *)&state.gE, sizeof(Val));
-		os.write((char *)&state.gI, sizeof(Val));
-		os.write((char *)&state.w, sizeof(Val));
+		os.write((char *)&state.v(), sizeof(Val));
+		os.write((char *)&state.gE(), sizeof(Val));
+		os.write((char *)&state.gI(), sizeof(Val));
+		os.write((char *)&state.w(), sizeof(Val));
 
 		// Record the auxiliary data
 		if (recordAux) {
-			os.write((char *)&state.iL, sizeof(Val));
-			os.write((char *)&state.iE, sizeof(Val));
-			os.write((char *)&state.iI, sizeof(Val));
-			os.write((char *)&state.iTh, sizeof(Val));
+			os.write((char *)&auxState.iL, sizeof(Val));
+			os.write((char *)&auxState.iE, sizeof(Val));
+			os.write((char *)&auxState.iI, sizeof(Val));
+			os.write((char *)&auxState.iTh, sizeof(Val));
 		}
 	}
 };
