@@ -10,7 +10,7 @@
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ *  GNU General Public License for more details.d.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -19,6 +19,7 @@
 #ifndef _ADEXPSIM_MODEL_HPP_
 #define _ADEXPSIM_MODEL_HPP_
 
+#include <array>
 #include <cmath>
 
 #include "Parameters.hpp"
@@ -29,6 +30,7 @@ namespace AdExpSim {
 
 class Model {
 public:
+
 	template <typename Recorder>
 	static void simulate(Time tEnd, const SpikeVec &spikes, Recorder &recorder,
 	                     const State &s0, const Parameters &p = Parameters(),
@@ -47,10 +49,10 @@ public:
 			ri--;
 
 			// Calculate the auxiliary state
-			as.iL = p.gL * (s.v - p.eL);
-			as.iE = s.gE * (s.v - p.eE);
-			as.iI = s.gI * (s.v - p.eI);
-			as.iTh = -p.gL * p.deltaTh * exp((s.v - p.eTh) / p.deltaTh);
+			as.iL = p.gL * (s.v() - p.eL);
+			as.iE = s.gE() * (s.v() - p.eE);
+			as.iI = s.gI() * (s.v() - p.eI);
+			as.iTh = -p.gL * p.deltaTh * exp((s.v() - p.eTh) / p.deltaTh);
 
 			// Handle incomming spikes
 			if (si < spikes.size() && spikes[si].t <= t) {
@@ -61,9 +63,9 @@ public:
 				// inhibitory channel
 				const Val w = spikes[si].w;
 				if (w > 0) {
-					s.gE += w;
+					s.gE() += w;
 				} else {
-					s.gI -= w;
+					s.gI() -= w;
 				}
 
 				// Record the new values
@@ -75,15 +77,15 @@ public:
 			}
 
 			// Calculate the next voltage value
-			sN.v = s.v - ((as.iL + as.iE + as.iI + as.iTh) / p.cM) * tD;
-			if (sN.v > p.eSpike) {
+			sN.v() = s.v() - ((as.iL + as.iE + as.iI + as.iTh) / p.cM) * tD;
+			if (sN.v() > p.eSpike) {
 				// Record the spike event
-				sN.v = p.eSpike;
+				sN.v() = p.eSpike;
 				recorder.record(t, sN, as);
 
 				// Reset the voltage and increase the adaptation current
-				sN.v = p.eReset;
-				sN.w = sN.w + p.b;
+				sN.v() = p.eReset;
+				sN.w() += p.b;
 				recorder.record(t, sN, as);
 
 				// Reset the record counter -- we've already recorded something
@@ -97,9 +99,9 @@ public:
 			}
 
 			// Calculate all other state values
-			sN.gE = s.gE - (s.gE / p.tauE) * tD;
-			sN.gI = s.gI - (s.gI / p.tauI) * tD;
-			sN.w = s.w - ((s.w - p.a * (s.v - p.eL)) / p.tauW) * tD;
+			sN.gE() = s.gE() - (s.gE() / p.tauE) * tD;
+			sN.gI() = s.gI() - (s.gI() / p.tauI) * tD;
+			sN.w() = s.w() - ((s.w() - p.a * (s.v() - p.eL)) / p.tauW) * tD;
 
 			// Assign the new state to the current state
 			s = sN;

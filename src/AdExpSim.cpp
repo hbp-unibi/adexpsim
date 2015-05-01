@@ -24,7 +24,8 @@ using namespace AdExpSim;
 
 int main(int argc, char *argv[])
 {
-	StreamRecorder recorder(std::cout);
+//	StreamRecorder recorder(std::cout);
+	NullRecorder recorder;
 	Parameters params;
 	Model::simulate(20e-3, {
 		{1e-3, 0.03e-6},
