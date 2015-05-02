@@ -3,7 +3,7 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 PROJECT (AdExpSim)
 
 # Enable C++11 and all warnings, enable vector optimizations for this processor
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic-errors -std=c++11 -march=native")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic-errors -std=c++11 -march=native -ffast-math")
 
 # AdExpSim library
 ADD_LIBRARY(AdExpSimCore
