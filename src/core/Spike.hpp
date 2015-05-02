@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "Types.hpp"
+#include "Parameters.hpp"
 
 namespace AdExpSim {
 
@@ -43,6 +44,11 @@ struct Spike {
 };
 
 using SpikeVec = std::vector<Spike>;
+
+/**
+ * Creates a working set of spikes corresponding to the given parameters.
+ */
+SpikeVec scaleSpikes(const SpikeVec &vec, Parameters &params);
 
 }
 

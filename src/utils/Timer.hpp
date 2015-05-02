@@ -16,9 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Spike.hpp"
+#ifndef _TIMER_HPP_
+#define _TIMER_HPP_
 
-namespace AdExpSim {
-// Do nothing here for now, make sure the header compiles
-}
+#include <ostream>
+
+class Timer {
+private:
+	double start;
+	double value;
+	bool active;
+
+public:
+	Timer();
+
+	void pause();
+	void cont();
+	double time() const;
+
+	friend std::ostream& operator<<(std::ostream &os, const Timer &t);
+};
+
+#endif /* _TIMER_HPP_ */
 

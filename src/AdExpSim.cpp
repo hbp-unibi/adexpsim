@@ -16,22 +16,45 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Model.hpp"
+#include "core/Model.hpp"
+#include "core/Recorder.hpp"
+#include "utils/Timer.hpp"
 
 #include <iostream>
+
+#define BENCHMARK 0
 
 using namespace AdExpSim;
 
 int main(int argc, char *argv[])
 {
-//	StreamRecorder recorder(std::cout);
-	NullRecorder recorder;
+	// Use the default parameters
 	Parameters params;
-	Model::simulate(20e-3, {
-		{1e-3, 0.03e-6},
-		{2e-3, 0.03e-6},
-		{3e-3, 0.03e-6}
-	}, recorder, params.eL, params);
+
+// Create the recorder
+#if BENCHMARK
+	NullRecorder recorder;
+#else
+	CsvRecorder<> recorder(params, 0.1e-3, std::cout);
+#endif
+
+	// Create a vector containing all input spikes
+	SpikeVec spikes = scaleSpikes(
+	    {{1e-3, 0.03e-6}, {2e-3, 0.03e-6}, {3e-3, 0.03e-6}}, params);
+
+	std::cerr << "Max. iTh exponent: "
+	          << WorkingParameters(params).maxIThExponent << std::endl;
+
+#if BENCHMARK
+	Timer t;
+	for (int i = 0; i < 1000; i++) {
+#endif
+		Model::simulate(20e-3, spikes, recorder, 0.0, params);
+#if BENCHMARK
+	}
+	std::cout << t;
+#endif
+	std::cerr << "Max. membrane potential: " << maxV + params.eL << std::endl;
 	return 0;
 }
 
