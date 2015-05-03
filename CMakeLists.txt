@@ -12,6 +12,7 @@ INCLUDE_DIRECTORIES(
 # AdExpSimUtils library
 ADD_LIBRARY(AdExpSimUtils
 	src/utils/Timer
+	src/utils/Types
 )
 
 TARGET_LINK_LIBRARIES(AdExpSimUtils
@@ -25,7 +26,6 @@ ADD_LIBRARY(AdExpSimCore
 	src/core/Recorder
 	src/core/Spike
 	src/core/State
-	src/core/Types
 )
 
 # AdExpSimExploration library

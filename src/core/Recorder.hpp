@@ -31,9 +31,10 @@
 #include <ostream>
 #include <limits>
 
+#include <utils/Types.hpp>
+
 #include "Parameters.hpp"
 #include "State.hpp"
-#include "Types.hpp"
 
 namespace AdExpSim {
 

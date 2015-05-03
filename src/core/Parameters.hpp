@@ -30,7 +30,7 @@
 
 #include <cmath>
 
-#include "Types.hpp"
+#include <utils/Types.hpp>
 
 namespace AdExpSim {
 

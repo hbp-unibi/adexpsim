@@ -30,7 +30,7 @@
 
 #include <tuple>
 
-#include <core/Types.hpp>
+#include <utils/Types.hpp>
 #include <core/Spike.hpp>
 
 namespace AdExpSim {
