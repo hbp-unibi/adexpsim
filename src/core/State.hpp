@@ -28,74 +28,11 @@
 #define _ADEXPSIM_STATE_HPP_
 
 #include <utils/Types.hpp>
+#include <utils/Vector.hpp>
 
 #include "Parameters.hpp"
 
 namespace AdExpSim {
-
-/**
- * Vector data type which can be used for storing the internal state.
- */
-typedef Val vec4_t __attribute__((vector_size(sizeof(Val) * 4)));
-
-/**
- * The Vec4 class represents a vector with four Val entries. Defines a set of
- * operators that should use the SIMD extensions of the targeted processor
- * architecture.
- */
-template<typename Impl>
-class Vec4 {
-protected:
-	/**
-	 * Type containing the actual data. Use the vec4_t type which if possible
-	 * uses the processor vector extensions.
-	 */
-	vec4_t arr;
-
-public:
-
-	using T = Vec4<Impl>;
-
-	Vec4(vec4_t arr) : arr(arr) {}
-
-	Val &operator[](size_t idx) { return arr[idx]; }
-
-	Val operator[](size_t idx) const { return arr[idx]; }
-
-	friend void operator+=(T &v1, const T &v2) { v1.arr += v2.arr; }
-
-	friend void operator-=(T &v1, const T &v2) { v1.arr -= v2.arr; }
-
-	friend void operator*=(T &v1, const T &v2) { v1.arr *= v2.arr; }
-
-	friend void operator/=(T &v1, const T &v2) { v1.arr /= v2.arr; }
-
-	friend Impl operator+(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr + v2.arr);
-	}
-
-	friend Impl operator-(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr - v2.arr);
-	}
-
-	friend Impl operator*(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr * v2.arr);
-	}
-
-	friend Impl operator/(const T &v1, const T &v2)
-	{
-		return Vec4(v1.arr / v2.arr);
-	}
-
-	friend Impl operator*(Val s, const T &v) { return Impl(s * v.arr); }
-
-	friend Impl operator*(const T &v, Val s) { return Impl(v.arr * s); }
-
-	friend Impl operator/(const T &v, Val s) { return Impl(v.arr / s); }
-};
 
 /**
  * The State class contains the state of a single neuron. This state consists
