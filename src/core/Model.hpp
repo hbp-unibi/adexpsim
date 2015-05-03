@@ -114,9 +114,10 @@ public:
 	 * potential is near its resting potential.
 	 *
 	 * @param s is the current neuron state.
-	 * @return ture if the neuron should continue, false otherwise.
+	 * @return true if the neuron should continue, false otherwise.
 	 */
-	static bool control(Time, const State &s, const AuxiliaryState &)
+	static bool control(Time, const State &s, const AuxiliaryState &,
+	                    const WorkingParameters &)
 	{
 		return fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE;
 	}
@@ -136,14 +137,26 @@ public:
 	static constexpr Val MIN_RATE = 10;
 
 	/**
+	 * Minim excitatory plus inhibitory channel rate. This value is chosen
+	 * rather high as we want to abort as early as possible and only if the
+	 * high excitatory current could still increase the membrane potential.
+	 */
+	static constexpr Val MAX_DV = -1e-4;
+
+	/**
 	 * Maximum voltage
 	 */
-	Val maxV = std::numeric_limits<Val>::min();
+	Val vMax = std::numeric_limits<Val>::min();
 
 	/**
 	 * Time point at which the maximum voltage was recorded.
 	 */
-	Time maxVTime = MAX_TIME;
+	Time vMaxTime = MAX_TIME;
+
+	/**
+	 * Time point at which the effective spiking potential was reached.
+	 */
+	Time tSpike = MAX_TIME;
 
 	/**
 	 * The control function is responsible for aborting the simulation. The
@@ -152,20 +165,26 @@ public:
 	 * potential is near its resting potential.
 	 *
 	 * @param s is the current neuron state.
-	 * @return ture if the neuron should continue, false otherwise.
+	 * @return true if the neuron should continue, false otherwise.
 	 */
-	bool control(Time t, const State &s, const AuxiliaryState &aux)
+	bool control(Time t, const State &s, const AuxiliaryState &aux,
+	             const WorkingParameters &p)
 	{
 		// Track the maximum voltage
-		if (s.v() > maxV) {
-			maxV = s.v();
-			maxVTime = t;
+		if (s.v() > vMax) {
+			vMax = s.v();
+			vMaxTime = t;
+		}
+
+		// Track the time at which the spike potential was reached
+		if (s.v() > p.eSpikeEff && t < tSpike) {
+			tSpike = t;
 		}
 
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
 		return s.lE() > MIN_RATE ||
-		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI()) < 0;
+		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI()) < MAX_DV;
 	}
 };
 
@@ -255,9 +274,10 @@ public:
 	template <uint8_t Flags = 0, typename Integrator = RungeKuttaIntegrator,
 	          typename Recorder, typename Controller>
 	static void simulate(const SpikeVec &spikes, Recorder &recorder,
-	                     Controller &controller, const State &s0,
+	                     Controller &controller,
 	                     const WorkingParameters &p = WorkingParameters(),
-	                     Time tDelta = 10e-6, Time tEnd = MAX_TIME)
+	                     Time tDelta = 10e-6, Time tEnd = MAX_TIME,
+	                     const State &s0 = State())
 	{
 		const Val h = tDelta.toSeconds();
 		const size_t nSpikes = spikes.size();
@@ -312,7 +332,7 @@ public:
 			recorder.record(t, s, as, false);
 
 			// Ask the controller whether it is time to abort
-			if (!controller.control(t, s, as) && spikeIdx >= nSpikes) {
+			if (!controller.control(t, s, as, p) && spikeIdx >= nSpikes) {
 				break;
 			}
 		}
