@@ -13,6 +13,7 @@ INCLUDE_DIRECTORIES(
 ADD_LIBRARY(AdExpSimUtils
 	src/utils/Timer
 	src/utils/Types
+	src/utils/Vector
 )
 
 TARGET_LINK_LIBRARIES(AdExpSimUtils
