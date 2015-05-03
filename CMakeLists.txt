@@ -28,6 +28,15 @@ ADD_LIBRARY(AdExpSimCore
 	src/core/Types
 )
 
+# AdExpSimExploration library
+ADD_LIBRARY(AdExpSimExploration
+	src/exploration/Evaluation
+)
+
+TARGET_LINK_LIBRARIES(AdExpSimExploration
+	AdExpSimCore
+)
+
 # AdExpSim executable
 ADD_EXECUTABLE(AdExpSim
 	src/AdExpSim
@@ -36,6 +45,15 @@ ADD_EXECUTABLE(AdExpSim
 TARGET_LINK_LIBRARIES(AdExpSim
 	AdExpSimCore
 	AdExpSimUtils
+)
+
+# AdExploration executable
+ADD_EXECUTABLE(AdExploration
+	src/AdExploration
+)
+
+TARGET_LINK_LIBRARIES(AdExploration
+	AdExpSimExploration
 )
 
 INSTALL_TARGETS(/bin AdExpSim)
