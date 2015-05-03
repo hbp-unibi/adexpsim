@@ -5,6 +5,10 @@ PROJECT (AdExpSim)
 # Enable C++11 and all warnings, enable vector optimizations for this processor
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic-errors -std=c++11 -march=native -ffast-math")
 
+INCLUDE_DIRECTORIES(
+	src/
+)
+
 # AdExpSimUtils library
 ADD_LIBRARY(AdExpSimUtils
 	src/utils/Timer
