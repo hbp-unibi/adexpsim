@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-#define BENCHMARK 0
+//#define BENCHMARK
 
 using namespace AdExpSim;
 
@@ -30,9 +30,10 @@ int main(int argc, char *argv[])
 {
 	// Use the default parameters
 	Parameters params;
+	MaxValueController controller;
 
 // Create the recorder
-#if BENCHMARK
+#ifdef BENCHMARK
 	NullRecorder recorder;
 #else
 	CsvRecorder<> recorder(params, 0.1e-3, std::cout);
@@ -42,19 +43,23 @@ int main(int argc, char *argv[])
 	SpikeVec spikes = scaleSpikes(
 	    {{1e-3, 0.03e-6}, {2e-3, 0.03e-6}, {3e-3, 0.03e-6}}, params);
 
-	std::cerr << "Max. iTh exponent: "
-	          << WorkingParameters(params).maxIThExponent << std::endl;
+	WorkingParameters wParams(params);
+	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent << std::endl;
+	std::cerr << "Effective spike potential: " << wParams.eSpikeEff + params.eL
+	          << std::endl;
 
-#if BENCHMARK
+#ifdef BENCHMARK
 	Timer t;
 	for (int i = 0; i < 1000; i++) {
 #endif
-		Model::simulate(20e-3, spikes, recorder, 0.0, params);
-#if BENCHMARK
+		Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(
+		    spikes, recorder, controller, 0.0, wParams, 0.01e-3);
+#ifdef BENCHMARK
 	}
 	std::cout << t;
 #endif
-	std::cerr << "Max. membrane potential: " << maxV + params.eL << std::endl;
+	std::cerr << "Max. membrane potential: " << controller.maxV + params.eL
+	          << std::endl;
 	return 0;
 }
 
