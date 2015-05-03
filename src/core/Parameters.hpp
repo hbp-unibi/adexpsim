@@ -126,11 +126,20 @@ public:
 	      lA(p.a / p.cM),
 	      lB(p.b / p.cM),
 	      wSpike(1.0 / p.cM),
-	      invDeltaTh(1.0 / p.deltaTh),
-	      maxIThExponent(log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL))),
-	      eSpikeEff(calculateESpikeEff()),
-	      eSpikeEffRed(eSpikeEff - 1e-4)
+	      invDeltaTh(1.0 / p.deltaTh)
 	{
+		update();
+	}
+
+	/**
+	 * Updates some derived values. This method must be called whenever the
+	 * parameters have been changed from the outside.
+	 */
+	void update()
+	{
+		maxIThExponent = log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL));
+		eSpikeEff = calculateESpikeEff();
+		eSpikeEffRed = eSpikeEff - 1e-4;
 	}
 };
 }

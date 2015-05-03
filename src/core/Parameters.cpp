@@ -24,7 +24,7 @@ namespace AdExpSim {
 
 Val WorkingParameters::calculateESpikeEff()
 {
-	constexpr Val EPS = 1e-9;
+	constexpr Val EPS = 1e-7;
 	const Val logDeltaTh = log(deltaTh);
 	Val x = eTh;
 	while (true) {
