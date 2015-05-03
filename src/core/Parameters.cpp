@@ -16,9 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
+
 #include "Parameters.hpp"
 
 namespace AdExpSim {
-// Do nothing here for now, make sure the header compiles
+
+Val WorkingParameters::calculateESpikeEff()
+{
+	constexpr Val EPS = 1e-9;
+	const Val logDeltaTh = log(deltaTh);
+	Val x = eTh;
+	while (true) {
+		const Val dx = (logDeltaTh + (x - eTh) * invDeltaTh - log(x)) *
+		               (x * deltaTh) / (x - deltaTh);
+		x = x - dx;
+		if (fabs(dx) < EPS) {
+			break;
+		}
+	}
+	return x;
+}
 }
 
