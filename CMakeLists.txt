@@ -10,6 +10,10 @@ ADD_LIBRARY(AdExpSimUtils
 	src/utils/Timer
 )
 
+TARGET_LINK_LIBRARIES(AdExpSimUtils
+	rt
+)
+
 # AdExpSimCore library
 ADD_LIBRARY(AdExpSimCore
 	src/core/Model
