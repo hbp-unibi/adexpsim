@@ -19,15 +19,6 @@
 #include "Spike.hpp"
 
 namespace AdExpSim {
-
-SpikeVec scaleSpikes(const SpikeVec &vec, Parameters &params)
-{
-	SpikeVec res(vec);
-	for (auto &spike: res) {
-		spike.w = spike.w / params.cM; 
-	}
-	return res;
-}
-
+// Do nothing here for now, make sure the header compiles.
 }
 

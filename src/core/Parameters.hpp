@@ -95,6 +95,7 @@ public:
 	Val deltaTh;  // Spike slope factor [V]
 	Val lA;       // Subthreshold adaptation [Hz]
 	Val lB;       // Spike triggered adaptation current [V/s]
+	Val wSpike;   // Weight with which the spikes should be multiplied [V/A*s]
 
 	Val invDeltaTh;  // Reverse spike slope factor [1/V]
 
@@ -124,6 +125,7 @@ public:
 	      deltaTh(p.deltaTh),
 	      lA(p.a / p.cM),
 	      lB(p.b / p.cM),
+	      wSpike(1.0 / p.cM),
 	      invDeltaTh(1.0 / p.deltaTh),
 	      maxIThExponent(log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL))),
 	      eSpikeEff(calculateESpikeEff()),
