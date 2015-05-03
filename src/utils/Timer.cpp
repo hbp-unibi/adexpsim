@@ -24,7 +24,7 @@
 
 static inline double microtime() {
 	struct timespec time;
-	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &time);
+	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time);
 	return time.tv_sec * 1.0e6 + time.tv_nsec * 1.0e-3;
 }
 
