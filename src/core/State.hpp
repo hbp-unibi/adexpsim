@@ -59,29 +59,10 @@ public:
 	{
 	}
 
-	void v(Val v) { arr[0] = v; }
-
-	void lE(Val lE) { arr[1] = lE; }
-
-	void lI(Val lI) { arr[2] = lI; }
-
-	void dvW(Val dvW) { arr[3] = dvW; }
-
-	Val &v() { return arr[0]; }
-
-	Val &lE() { return arr[1]; }
-
-	Val &lI() { return arr[2]; }
-
-	Val &dvW() { return arr[3]; }
-
-	const Val &v() const { return arr[0]; }
-
-	const Val &lE() const { return arr[1]; }
-
-	const Val &lI() const { return arr[2]; }
-
-	const Val &dvW() const { return arr[3]; }
+	NAMED_VECTOR_ELEMENT(v, 0);
+	NAMED_VECTOR_ELEMENT(lE, 1);
+	NAMED_VECTOR_ELEMENT(lI, 2);
+	NAMED_VECTOR_ELEMENT(dvW, 3);
 };
 
 /**
@@ -89,7 +70,7 @@ public:
  * actual state. The auxiliary state consists of the voltage change rates. The
  * unit of all auxiliary variables is [V/s].
  */
-class AuxiliaryState: public Vec4<AuxiliaryState> {
+class AuxiliaryState : public Vec4<AuxiliaryState> {
 public:
 	/**
 	 * Inherit the base class constructors.
@@ -110,31 +91,11 @@ public:
 	{
 	}
 
-	void dvL(Val dvL) { arr[0] = dvL; }
-
-	void dvE(Val dvE) { arr[1] = dvE; }
-
-	void dvI(Val dvI) { arr[2] = dvI; }
-
-	void dvTh(Val dvTh) { arr[3] = dvTh; }
-
-	Val &dvL() { return arr[0]; }
-
-	Val &dvE() { return arr[1]; }
-
-	Val &dvI() { return arr[2]; }
-
-	Val &dvTh() { return arr[3]; }
-
-	const Val &dvL() const { return arr[0]; }
-
-	const Val &dvE() const { return arr[1]; }
-
-	const Val &dvI() const { return arr[2]; }
-
-	const Val &dvTh() const { return arr[3]; }
+	NAMED_VECTOR_ELEMENT(dvL, 0);
+	NAMED_VECTOR_ELEMENT(dvE, 1);
+	NAMED_VECTOR_ELEMENT(dvI, 2);
+	NAMED_VECTOR_ELEMENT(dvTh, 3);
 };
-
 }
 
 #endif /* _ADEXPSIM_STATE_HPP_ */
