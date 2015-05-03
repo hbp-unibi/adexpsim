@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// Create a vector containing all input spikes
-	SpikeVec spikes{{1e-3, 0.03e-6}, {2e-3, 0.03e-6}, {3e-3, 0.03e-6}};
+	SpikeVec spikes = buildInputSpikes(3.1, 1e-3, 0, 0.03175e-6);
 
 	WorkingParameters wParams(params);
 	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent << std::endl;
@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < 1000; i++) {
 #endif
 		Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(
-		    spikes, recorder, controller, 0.0, wParams, 0.01e-3);
+		    spikes, recorder, controller, wParams, 0.01e-3);
 #ifdef BENCHMARK
 	}
 	std::cout << t;
 #endif
-	std::cerr << "Max. membrane potential: " << controller.maxV + params.eL
+	std::cerr << "Max. membrane potential: " << controller.vMax + params.eL
 	          << std::endl;
 	return 0;
 }
