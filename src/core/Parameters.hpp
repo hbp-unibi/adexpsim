@@ -35,20 +35,20 @@
 namespace AdExpSim {
 
 namespace DefaultParameters {
-constexpr Val cM = 1e-9;         // Membrane capacitance [F]
-constexpr Val gL = 0.05e-6;      // Membrane leak conductance [S]
-constexpr Val eL = -70e-3;       // Leak channel reversal potential [V]
-constexpr Val eE = 0e-3;         // Excitatory channel reversal potential [V]
-constexpr Val eI = -70e-3;       // Inhibitory channel reversal potential [V]
-constexpr Val eTh = -54.0e-3;    // Threshold potential [V]
-constexpr Val eSpike = 20e-3;    // Spike potential [V]
-constexpr Val eReset = -80e-3;   // Reset potential [V]
-constexpr Val deltaTh = 0.1e-3;  // Slope factor [V]
-constexpr Val tauI = 5e-3;       // Time constant for exponential decay of gI
-constexpr Val tauE = 5e-3;       // Time constant for exponential decay of gE
-constexpr Val tauW = 144e-3;     // Time constant for exponential decay of w
-constexpr Val a = 4e-9;          // Subthreshold adaptation [S]
-constexpr Val b = 0.0805e-9;     // Spike triggered adaptation [A]
+constexpr Val cM = 1e-9;        // Membrane capacitance [F]
+constexpr Val gL = 0.05e-6;     // Membrane leak conductance [S]
+constexpr Val eL = -70e-3;      // Leak channel reversal potential [V]
+constexpr Val eE = 0e-3;        // Excitatory channel reversal potential [V]
+constexpr Val eI = -70e-3;      // Inhibitory channel reversal potential [V]
+constexpr Val eTh = -54.0e-3;   // Threshold potential [V]
+constexpr Val eSpike = 20e-3;   // Spike potential [V]
+constexpr Val eReset = -80e-3;  // Reset potential [V]
+constexpr Val deltaTh = 2e-3;   // Slope factor [V]
+constexpr Val tauI = 5e-3;      // Time constant for exponential decay of gI
+constexpr Val tauE = 5e-3;      // Time constant for exponential decay of gE
+constexpr Val tauW = 144e-3;    // Time constant for exponential decay of w
+constexpr Val a = 4e-9;         // Subthreshold adaptation [S]
+constexpr Val b = 0.0805e-9;    // Spike triggered adaptation [A]
 }
 
 /**
@@ -75,7 +75,14 @@ struct Parameters {
  * Structure holding the reduced parameter set which is actually used for the
  * calculations as well as some pre-calculated values
  */
-struct WorkingParameters {
+class WorkingParameters {
+private:
+	/**
+	 * Function used to calculate the effective spike potential.
+	 */
+	Val calculateESpikeEff();
+
+public:
 	Val lL;       // Membrane leak rate [Hz]
 	Val lE;       // Excitatory decay rate [Hz]
 	Val lI;       // Inhibitory decay rate [Hz]
@@ -92,6 +99,8 @@ struct WorkingParameters {
 	Val invDeltaTh;  // Reverse spike slope factor [1/V]
 
 	Val maxIThExponent;  // Value to which the exponent is clamped
+	Val eSpikeEff;       // Effective spike potential
+	Val eSpikeEffRed;  // Reduced effective spike potential (used for clamping)
 
 	static constexpr Val MIN_DELTA_T =
 	    0.1e-6;  // 0.1 µS -- used for the calculation of maxIThExponent
@@ -116,7 +125,9 @@ struct WorkingParameters {
 	      lA(p.a / p.cM),
 	      lB(p.b / p.cM),
 	      invDeltaTh(1.0 / p.deltaTh),
-	      maxIThExponent(log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL)))
+	      maxIThExponent(log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL))),
+	      eSpikeEff(calculateESpikeEff()),
+	      eSpikeEffRed(eSpikeEff - 1e-4)
 	{
 	}
 };
