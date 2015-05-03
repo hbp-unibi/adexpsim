@@ -16,6 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+/**
+ * @file Model.hpp
+ *
+ * Contains the implementation of the AdExp model. The implementation presented
+ * here makes heavy use of templates in order to configure the model at compile
+ * time. This minimizes branching and significantly increases the performance
+ * of the code.
+ *
+ * @author Andreas Stöckel
+ */
+
 #ifndef _ADEXPSIM_MODEL_HPP_
 #define _ADEXPSIM_MODEL_HPP_
 
@@ -23,22 +34,28 @@
 #include <cmath>
 #include <cstdint>
 
+#include <utils/FastMath.hpp>
+
 #include "Parameters.hpp"
 #include "Spike.hpp"
 #include "State.hpp"
 
-#define USE_FAST_EXP 1
-
 namespace AdExpSim {
-
-static Val maxV = std::numeric_limits<Val>::min();
-
 /**
  * The EulerIntegrator class represents euler's method for integrating ODEs. Do
  * not use this. For debugging only.
  */
 class EulerIntegrator {
 public:
+	/**
+	 * Implements the standard Euler integrator.
+	 *
+	 * @param h is the timestep width.
+	 * @param s is the current state vector at the previous timestep.
+	 * @param df is the function which calculates the derivative for a given
+	 * state.
+	 * @return the new state for the next timestep.
+	 */
 	template <typename Func>
 	static State integrate(Val h, const State &s, Func df)
 	{
@@ -52,6 +69,15 @@ public:
  */
 class RungeKuttaIntegrator {
 public:
+	/**
+	 * Implements the fourth-order Runge-Kutta method.
+	 *
+	 * @param h is the timestep width.
+	 * @param s is the current state vector at the previous timestep.
+	 * @param df is the function which calculates the derivative for a given
+	 * state.
+	 * @return the new state for the next timestep.
+	 */
 	template <typename Func>
 	static State integrate(Val h, const State &s, Func df)
 	{
@@ -64,50 +90,144 @@ public:
 	}
 };
 
-class Model {
-private:
-#if USE_FAST_EXP
-	// Source: https://code.google.com/p/fastapprox/
-	// See also: http://www.schraudolph.org/pubs/Schraudolph99.pdf
-	static float fastpow2(float p)
-	{
-		float offset = (p < 0) ? 1.0f : 0.0f;
-		float clipp = (p < -126) ? -126.0f : p;
-		int w = clipp;
-		float z = clipp - w + offset;
-		union {
-			uint32_t i;
-			float f;
-		} v = {static_cast<uint32_t>(
-		      (1 << 23) * (clipp + 121.2740575f +
-		                   27.7280233f / (4.84252568f - z) - 1.49012907f * z))};
-
-		return v.f;
-	}
-
-	static float fastexp(float p) { return fastpow2(1.442695040f * p); }
-#endif
+/**
+ * The DefaultController class is used to abort the model calculation once the
+ * model has settled: The leak current is set to zero and the channel
+ * conductance is small.
+ */
+class DefaultController {
+public:
+	/**
+	 * Minimum neuron voltage at which the simulation can be aborted.
+	 */
+	static constexpr Val MIN_VOLTAGE = 1e-4;
 
 	/**
-	 * Calculates the current auxiliary state. Note that the "exp" for the
-	 * threshold current takes more than half of the time.
+	 * Minim excitatory plus inhibitory channel rate.
 	 */
+	static constexpr Val MIN_RATE = 1e-3;
+
+	/**
+	 * The control function is responsible for aborting the simulation. The
+	 * default controller aborts the simulation once the neuron has settled,
+	 * so there are no inhibitory or excitatory currents and the membrane
+	 * potential is near its resting potential.
+	 *
+	 * @param s is the current neuron state.
+	 * @return ture if the neuron should continue, false otherwise.
+	 */
+	static bool control(Time, const State &s, const AuxiliaryState &)
+	{
+		return fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE;
+	}
+};
+
+/**
+ * The MaxValueController class is used to abort the model calculation once the
+ * maximum voltage is reached and to record this maximum voltage.
+ */
+class MaxValueController {
+public:
+	/**
+	 * Minim excitatory plus inhibitory channel rate. This value is chosen
+	 * rather high as we want to abort as early as possible and only if the
+	 * high excitatory current could still increase the membrane potential.
+	 */
+	static constexpr Val MIN_RATE = 10;
+
+	/**
+	 * Maximum voltage
+	 */
+	Val maxV = std::numeric_limits<Val>::min();
+
+	/**
+	 * Time point at which the maximum voltage was recorded.
+	 */
+	Time maxVTime = MAX_TIME;
+
+	/**
+	 * The control function is responsible for aborting the simulation. The
+	 * default controller aborts the simulation once the neuron has settled,
+	 * so there are no inhibitory or excitatory currents and the membrane
+	 * potential is near its resting potential.
+	 *
+	 * @param s is the current neuron state.
+	 * @return ture if the neuron should continue, false otherwise.
+	 */
+	bool control(Time t, const State &s, const AuxiliaryState &aux)
+	{
+		// Track the maximum voltage
+		if (s.v() > maxV) {
+			maxV = s.v();
+			maxVTime = t;
+		}
+
+		// Do not abort as long as lE is larger than the minimum rate and the
+		// current is negative (charges the neuron)
+		return s.lE() > MIN_RATE ||
+		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI()) < 0;
+	}
+};
+
+/**
+ * The Model class contains the static function "simulate" which performs the
+ * actual simulation of the AdExp model.
+ */
+class Model {
+public:
+	/**
+	 * Set this flag if ITh should be completely disabled, allowing to downgrade
+	 * the model from the Adaptive I&F model to the classical I&F model.
+	 */
+	static constexpr uint8_t DISABLE_ITH = (1 << 0);
+
+	/**
+	 * Set this flag if ITh should be clamped in such a way that the exponential
+	 * runnaway effect cannot occur and thus no spikes will be issued.
+	 */
+	static constexpr uint8_t CLAMP_ITH = (1 << 1);
+
+	/**
+	 * Set this flag if a fast approximation of the exponential function should
+	 * be used. This approximation is less accurate, however is signigicantly
+	 * faster.
+	 */
+	static constexpr uint8_t FAST_EXP = (1 << 2);
+
+private:
+	/**
+	 * Calculates the current auxiliary state. This function is the bottleneck
+	 * of the simulation, with the "exp" for the threshold current taking more
+	 * than half of the time.
+	 *
+	 * @tparam Flags is a bit field containing the simulation flags, which may
+	 * be a combination of DISABLE_ITH, CLAMP_ITH and FAST_EXP.
+	 * @param s is the state vector for which the auxiliary state should be
+	 * calculated.
+	 * @param p is a reference at the working parameter set p.
+	 */
+	template <uint8_t Flags>
 	static AuxiliaryState aux(const State &s, const WorkingParameters &p)
 	{
 		// Calculate the exponent that should be used inside the formula for
 		// iTh. Clamp the value to "maxIThExponent" to prevent uneccessary
 		// overflows.
-		const Val iThExponent =
-		    std::min(p.maxIThExponent, (s.v() - p.eTh) * p.invDeltaTh);
+		const Val dvThExponent =
+		    (Flags & CLAMP_ITH)
+		        ? (std::min(p.eSpikeEffRed, s.v()) - p.eTh) * p.invDeltaTh
+		        : std::min(p.maxIThExponent, (s.v() - p.eTh) * p.invDeltaTh);
 
-		return AuxiliaryState(p.lL * s.v(),             // dvL
-		                      s.lE() * (s.v() - p.eE),  // dvE
-		                      s.lI() * (s.v() - p.eI),  // dvI
-#if USE_FAST_EXP
-		                      -p.lL * p.deltaTh * fastexp(iThExponent)  // dvTh
-#else
-		                      -p.lL * p.deltaTh * exp(iThExponent)  // dvTh
-#endif
+		// Calculate dvTh depending on the flags
+		const Val dvTh = (Flags & DISABLE_ITH)
+		                     ? 0.0f
+		                     : -p.lL * p.deltaTh *
+		                           (Flags & FAST_EXP ? fast::exp(dvThExponent)
+		                                             : exp(dvThExponent));
+
+		return AuxiliaryState(p.lL * s.v(),             // dvL  [V/s]
+		                      s.lE() * (s.v() - p.eE),  // dvE  [V/s]
+		                      s.lI() * (s.v() - p.eI),  // dvI  [V/s]
+		                      dvTh                      // dvTh [V/s]
 		                      );
 	}
 
@@ -132,20 +252,22 @@ private:
 	}
 
 public:
-	template <typename Recorder, typename Integrator = RungeKuttaIntegrator>
-	static void simulate(Time tEnd, const SpikeVec &spikes, Recorder &recorder,
-	                     const State &s0,
+	template <uint8_t Flags = 0, typename Integrator = RungeKuttaIntegrator,
+	          typename Recorder, typename Controller>
+	static void simulate(const SpikeVec &spikes, Recorder &recorder,
+	                     Controller &controller, const State &s0,
 	                     const WorkingParameters &p = WorkingParameters(),
-	                     Time tDelta = 10e-6)
+	                     Time tDelta = 10e-6, Time tEnd = MAX_TIME)
 	{
 		const Val h = tDelta.toSeconds();
+		const size_t nSpikes = spikes.size();
 		size_t spikeIdx = 0;
 		State s = s0;
 		for (Time t = 0.0; t < tEnd; t += tDelta) {
 			// Handle incomming spikes
-			while (spikeIdx < spikes.size() && spikes[spikeIdx].t <= t) {
+			while (spikeIdx < nSpikes && spikes[spikeIdx].t <= t) {
 				// Record the old values
-				recorder.record(t, s, aux(s, p), true);
+				recorder.record(t, s, aux<Flags>(s, p), true);
 
 				// Add the spike weight to either the excitatory or the
 				// inhibitory channel
@@ -157,33 +279,31 @@ public:
 				}
 
 				// Record the new values
-				recorder.record(t, s, aux(s, p), true);
+				recorder.record(t, s, aux<Flags>(s, p), true);
 
 				// Go to the next spike
 				spikeIdx++;
 			}
 
 			// Perform the actual integration
-			s = Integrator::integrate(
-			    h, s, [&p](const State &s) { return df(s, aux(s, p), p); });
+			s = Integrator::integrate(h, s, [&p](const State &s) {
+				return df(s, aux<Flags>(s, p), p);
+			});
 
 			// Calculate the auxiliary state for the recorder
-			AuxiliaryState as = aux(s, p);
+			AuxiliaryState as = aux<Flags>(s, p);
 
 			// Reset the neuron if the spike potential is reached
 			if (s.v() > p.eSpike) {
 				// Record the spike event
 				s.v() = p.eSpike;
-				as = aux(s, p);
+				as = aux<Flags>(s, p);
 				recorder.record(t, s, as, true);
-
-				// Track the maximum voltage
-				maxV = std::max(s.v(), maxV);
 
 				// Reset the voltage and increase the adaptation current
 				s.v() = p.eReset;
 				s.dvW() += p.lB;
-				as = aux(s, p);
+				as = aux<Flags>(s, p);
 				recorder.record(t, s, as, true);
 			}
 
@@ -191,8 +311,10 @@ public:
 			// should be recorded
 			recorder.record(t, s, as, false);
 
-			// Track the maximum voltage
-			maxV = std::max(s.v(), maxV);
+			// Ask the controller whether it is time to abort
+			if (!controller.control(t, s, as) && spikeIdx >= nSpikes) {
+				break;
+			}
 		}
 	}
 };
