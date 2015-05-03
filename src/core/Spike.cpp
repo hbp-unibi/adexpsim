@@ -16,9 +16,25 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <cmath>
+
 #include "Spike.hpp"
 
 namespace AdExpSim {
-// Do nothing here for now, make sure the header compiles.
+
+SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
+{
+	// Calculate the number of spikes
+	const size_t c = static_cast<size_t>(ceil(std::max(0.0f, xi)));
+
+	// Create the spikes and return them
+	SpikeVec res;
+	res.reserve(c);
+	for (size_t i = 0; i < c; i++) {
+		res.emplace_back(t0 + TimeType(T.t * i), std::min(1.0f, xi - i) * w);
+	}
+	return res;
+}
+
 }
 

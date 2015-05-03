@@ -17,7 +17,12 @@
  */
 
 /**
- * Contains the data type describing a spike.
+ * @file Spike.hpp
+ *
+ * Contains the data type describing a spike and auxiliary functions for
+ * generating and scaling input spikes.
+ *
+ * @author Andreas Stöckel
  */
 
 #ifndef _ADEXPSIM_SPIKE_HPP_
@@ -30,6 +35,9 @@
 
 namespace AdExpSim {
 
+/**
+ * Structure representing a single spike.
+ */
 struct Spike {
 	Time t;
 	Val w;
@@ -44,6 +52,19 @@ struct Spike {
 };
 
 using SpikeVec = std::vector<Spike>;
+
+/**
+ * Method used to build a set of xi input spikes.
+ *
+ * @param xi is the number of input spikes. If a fractional number is given, an
+ * additional input spike is generated which is scaled by the fractional part
+ * of the number.
+ * @param T is the delay between the spikes.
+ * @param t0 is the time at which the first spike should be generated.
+ * @param w is the weight factor with which the spike weights are multiplied.
+ */
+SpikeVec buildInputSpikes(Val xi, Time T, Time t0 = 0, Val w = 1);
+
 }
 
 #endif /* _ADEXPSIM_SPIKE_HPP_ */
