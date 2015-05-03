@@ -25,12 +25,17 @@ namespace AdExpSim {
 Val WorkingParameters::calculateESpikeEff()
 {
 	constexpr Val EPS = 1e-7;
-	const Val logDeltaTh = log(deltaTh);
-	Val x = eTh;
+
+	// Copy some variables for convenient access
+	const Val eT = eTh();
+	const Val DT = deltaTh();
+	const Val iDTH = invDeltaTh();
+	const Val logDT = log(DT);
+
+	Val x = eTh();
 	while (true) {
-		const Val dx = (logDeltaTh + (x - eTh) * invDeltaTh - log(x)) *
-		               (x * deltaTh) / (x - deltaTh);
-		x = x - dx;
+		const Val dx = (logDT + (x - eT) * iDTH - log(x)) * (x * DT) / (x - DT);
+		x -= dx;
 		if (fabs(dx) < EPS) {
 			break;
 		}
