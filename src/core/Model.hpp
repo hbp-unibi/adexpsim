@@ -177,7 +177,7 @@ public:
 		}
 
 		// Track the time at which the spike potential was reached
-		if (s.v() > p.eSpikeEff && t < tSpike) {
+		if (s.v() > p.eSpikeEff() && t < tSpike) {
 			tSpike = t;
 		}
 
@@ -233,20 +233,21 @@ private:
 		// overflows.
 		const Val dvThExponent =
 		    (Flags & CLAMP_ITH)
-		        ? (std::min(p.eSpikeEffRed, s.v()) - p.eTh) * p.invDeltaTh
-		        : std::min(p.maxIThExponent, (s.v() - p.eTh) * p.invDeltaTh);
+		        ? (std::min(p.eSpikeEffRed(), s.v()) - p.eTh()) * p.invDeltaTh()
+		        : std::min(p.maxIThExponent(),
+		                   (s.v() - p.eTh()) * p.invDeltaTh());
 
 		// Calculate dvTh depending on the flags
 		const Val dvTh = (Flags & DISABLE_ITH)
 		                     ? 0.0f
-		                     : -p.lL * p.deltaTh *
+		                     : -p.lL() * p.deltaTh() *
 		                           (Flags & FAST_EXP ? fast::exp(dvThExponent)
 		                                             : exp(dvThExponent));
 
-		return AuxiliaryState(p.lL * s.v(),             // dvL  [V/s]
-		                      s.lE() * (s.v() - p.eE),  // dvE  [V/s]
-		                      s.lI() * (s.v() - p.eI),  // dvI  [V/s]
-		                      dvTh                      // dvTh [V/s]
+		return AuxiliaryState(p.lL() * s.v(),             // dvL  [V/s]
+		                      s.lE() * (s.v() - p.eE()),  // dvE  [V/s]
+		                      s.lI() * (s.v() - p.eI()),  // dvI  [V/s]
+		                      dvTh                        // dvTh [V/s]
 		                      );
 	}
 
@@ -264,9 +265,9 @@ private:
 	{
 		return State(
 		    -(as.dvL() + as.dvE() + as.dvI() + as.dvTh() + s.dvW()),  // [V/s]
-		    -s.lE() * p.lE,                                           // [1/s^2]
-		    -s.lI() * p.lI,                                           // [1/s^2]
-		    -(s.dvW() - p.lA * s.v()) * p.lW                          // [V/s^2]
+		    -s.lE() * p.lE(),                                         // [1/s^2]
+		    -s.lI() * p.lI(),                                         // [1/s^2]
+		    -(s.dvW() - p.lA() * s.v()) * p.lW()                      // [V/s^2]
 		    );
 	}
 
@@ -291,7 +292,7 @@ public:
 
 				// Add the spike weight to either the excitatory or the
 				// inhibitory channel
-				const Val w = spikes[spikeIdx].w * p.wSpike;
+				const Val w = spikes[spikeIdx].w * p.wSpike();
 				if (w > 0) {
 					s.lE() += w;
 				} else {
@@ -314,15 +315,15 @@ public:
 			AuxiliaryState as = aux<Flags>(s, p);
 
 			// Reset the neuron if the spike potential is reached
-			if (s.v() > p.eSpike) {
+			if (s.v() > p.eSpike()) {
 				// Record the spike event
-				s.v() = p.eSpike;
+				s.v() = p.eSpike();
 				as = aux<Flags>(s, p);
 				recorder.record(t, s, as, true);
 
 				// Reset the voltage and increase the adaptation current
-				s.v() = p.eReset;
-				s.dvW() += p.lB;
+				s.v() = p.eReset();
+				s.dvW() += p.lB();
 				as = aux<Flags>(s, p);
 				recorder.record(t, s, as, true);
 			}

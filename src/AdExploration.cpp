@@ -36,20 +36,20 @@ int main(int argc, char *argv[])
 
 	Evaluation evaluation(3, 1e-3);
 
-	float wOrig = params.wSpike;
+	float wOrig = params.wSpike();
 	size_t nY = 0;
-	params.wSpike = wOrig * 0.03e-6;
+	params.wSpike() = wOrig * 0.03e-6;
 //	for (Val w = 0; w < 0.1e-6; w += 0.001e-6) {
 	for (Val tauL = 0.1e-3; tauL < 10e-3; tauL += 0.1e-3) {
 		bool first = true;
 		size_t cOk = 0;
 //		for (Val eTh = 0.01; eTh < 0.05; eTh += 0.0001) {
 //		for (Val deltaTh = 0.001e-3; deltaTh < 0.1e-3; deltaTh += 0.001e-3) {
-		for (Val tauE = 0.1e-3; tauE < 200e-3; tauE += 0.1e-3) {
+		for (Val tauE = 0.1e-3; tauE < 200e-3; tauE += 1e-3) {
 			// Set the new parameters
 //			params.wSpike = wOrig * w;
-			params.lL = 1.0 / tauL;
-			params.lE = 1.0 / tauE;
+			params.lL() = 1.0 / tauL;
+			params.lE() = 1.0 / tauE;
 //			params.eTh = eTh;
 //			params.deltaTh = deltaTh;
 			params.update();

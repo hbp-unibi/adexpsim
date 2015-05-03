@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-//#define BENCHMARK
+#define BENCHMARK
 
 using namespace AdExpSim;
 
@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
 	SpikeVec spikes = buildInputSpikes(3.1, 1e-3, 0, 0.03175e-6);
 
 	WorkingParameters wParams(params);
-	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent << std::endl;
-	std::cerr << "Effective spike potential: " << wParams.eSpikeEff + params.eL
-	          << std::endl;
+	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() << std::endl;
+	std::cerr << "Effective spike potential: "
+	          << wParams.eSpikeEff() + params.eL << std::endl;
 
 #ifdef BENCHMARK
 	Timer t;

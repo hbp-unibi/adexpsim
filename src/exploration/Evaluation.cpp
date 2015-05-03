@@ -46,9 +46,9 @@ std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
 	Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(sXiM1, n, cXiM1, params,
 	                                                    tDelta);
 	return std::tuple<Val, Val, bool>(
-	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff, sigma),
+	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
 	    cXi.tSpike.toSeconds(),
-	    cXi.vMax > params.eSpikeEff && cXiM1.vMax < params.eSpikeEff);
+	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff());
 }
 }
 

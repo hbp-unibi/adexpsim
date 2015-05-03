@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include <utils/Types.hpp>
+#include <utils/Vector.hpp>
 
 namespace AdExpSim {
 
@@ -75,33 +76,35 @@ struct Parameters {
  * Structure holding the reduced parameter set which is actually used for the
  * calculations as well as some pre-calculated values
  */
-class WorkingParameters {
+class WorkingParameters : public Vector<WorkingParameters, 13> {
 private:
+	/**
+	 * Inverse spike slope factor [1/V].
+	 */
+	Val mInvDeltaTh;
+
+	/**
+	 * Value to which the exponent is clamped.
+	 */
+	Val mMaxIThExponent;
+
+	/**
+	 * Effective spike potential. [V]
+	 */
+	Val mESpikeEff;
+
+	/**
+	 * Reduced effective spike potential (used for clamping) [V]
+	 */
+	Val mESpikeEffRed;
+
 	/**
 	 * Function used to calculate the effective spike potential.
 	 */
 	Val calculateESpikeEff();
 
 public:
-	Val lL;       // Membrane leak rate [Hz]
-	Val lE;       // Excitatory decay rate [Hz]
-	Val lI;       // Inhibitory decay rate [Hz]
-	Val lW;       // Adaptation cur. decay rate [Hz]
-	Val eE;       // Excitatory channel reversal potential [V]
-	Val eI;       // Inhibitory channel reversal potential [V]
-	Val eTh;      // Spike threshold potential [V]
-	Val eSpike;   // Spike generation potential [V]
-	Val eReset;   // Membrane reset potential [V]
-	Val deltaTh;  // Spike slope factor [V]
-	Val lA;       // Subthreshold adaptation [Hz]
-	Val lB;       // Spike triggered adaptation current [V/s]
-	Val wSpike;   // Weight with which the spikes should be multiplied [V/A*s]
-
-	Val invDeltaTh;  // Reverse spike slope factor [1/V]
-
-	Val maxIThExponent;  // Value to which the exponent is clamped
-	Val eSpikeEff;       // Effective spike potential
-	Val eSpikeEffRed;  // Reduced effective spike potential (used for clamping)
+	using Vector<WorkingParameters, 13>::Vector;
 
 	static constexpr Val MIN_DELTA_T =
 	    0.1e-6;  // 0.1 µS -- used for the calculation of maxIThExponent
@@ -113,23 +116,38 @@ public:
 	 * should be created.
 	 */
 	WorkingParameters(const Parameters &p = Parameters())
-	    : lL(p.gL / p.cM),
-	      lE(1.0 / p.tauE),
-	      lI(1.0 / p.tauI),
-	      lW(1.0 / p.tauW),
-	      eE(p.eE - p.eL),
-	      eI(p.eI - p.eL),
-	      eTh(p.eTh - p.eL),
-	      eSpike(p.eSpike - p.eL),
-	      eReset(p.eReset - p.eL),
-	      deltaTh(p.deltaTh),
-	      lA(p.a / p.cM),
-	      lB(p.b / p.cM),
-	      wSpike(1.0 / p.cM),
-	      invDeltaTh(1.0 / p.deltaTh)
+	    : Vector<WorkingParameters, 13>({
+	          p.gL / p.cM,        // lL (0)
+	          Val(1.0) / p.tauE,  // lE (1)
+	          Val(1.0) / p.tauI,  // lI (2)
+	          Val(1.0) / p.tauW,  // lW (3)
+	          p.eE - p.eL,        // eE (4)
+	          p.eI - p.eL,        // eI (5)
+	          p.eTh - p.eL,       // eTh (6)
+	          p.eSpike - p.eL,    // eSpike (7)
+	          p.eReset - p.eL,    // eReset (8)
+	          p.deltaTh,          // deltaTh (9)
+	          p.a / p.cM,         // lA (10)
+	          p.b / p.cM,         // lB (11)
+	          Val(1.0) / p.cM     // wSpike (12)
+	      })
 	{
 		update();
 	}
+
+	NAMED_VECTOR_ELEMENT(lL, 0);       // Membrane leak rate [Hz]
+	NAMED_VECTOR_ELEMENT(lE, 1);       // Excitatory decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(lI, 2);       // Inhibitory decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(lW, 3);       // Adaptation cur. decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(eE, 4);       // Excitatory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eI, 5);       // Inhibitory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eTh, 6);      // Spike threshold potential [V]
+	NAMED_VECTOR_ELEMENT(eSpike, 7);   // Spike generation potential [V]
+	NAMED_VECTOR_ELEMENT(eReset, 8);   // Membrane reset potential [V]
+	NAMED_VECTOR_ELEMENT(deltaTh, 9);  // Spike slope factor [V]
+	NAMED_VECTOR_ELEMENT(lA, 10);      // Subthreshold adaptation [Hz]
+	NAMED_VECTOR_ELEMENT(lB, 11);      // Spike trig. adaptation cur. [V/s]
+	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [V/A*s]
 
 	/**
 	 * Updates some derived values. This method must be called whenever the
@@ -137,10 +155,44 @@ public:
 	 */
 	void update()
 	{
-		maxIThExponent = log((eSpike - eReset) / (MIN_DELTA_T * deltaTh * lL));
-		eSpikeEff = calculateESpikeEff();
-		eSpikeEffRed = eSpikeEff - 1e-4;
+		mInvDeltaTh = Val(1.0) / deltaTh();
+		mMaxIThExponent =
+		    log((eSpike() - eReset()) / (MIN_DELTA_T * deltaTh() * lL()));
+		mESpikeEff = calculateESpikeEff();
+		mESpikeEffRed = mESpikeEff - Val(1e-4);
 	}
+
+	/**
+	 * Returns the inverse spike slope factor. This is a derived value, call
+	 * update() after any of the other parameters were changed to recalculate
+	 * this value.
+	 */
+	Val invDeltaTh() const { return mInvDeltaTh; }
+
+	/**
+	 * Returns the value to which the exponent of the dvTh calculation is
+	 * clamped to prevent overshooting. This is a derived value, call update()
+	 * after any of the other parameters were changed to recalculate this value.
+	 */
+	Val maxIThExponent() const { return mMaxIThExponent; };
+
+	/**
+	 * Returns the effective spike potential. The membrane potential must be
+	 * larger than this value for a spike to be produced. A spike will be
+	 * produced if there are no inhibitory currents. This is a derived
+	 * value, call update() after any of the other parameters were changed to
+	 * recalculate this value.
+	 */
+	Val eSpikeEff() const { return mESpikeEff; }
+
+	/**
+	 * Returns a smaller version (0.1mV) of the effective spike potential.
+	 * This value is used when the CLAMP_ITH flag is set in order to prevent the
+	 * membrane potential from being set exactly to the spike potential, which
+	 * could cause the neuron to be staying in an unwanted equilibrium, which
+	 * may prevent abort conditions from triggering.
+	 */
+	Val eSpikeEffRed() const { return mESpikeEffRed; }
 };
 }
 
