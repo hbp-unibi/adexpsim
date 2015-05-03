@@ -27,8 +27,9 @@
 #ifndef _ADEXPSIM_STATE_HPP_
 #define _ADEXPSIM_STATE_HPP_
 
+#include <utils/Types.hpp>
+
 #include "Parameters.hpp"
-#include "Types.hpp"
 
 namespace AdExpSim {
 
