@@ -40,8 +40,7 @@ int main(int argc, char *argv[])
 #endif
 
 	// Create a vector containing all input spikes
-	SpikeVec spikes = scaleSpikes(
-	    {{1e-3, 0.03e-6}, {2e-3, 0.03e-6}, {3e-3, 0.03e-6}}, params);
+	SpikeVec spikes{{1e-3, 0.03e-6}, {2e-3, 0.03e-6}, {3e-3, 0.03e-6}};
 
 	WorkingParameters wParams(params);
 	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent << std::endl;
