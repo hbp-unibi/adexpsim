@@ -22,19 +22,26 @@
 
 namespace AdExpSim {
 
-Val WorkingParameters::calculateESpikeEff()
+Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 {
-	constexpr Val EPS = 1e-7;
+	constexpr double EPS = 1e-9;
+
+	// Abort if deltaTh is near zero. Additionally,  as shown (TM), threshold
+	// potentials smaller or equal to deltaTh will result in a instable neuron
+	// state and cause spikes no matter the current voltage is.
+	if (deltaTh < EPS || eTh <= deltaTh) {
+		return std::numeric_limits<Val>::lowest();
+	}
 
 	// Copy some variables for convenient access
-	const Val eT = eTh();
-	const Val DT = deltaTh();
-	const Val iDTH = invDeltaTh();
-	const Val logDT = log(DT);
+	const double invDeltaTh = 1.0 / deltaTh;
+	const double logDeltaTh = log(deltaTh);
 
-	Val x = eTh();
+	// Start a newton iteration
+	double x = eTh + EPS;
 	while (true) {
-		const Val dx = (logDT + (x - eT) * iDTH - log(x)) * (x * DT) / (x - DT);
+		const double dx = (logDeltaTh + (x - eTh) * invDeltaTh - log(x)) *
+		               (x * deltaTh) / (x - deltaTh);
 		x -= dx;
 		if (fabs(dx) < EPS) {
 			break;

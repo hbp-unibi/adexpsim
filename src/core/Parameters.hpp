@@ -99,9 +99,7 @@ private:
 	Val mESpikeEffRed;
 
 	/**
-	 * Function used to calculate the effective spike potential.
 	 */
-	Val calculateESpikeEff();
 
 public:
 	using Vector<WorkingParameters, 13>::Vector;
@@ -150,6 +148,11 @@ public:
 	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [V/A*s]
 
 	/**
+	 * Function used to calculate the effective spike potential.
+	 */
+	static Val calculateESpikeEff(double eTh, double deltaTh);
+
+	/**
 	 * Updates some derived values. This method must be called whenever the
 	 * parameters have been changed from the outside.
 	 */
@@ -158,7 +161,7 @@ public:
 		mInvDeltaTh = Val(1.0) / deltaTh();
 		mMaxIThExponent =
 		    log((eSpike() - eReset()) / (MIN_DELTA_T * deltaTh() * lL()));
-		mESpikeEff = calculateESpikeEff();
+		mESpikeEff = calculateESpikeEff(eTh(), deltaTh());
 		mESpikeEffRed = mESpikeEff - Val(1e-4);
 	}
 
