@@ -63,11 +63,6 @@ int main(int argc, char *argv[])
 	auto f = [&evaluation](const WorkingParameters &p) -> Val {
 		auto res = evaluation.evaluate(p);
 
-		// Penalize too small rates (or too large time constants)
-		/*		const Val errRate = 0.1 * (1.0 / p.lE() + 1.0 / p.lI() + 1.0 /
-		   p.lL() +
-		                                   1.0 / p.lW() + 1.0 / p.lA() + 1.0 /
-		   p.lB());*/
 		// Penalize too large time constants (maximum value: 0.5s)
 		const Val errRate =
 		    exp(100 * (1.0 / p.lL() - 0.5)) + exp(100 * (1.0 / p.lE() - 0.5));
@@ -87,10 +82,7 @@ int main(int argc, char *argv[])
 	};
 
 	Simplex<WorkingParameters> simplex(
-	    //	    params, std::vector<size_t>{0, 1, 4, 6, 9, 12}, f);
-	    params, std::vector<size_t>{0, 1, /*4, 6, 9,*/ 12}, f);
-
-	std::cout << std::endl;
+	    params, std::vector<size_t>{0, 1, 4, 6, 9, 12}, f);
 
 	SimplexStepResult res;
 	size_t it = 0;
@@ -99,7 +91,7 @@ int main(int argc, char *argv[])
 
 		// Print the best and mean cost#
 		if (it % 10 == 0) {
-			std::cout << "It: " << std::setw(5) << it + 1
+			std::cout << "It: " << std::setw(5) << it
 			          << " C: " << printCost(term, res.bestValue) << " ("
 			          << printCost(term, res.meanValue) << ") ";
 
@@ -125,9 +117,11 @@ int main(int argc, char *argv[])
 		}
 		it++;
 	} while (!res.done);
-	std::cout << std::endl;
 
 	auto evalRes = evaluation.evaluate(simplex.getSimplex()[0].x);
+	bool ok = std::get<2>(evalRes);
+
+	std::cout << std::endl;
 	std::cout << "Final Raw Cost: " << std::get<0>(evalRes) << std::endl;
 	std::cout << "Final Time    : " << std::get<1>(evalRes) * 1000 << "ms"
 	          << std::endl;
@@ -135,7 +129,6 @@ int main(int argc, char *argv[])
 	          << (std::get<1>(evalRes) -
 	              evaluation.getLastSpikeTime().toSeconds()) *
 	                 1000 << "ms" << std::endl;
-	bool ok = std::get<2>(evalRes);
 	std::cout << "Heaviside Beh.: "
 	          << (ok ? term.rgb(64, 128, 32, true) + "   OK   "
 	                 : term.rgb(128, 32, 32, true) + "  FAIL  ") << term.reset()
