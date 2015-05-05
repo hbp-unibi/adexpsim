@@ -38,6 +38,16 @@ namespace AdExpSim {
 class Evaluation {
 private:
 	/**
+	 * Value of xi given in the constructor.
+	 */
+	Val xi;
+
+	/**
+	 * Value of T given in the constructor.
+	 */
+	Time T;
+
+	/**
 	 * Vector containing the spikes for Xi input spikes.
 	 */
 	SpikeVec sXi;
@@ -80,7 +90,7 @@ public:
 	 * the spike delay T.
 	 */
 	std::tuple<Val, Val, bool> evaluate(const WorkingParameters &params,
-	                                    Val sigma = 100, Val tDelta = 0.1e-3);
+	                                    Val sigma = 100, Val tDelta = -1);
 };
 }
 

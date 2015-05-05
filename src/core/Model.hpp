@@ -277,13 +277,26 @@ public:
 	static void simulate(const SpikeVec &spikes, Recorder &recorder,
 	                     Controller &controller,
 	                     const WorkingParameters &p = WorkingParameters(),
-	                     Time tDelta = 10e-6, Time tEnd = MAX_TIME,
+	                     Time tDelta = -1, Time tEnd = MAX_TIME,
 	                     const State &s0 = State())
 	{
+		// Use the automatically calculated tDelta if no user-defined value is
+		// given
+		if (tDelta <= 0.0) {
+			tDelta = p.tDelta();
+		}
+
+		// Fetch the timestep h in sconds
 		const Val h = tDelta.toSeconds();
+
+		// Number of spikes and index of the next spike that should be processed
 		const size_t nSpikes = spikes.size();
 		size_t spikeIdx = 0;
+
+		// Start with state s0
 		State s = s0;
+
+		// Iterate over all time slices
 		for (Time t = 0.0; t < tEnd; t += tDelta) {
 			// Handle incomming spikes
 			while (spikeIdx < nSpikes && spikes[spikeIdx].t <= t) {

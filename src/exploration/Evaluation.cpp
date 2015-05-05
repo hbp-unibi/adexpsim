@@ -26,7 +26,10 @@
 namespace AdExpSim {
 
 Evaluation::Evaluation(Val xi, Time T)
-    : sXi(buildInputSpikes(xi, T)), sXiM1(buildInputSpikes(xi - 1, T))
+    : xi(xi),
+      T(T),
+      sXi(buildInputSpikes(xi, T)),
+      sXiM1(buildInputSpikes(xi - 1, T))
 {
 }
 

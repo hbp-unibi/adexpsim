@@ -28,6 +28,7 @@
 #ifndef _ADEXPSIM_PARAMETERS_HPP_
 #define _ADEXPSIM_PARAMETERS_HPP_
 
+#include <algorithm>
 #include <cmath>
 
 #include <utils/Types.hpp>
@@ -99,7 +100,10 @@ private:
 	Val mESpikeEffRed;
 
 	/**
+	 * Proposed ODE integrator tDelta. Set to one tenth of the smallest time
+	 * constant.
 	 */
+	Val mTDelta;
 
 public:
 	using Vector<WorkingParameters, 13>::Vector;
@@ -163,6 +167,7 @@ public:
 		    log((eSpike() - eReset()) / (MIN_DELTA_T * deltaTh() * lL()));
 		mESpikeEff = calculateESpikeEff(eTh(), deltaTh());
 		mESpikeEffRed = mESpikeEff - Val(1e-4);
+		mTDelta = Val(0.1) / std::max({lL(), lE(), lI(), lW(), lA()});
 	}
 
 	/**
@@ -196,6 +201,11 @@ public:
 	 * may prevent abort conditions from triggering.
 	 */
 	Val eSpikeEffRed() const { return mESpikeEffRed; }
+
+	/**
+	 * Returns the tDelta proposed for this parameter set.
+	 */
+	Val tDelta() const { return mTDelta; }
 };
 }
 
