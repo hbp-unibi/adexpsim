@@ -171,6 +171,16 @@ public:
 	}
 
 	/**
+	 * Returns true if the parameters are in a range which is generally valid.
+	 */
+	bool valid() const
+	{
+		return lL() > Val(0) && lE() > Val(0) && lI() > Val(0) &&
+		       lW() > Val(0) && deltaTh() > Val(0) && lA() > Val(0) &&
+		       lB() > Val(0);
+	}
+
+	/**
 	 * Returns the inverse spike slope factor. This is a derived value, call
 	 * update() after any of the other parameters were changed to recalculate
 	 * this value.
