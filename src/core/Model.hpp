@@ -151,7 +151,7 @@ public:
 	/**
 	 * Time point at which the maximum voltage was recorded.
 	 */
-	Time vMaxTime = MAX_TIME;
+	Time tVMax = MAX_TIME;
 
 	/**
 	 * Time point at which the effective spiking potential was reached.
@@ -173,7 +173,7 @@ public:
 		// Track the maximum voltage
 		if (s.v() > vMax) {
 			vMax = s.v();
-			vMaxTime = t;
+			tVMax = t;
 		}
 
 		// Track the time at which the spike potential was reached

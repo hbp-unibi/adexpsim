@@ -51,7 +51,7 @@ std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
 	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, tDelta);
 	return std::tuple<Val, Val, bool>(
 	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
-	    cXi.tSpike.toSeconds(),
+	    std::min(cXi.tSpike, cXi.tVMax).toSeconds(),
 	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff());
 }
 }
