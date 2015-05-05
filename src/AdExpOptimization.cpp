@@ -52,12 +52,12 @@ int main(int argc, char *argv[])
 {
 	Terminal term(true);
 
-	Evaluation evaluation(3, 0.5e-3);
+	Evaluation evaluation(3, 2e-3);
 
 	// Create the initial parameters
 	// TODO: Derive better guess
 	WorkingParameters params;
-	params.wSpike() *= 0.01e-6;
+	params.wSpike() *= 0.1e-6;
 
 	// Define the cost function f
 	auto f = [&evaluation](const WorkingParameters &p) -> Val {
@@ -82,13 +82,13 @@ int main(int argc, char *argv[])
 		const Val delay =
 		    (std::get<1>(res) - evaluation.getLastSpikeTime()).toSeconds();
 		const Val timePenalty =
-		    20 * std::max<Val>(0.0, std::min<Val>(1.0, delay));
+		    100 * std::max<Val>(0.0, std::min<Val>(1.0, delay));
 		return std::get<0>(res) + timePenalty + errRate + errVolt;
 	};
 
 	Simplex<WorkingParameters> simplex(
 	    //	    params, std::vector<size_t>{0, 1, 4, 6, 9, 12}, f);
-	    params, std::vector<size_t>{0, 1, 4, 6, 9, 12}, f);
+	    params, std::vector<size_t>{0, 1, /*4, 6, 9,*/ 12}, f);
 
 	std::cout << std::endl;
 
@@ -128,14 +128,18 @@ int main(int argc, char *argv[])
 	std::cout << std::endl;
 
 	auto evalRes = evaluation.evaluate(simplex.getSimplex()[0].x);
-	std::cout << "Final Cost: " << std::get<0>(evalRes) << std::endl;
-	std::cout << "Final Time: " << std::get<1>(evalRes) * 1000 << "ms"
+	std::cout << "Final Raw Cost: " << std::get<0>(evalRes) << std::endl;
+	std::cout << "Final Time    : " << std::get<1>(evalRes) * 1000 << "ms"
 	          << std::endl;
-	std::cout << "Final Delay: "
+	std::cout << "Final Delay   : "
 	          << (std::get<1>(evalRes) -
 	              evaluation.getLastSpikeTime().toSeconds()) *
 	                 1000 << "ms" << std::endl;
-	std::cout << "Final OK: " << std::get<2>(evalRes) << std::endl;
+	bool ok = std::get<2>(evalRes);
+	std::cout << "Heaviside Beh.: "
+	          << (ok ? term.rgb(64, 128, 32, true) + "   OK   "
+	                 : term.rgb(128, 32, 32, true) + "  FAIL  ") << term.reset()
+	          << std::endl;
 
 	return 0;
 }
