@@ -60,4 +60,15 @@ TARGET_LINK_LIBRARIES(AdExploration
 	AdExpSimUtils
 )
 
+# AdExpOptimization executable
+ADD_EXECUTABLE(AdExpOptimization
+	src/AdExpOptimization
+)
+
+TARGET_LINK_LIBRARIES(AdExpOptimization
+	AdExpSimExploration
+	AdExpSimUtils
+)
+
+
 INSTALL_TARGETS(/bin AdExpSim)
