@@ -33,6 +33,7 @@ ADD_LIBRARY(AdExpSimCore
 # AdExpSimExploration library
 ADD_LIBRARY(AdExpSimExploration
 	src/exploration/Evaluation
+	src/exploration/Simplex
 )
 
 TARGET_LINK_LIBRARIES(AdExpSimExploration
