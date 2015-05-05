@@ -22,7 +22,7 @@
 
 #include <iostream>
 
-#define BENCHMARK
+//#define BENCHMARK
 
 using namespace AdExpSim;
 
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
 	Timer t;
 	for (int i = 0; i < 1000; i++) {
 #endif
-		Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(
+		Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP | Model::DISABLE_SPIKING>(
 		    spikes, recorder, controller, wParams, 0.01e-3);
 #ifdef BENCHMARK
 	}

@@ -184,7 +184,8 @@ public:
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
 		return s.lE() > MIN_RATE ||
-		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI()) < MAX_DV;
+		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI() + s.dvW()) <
+		           MAX_DV;
 	}
 };
 
@@ -207,11 +208,18 @@ public:
 	static constexpr uint8_t CLAMP_ITH = (1 << 1);
 
 	/**
+	 * Set this flag if the spiking mechanism of the neuron should be switched
+	 * of. ITh will still flow, but the neuron will not be reset. Only use in
+	 * conjunction with CLAMP_ITH or DISABLE_ITH.
+	 */
+	static constexpr uint8_t DISABLE_SPIKING = (1 << 2);
+
+	/**
 	 * Set this flag if a fast approximation of the exponential function should
 	 * be used. This approximation is less accurate, however is signigicantly
 	 * faster.
 	 */
-	static constexpr uint8_t FAST_EXP = (1 << 2);
+	static constexpr uint8_t FAST_EXP = (1 << 3);
 
 private:
 	/**
@@ -328,17 +336,19 @@ public:
 			AuxiliaryState as = aux<Flags>(s, p);
 
 			// Reset the neuron if the spike potential is reached
-			if (s.v() > p.eSpike()) {
-				// Record the spike event
-				s.v() = p.eSpike();
-				as = aux<Flags>(s, p);
-				recorder.record(t, s, as, true);
+			if (!(Flags & DISABLE_SPIKING)) {
+				if (s.v() > p.eSpike()) {
+					// Record the spike event
+					s.v() = p.eSpike();
+					as = aux<Flags>(s, p);
+					recorder.record(t, s, as, true);
 
-				// Reset the voltage and increase the adaptation current
-				s.v() = p.eReset();
-				s.dvW() += p.lB();
-				as = aux<Flags>(s, p);
-				recorder.record(t, s, as, true);
+					// Reset the voltage and increase the adaptation current
+					s.v() = p.eReset();
+					s.dvW() += p.lB();
+					as = aux<Flags>(s, p);
+					recorder.record(t, s, as, true);
+				}
 			}
 
 			// Record the value -- this is the regular position in which values
