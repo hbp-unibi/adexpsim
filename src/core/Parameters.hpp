@@ -82,28 +82,28 @@ private:
 	/**
 	 * Inverse spike slope factor [1/V].
 	 */
-	Val mInvDeltaTh;
+	mutable Val mInvDeltaTh;
 
 	/**
 	 * Value to which the exponent is clamped.
 	 */
-	Val mMaxIThExponent;
+	mutable Val mMaxIThExponent;
 
 	/**
 	 * Effective spike potential. [V]
 	 */
-	Val mESpikeEff;
+	mutable Val mESpikeEff;
 
 	/**
 	 * Reduced effective spike potential (used for clamping) [V]
 	 */
-	Val mESpikeEffRed;
+	mutable Val mESpikeEffRed;
 
 	/**
 	 * Proposed ODE integrator tDelta. Set to one tenth of the smallest time
 	 * constant.
 	 */
-	Val mTDelta;
+	mutable Val mTDelta;
 
 public:
 	using Vector<WorkingParameters, 13>::Vector;
@@ -160,7 +160,7 @@ public:
 	 * Updates some derived values. This method must be called whenever the
 	 * parameters have been changed from the outside.
 	 */
-	void update()
+	void update() const
 	{
 		mInvDeltaTh = Val(1.0) / deltaTh();
 		mMaxIThExponent =
