@@ -103,7 +103,7 @@ public:
 
 	Time getT() { return T; };
 
-	Time getLastSpikeTime() { return T * ceil(xi); }
+	Time getLastSpikeTime() { return T * ceil(xi - 1.0); }
 };
 }
 
