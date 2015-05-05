@@ -96,7 +96,7 @@ public:
 	 * @param tDelta is the internally used resolution. Should be smaller than
 	 * the spike delay T.
 	 */
-	std::tuple<Val, Val, bool> evaluate(const WorkingParameters &params,
+	std::tuple<Val, Val, bool, Val, Val> evaluate(const WorkingParameters &params,
 	                                    Val sigma = 100, Val tDelta = -1);
 
 	Val getXi() { return xi; }

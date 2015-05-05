@@ -40,14 +40,14 @@ Val Evaluation::cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma)
 	       exp(sigma * (vMaxXiM1 - eSpikeEff));
 }
 
-std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
-                                                Val sigma, Val tDelta)
+std::tuple<Val, Val, bool, Val, Val> Evaluation::evaluate(
+    const WorkingParameters &params, Val sigma, Val tDelta)
 {
 	// Make sure the parameters are inside the valid range, otherwise abort
 	if (!params.valid()) {
-		return std::tuple<Val, Val, bool>(std::numeric_limits<Val>::max(),
-		                                  std::numeric_limits<Val>::max(),
-		                                  false);
+		return std::tuple<Val, Val, bool, Val, Val>(
+		    std::numeric_limits<Val>::max(), std::numeric_limits<Val>::max(),
+		    false, 0, 0);
 	}
 
 	// Make sure all derived parameters have been calculated correctly
@@ -65,10 +65,11 @@ std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
 
 	// Return cost, time to spike and whether the parameters generally fulfill
 	// the condition
-	return std::tuple<Val, Val, bool>(
+	return std::tuple<Val, Val, bool, Val, Val>(
 	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
 	    std::min(cXi.tSpike, cXi.tVMax).toSeconds(),
-	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff());
+	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff(),
+	    cXi.vMax - params.eSpikeEff(), cXiM1.vMax - params.eSpikeEff());
 }
 }
 
