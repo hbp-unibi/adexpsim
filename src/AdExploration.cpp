@@ -34,10 +34,12 @@ int main(int argc, char *argv[])
 	std::ofstream fTime("exploration_time.csv");
 	std::ofstream fCost("exploration_cost.csv");
 	std::ofstream fOk("exploration_ok.csv");
+	std::ofstream fvMax("exploration_vMax.csv");
+	std::ofstream fvMaxM1("exploration_vMaxM1.csv");
 
 	WorkingParameters params;
 
-	Evaluation evaluation(3, 5e-3);
+	Evaluation evaluation(3, 1e-3);
 
 	float wOrig = params.wSpike();
 	size_t nY = 0;
@@ -50,17 +52,17 @@ int main(int argc, char *argv[])
 		size_t cTotal = 0;
 		Val minCost = std::numeric_limits<Val>::max();
 		//		for (Val eTh = 0.01; eTh < 0.05; eTh += 0.0001) {
-		for (Val deltaTh = 0.0; deltaTh < 10e-3; deltaTh += 0.01e-3) {
-			//		for (Val tauE = 1e-3; tauE < 50e-3; tauE += 0.1e-3) {
-			//		for (Val tauL = 0.1e-3; tauL < 20e-3; tauL += 0.1e-3) {
+		// for (Val deltaTh = 0.0; deltaTh < 10e-3; deltaTh += 0.01e-3) {
+		//		for (Val tauE = 1e-3; tauE < 50e-3; tauE += 0.1e-3) {
+		for (Val tauL = 0.1e-3; tauL < 20e-3; tauL += 0.1e-3) {
 			//		for (Val eE = 0.0; eE < 0.4; eE += 0.0002) {
 			// Set the new parameters
 			params.wSpike() = wOrig * w;
-			params.deltaTh() = deltaTh;
-			//			params.lL() = 1.0 / tauL;
+			// params.deltaTh() = deltaTh;
+			params.lL() = 1.0 / tauL;
 			//			params.lE() = 1.0 / tauE;
 			//			params.eE() = eE;
-			//params.eTh() = eTh;
+			// params.eTh() = eTh;
 			params.update();
 
 			// Call the evaluation function
@@ -68,11 +70,15 @@ int main(int argc, char *argv[])
 				fTime << ",";
 				fCost << ",";
 				fOk << ",";
+				fvMax << ",";
+				fvMaxM1 << ",";
 			}
 			auto res = evaluation.evaluate(params);
 			fCost << std::get<0>(res);
 			fTime << std::get<1>(res);
 			fOk << std::get<2>(res);
+			fvMax << std::get<3>(res);
+			fvMaxM1 << std::get<4>(res);
 			minCost = std::min(minCost, std::get<0>(res));
 			first = false;
 			cOk = cOk + std::get<2>(res);
@@ -81,6 +87,8 @@ int main(int argc, char *argv[])
 		fCost << std::endl;
 		fTime << std::endl;
 		fOk << std::endl;
+		fvMax << std::endl;
+		fvMaxM1 << std::endl;
 
 		// Print some fancy progress bar
 		if (nY == 0) {
