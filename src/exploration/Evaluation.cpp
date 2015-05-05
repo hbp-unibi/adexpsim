@@ -42,6 +42,8 @@ Val Evaluation::cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma)
 std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
                                                 Val sigma, Val tDelta)
 {
+	// Make sure all derived parameters have been calculated correctly
+	params.update();
 	NullRecorder n;
 	MaxValueController cXi, cXiM1;
 
