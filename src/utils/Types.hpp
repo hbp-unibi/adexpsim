@@ -160,6 +160,16 @@ public:
 		return Time(t1.t / t2.t);
 	}
 
+	friend Time operator*(const Time &t, Val s)
+	{
+		return Time(TimeType(t.t * s));
+	}
+
+	friend Time operator*(Val s, const Time &t)
+	{
+		return Time(TimeType(s * t.t));
+	}
+
 	friend Time operator*(const Time &t1, const Time &t2)
 	{
 		return Time(t1.t * t2.t);
