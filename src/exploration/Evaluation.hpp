@@ -59,6 +59,12 @@ private:
 
 public:
 	/**
+	 * Flags used for the AdExp simulation.
+	 */
+	static constexpr uint8_t SimulationFlags =
+	    Model::CLAMP_ITH | Model::DISABLE_SPIKING | Model::FAST_EXP;
+
+	/**
 	 * Constructor of the evaluation class.
 	 *
 	 * @param xi is the number of input spikes for which the neuron should

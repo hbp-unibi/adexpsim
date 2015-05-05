@@ -40,14 +40,13 @@ Val Evaluation::cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma)
 }
 
 std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
-                                         Val sigma, Val tDelta)
+                                                Val sigma, Val tDelta)
 {
 	NullRecorder n;
 	MaxValueController cXi, cXiM1;
-	Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(sXi, n, cXi, params,
-	                                                    tDelta);
-	Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP>(sXiM1, n, cXiM1, params,
-	                                                    tDelta);
+
+	Model::simulate<SimulationFlags>(sXi, n, cXi, params, tDelta);
+	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, tDelta);
 	return std::tuple<Val, Val, bool>(
 	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
 	    cXi.tSpike.toSeconds(),
