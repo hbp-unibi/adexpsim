@@ -28,6 +28,7 @@
 #ifndef _ADEXPSIM_EVALUATION_HPP_
 #define _ADEXPSIM_EVALUATION_HPP_
 
+#include <cmath>
 #include <tuple>
 
 #include <utils/Types.hpp>
@@ -97,6 +98,12 @@ public:
 	 */
 	std::tuple<Val, Val, bool> evaluate(const WorkingParameters &params,
 	                                    Val sigma = 100, Val tDelta = -1);
+
+	Val getXi() { return xi; }
+
+	Time getT() { return T; };
+
+	Time getLastSpikeTime() { return T * ceil(xi); }
 };
 }
 
