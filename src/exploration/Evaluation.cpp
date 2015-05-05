@@ -17,6 +17,7 @@
  */
 
 #include <cmath>
+#include <limits>
 
 #include <core/Model.hpp>
 #include <core/Recorder.hpp>
@@ -42,13 +43,28 @@ Val Evaluation::cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma)
 std::tuple<Val, Val, bool> Evaluation::evaluate(const WorkingParameters &params,
                                                 Val sigma, Val tDelta)
 {
+	// Make sure the parameters are inside the valid range, otherwise abort
+	if (!params.valid()) {
+		return std::tuple<Val, Val, bool>(std::numeric_limits<Val>::max(),
+		                                  std::numeric_limits<Val>::max(),
+		                                  false);
+	}
+
 	// Make sure all derived parameters have been calculated correctly
 	params.update();
+
+	// Do not record any result
 	NullRecorder n;
+
+	// Use max value controller to track the maximum value
 	MaxValueController cXi, cXiM1;
 
+	// Simulate for both the sXi and the sXiM1 input spike train
 	Model::simulate<SimulationFlags>(sXi, n, cXi, params, tDelta);
 	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, tDelta);
+
+	// Return cost, time to spike and whether the parameters generally fulfill
+	// the condition
 	return std::tuple<Val, Val, bool>(
 	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
 	    std::min(cXi.tSpike, cXi.tVMax).toSeconds(),
