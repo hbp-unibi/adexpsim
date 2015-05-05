@@ -11,6 +11,7 @@ INCLUDE_DIRECTORIES(
 
 # AdExpSimUtils library
 ADD_LIBRARY(AdExpSimUtils
+	src/utils/Terminal
 	src/utils/Timer
 	src/utils/Types
 	src/utils/Vector
@@ -55,6 +56,7 @@ ADD_EXECUTABLE(AdExploration
 
 TARGET_LINK_LIBRARIES(AdExploration
 	AdExpSimExploration
+	AdExpSimUtils
 )
 
 INSTALL_TARGETS(/bin AdExpSim)
