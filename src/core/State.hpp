@@ -55,7 +55,7 @@ public:
 	 * @param dvW is the initial adaptive voltage change rate in [V/s].
 	 */
 	State(Val v = 0.0, Val lE = 0.0, Val lI = 0.0, Val dvW = 0.0)
-	    : Vec4(vec4_t{v, lE, lI, dvW})
+	    : Vec4(v, lE, lI, dvW)
 	{
 	}
 
@@ -87,7 +87,7 @@ public:
 	 * @param dvTh is the threshold current induced voltage change rate [V/s].
 	 */
 	AuxiliaryState(Val dvL = 0.0, Val dvE = 0.0, Val dvI = 0.0, Val dvTh = 0.0)
-	    : Vec4(vec4_t{dvL, dvE, dvI, dvTh})
+	    : Vec4(dvL, dvE, dvI, dvTh)
 	{
 	}
 
