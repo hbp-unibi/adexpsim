@@ -67,7 +67,7 @@ std::tuple<Val, Val, bool, Val, Val> Evaluation::evaluate(
 	// the condition
 	return std::tuple<Val, Val, bool, Val, Val>(
 	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
-	    std::min(cXi.tSpike, cXi.tVMax).toSeconds(),
+	    cXi.tSpike.toSeconds(),
 	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff(),
 	    cXi.vMax - params.eSpikeEff(), cXiM1.vMax - params.eSpikeEff());
 }
