@@ -209,14 +209,14 @@ public:
 
 	/**
 	 * Set this flag if the spiking mechanism of the neuron should be switched
-	 * of. ITh will still flow, but the neuron will not be reset. Only use in
+	 * off. ITh will still flow, but the neuron will not be reset. Only use in
 	 * conjunction with CLAMP_ITH or DISABLE_ITH.
 	 */
 	static constexpr uint8_t DISABLE_SPIKING = (1 << 2);
 
 	/**
 	 * Set this flag if a fast approximation of the exponential function should
-	 * be used. This approximation is less accurate, however is signigicantly
+	 * be used. This approximation is less accurate, however is significantly
 	 * faster.
 	 */
 	static constexpr uint8_t FAST_EXP = (1 << 3);
@@ -225,7 +225,7 @@ private:
 	/**
 	 * Calculates the current auxiliary state. This function is the bottleneck
 	 * of the simulation, with the "exp" for the threshold current taking more
-	 * than half of the time.
+	 * than half of the time (unless FAST_EXP is used).
 	 *
 	 * @tparam Flags is a bit field containing the simulation flags, which may
 	 * be a combination of DISABLE_ITH, CLAMP_ITH and FAST_EXP.
