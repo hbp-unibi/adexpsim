@@ -92,9 +92,6 @@ public:
 
 	friend void operator-=(T &v1, const T &v2)
 	{
-		for (size_t i = 0; i < N; i++) {
-			v1[i] -= v2[i];
-		}
 		map2(v1, v2, [](Val &a, Val b) { return a -= b; });
 	}
 
