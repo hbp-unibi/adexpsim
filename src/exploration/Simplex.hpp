@@ -154,10 +154,24 @@ private:
 		return res;
 	}
 
+	/**
+	 * The restart function preserves the currently best simplex point but
+	 * randomly distributes all other simplex points along the axes of the
+	 * parameter dimensions.
+	 *
+	 * @param f is the function used to evaluate the simplex.
+	 */
 	template <typename Function>
 	void restart(Function f)
 	{
 		for (size_t i = 0; i < N; i++) {
+			// Randomly draw a scale factor between 0.5 and 1.5
+			const int r = std::rand();
+			const Val range = 0.5;
+			const Val fac = 1.0 - range + 2.0 * range * (Val(r) / Val(RAND_MAX));
+
+			// Create a version of the x-Vector with the corresponding dimension
+			// scaled
 			simplex[i + 1] = ValueVector(vary(simplex[0].x, dims[i], fac), f);
 		}
 	}
@@ -182,11 +196,6 @@ private:
 	 * Indices of the dimensions that are being optimized.
 	 */
 	const std::vector<size_t> dims;
-
-	/**
-	 * Fac controls the spread from the center point.
-	 */
-	const Val fac;
 
 	/**
 	 * Alpha controls the construction of the reflected point.
@@ -240,7 +249,6 @@ public:
 	        Val sigma = 0.5)
 	    : N(dims.size()),
 	      dims(dims),
-	      fac(fac),
 	      alpha(alpha),
 	      gamma(gamma),
 	      rho(rho),
@@ -250,9 +258,6 @@ public:
 		simplex.reserve(N + 1);
 		simplex.emplace_back(xInit, f);
 		for (size_t i = 0; i < N; i++) {
-			int r = std::rand();
-			Val range = 0.2;
-			Val fac = range - 2 * range * (Val(r) / Val(RAND_MAX));
 			simplex.emplace_back(vary(xInit, dims[i], fac), f);
 		}
 	}
@@ -317,9 +322,11 @@ public:
 		// (4) Expansion
 		// If vr is the best point so far, calculate an expanded point ve
 		if (vr.y < simplex[0].y) {
-			// We got a better point, discard the "restarted" flag
-			restartCount = 0;
-			iterationCount = 0;
+			// If we got a significantly better point, reset restartCount
+			if (simplex[0].y - vr.y > epsilon) {
+				restartCount = 0;
+				iterationCount = 0;
+			}
 			ValueVector ve(x0 + gamma * (x0 - simplex[N - 1].x), f);
 			if (ve.y < vr.y) {
 				simplex[N] = ve;
