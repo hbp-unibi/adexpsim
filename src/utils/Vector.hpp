@@ -142,6 +142,14 @@ public:
 };
 
 /**
+ * Remove this define if you are using a compiler that does not allow the
+ * definition of a 4-element vector type as specified below.
+ */
+#define USE_GCC_VEC4
+
+#ifdef USE_GCC_VEC4
+
+/**
  * Vector data type which is used as a special optimization of the Vec4 class.
  */
 typedef Val vec4_t __attribute__((vector_size(sizeof(Val) * 4)));
@@ -162,6 +170,8 @@ protected:
 
 public:
 	using T = Vec4<Impl>;
+
+	Vec4(Val v0, Val v1, Val v2, Val v3) : arr(vec4_t{v0, v1, v2, v3}) {}
 
 	Vec4(vec4_t arr) : arr(arr) {}
 
@@ -204,11 +214,28 @@ public:
 	friend Impl operator/(const T &v, Val s) { return Impl(v.arr / s); }
 };
 
-#define NAMED_VECTOR_ELEMENT(NAME, IDX)\
-void NAME(Val x) {arr[IDX] = x; }\
-Val &NAME() { return arr[IDX]; }\
-Val NAME() const { return arr[IDX]; }
+#else
 
+/**
+ * Stub implementation of an unoptimized Vec4.
+ */
+template <typename Impl>
+class Vec4 : public Vector<Impl, 4> {
+public:
+	using Vector<Impl, 4>::Vector;
+
+	Vec4(Val v0, Val v1, Val v2, Val v3)
+	    : Vector<Impl, 4>({v0, v1, v2, v3})
+	{
+	}
+};
+
+#endif
+
+#define NAMED_VECTOR_ELEMENT(NAME, IDX) \
+	void NAME(Val x) { arr[IDX] = x; }  \
+	Val &NAME() { return arr[IDX]; }    \
+	Val NAME() const { return arr[IDX]; }
 }
 
 #endif /* _ADEXPSIM_VECTOR_HPP_ */
