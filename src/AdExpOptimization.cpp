@@ -22,6 +22,7 @@
 #include "exploration/Simplex.hpp"
 #include "utils/Terminal.hpp"
 
+#include <csignal>
 #include <limits>
 #include <iostream>
 #include <iomanip>
@@ -48,8 +49,24 @@ std::string printCost(Terminal &term, Val cost)
 	return ss.str();
 }
 
+/**
+ * SIGINT handler. Sets the global "cancel" flag to true when called once,
+ * terminates the program if called twice. This allows to terminate the program,
+ * even if it is not responsive (the cancel flag is not checked).
+ */
+static bool cancel = false;
+void int_handler(int x)
+{
+	if (cancel) {
+		exit(1);
+	}
+	cancel = true;
+}
+
 int main(int argc, char *argv[])
 {
+	signal(SIGINT, int_handler);
+
 	Terminal term(true);
 
 	Evaluation evaluation(3, 2e-3);
@@ -116,12 +133,17 @@ int main(int argc, char *argv[])
 			std::cout << "\r";
 		}
 		it++;
-	} while (!res.done);
+	} while (!res.done && !cancel);
 
 	auto evalRes = evaluation.evaluate(simplex.getSimplex()[0].x);
 	bool ok = std::get<2>(evalRes);
 
 	std::cout << std::endl;
+
+	if (cancel) {
+		std::cout << "Manually aborted optimization" << std::endl;
+	}
+
 	std::cout << "Final Raw Cost: " << std::get<0>(evalRes) << std::endl;
 	std::cout << "Final Time    : " << std::get<1>(evalRes) * 1000 << "ms"
 	          << std::endl;
