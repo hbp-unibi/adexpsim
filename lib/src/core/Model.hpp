@@ -130,7 +130,7 @@ public:
 class MaxValueController {
 public:
 	/**
-	 * Minim excitatory plus inhibitory channel rate. This value is chosen
+	 * Minimum excitatory plus inhibitory channel rate. This value is chosen
 	 * rather high as we want to abort as early as possible and only if the
 	 * high excitatory current could still increase the membrane potential.
 	 */
@@ -146,17 +146,32 @@ public:
 	/**
 	 * Maximum voltage
 	 */
-	Val vMax = std::numeric_limits<Val>::min();
+	Val vMax;
 
 	/**
 	 * Time point at which the maximum voltage was recorded.
 	 */
-	Time tVMax = MAX_TIME;
+	Time tVMax;
 
 	/**
 	 * Time point at which the effective spiking potential was reached.
 	 */
-	Time tSpike = MAX_TIME;
+	Time tSpike;
+
+	/**
+	 * Default constructor, resets this instance to its initial state.
+	 */
+	MaxValueController() { reset(); }
+
+	/**
+	 * Resets the controller to its initial state.
+	 */
+	void reset()
+	{
+		vMax = std::numeric_limits<Val>::min();
+		tVMax = MAX_TIME;
+		tSpike = MAX_TIME;
+	}
 
 	/**
 	 * The control function is responsible for aborting the simulation. The
@@ -181,11 +196,12 @@ public:
 			tSpike = t;
 		}
 
+		// Calculate the total current (voltage change rate, without dvL)
+		Val dvSum = aux.dvTh() + aux.dvE() + aux.dvI() + s.dvW();
+
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
-		return s.lE() > MIN_RATE ||
-		       (aux.dvL() + aux.dvTh() + aux.dvE() + aux.dvI() + s.dvW()) <
-		           MAX_DV;
+		return s.lE() > MIN_RATE || (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV);
 	}
 };
 

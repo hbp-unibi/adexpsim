@@ -16,11 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/**
- * @file SimulationResultWidget.hpp
- *
- * The SimulationResultWidget is used to display the result of a 
- * AdExp model simulation run in the form of a set of line plots. It is
- * capable of running a simulation task in the background and updating the
- * view once the simulation ran.
- */
+#include "NeuronSimulation.hpp"
+
+namespace AdExpSim {
+
+void NeuronSimulation::prepare(const Parameters &parameters,
+                               const SpikeVec &spikes)
+{
+	this->parameters = parameters;
+	this->spikes = spikes;
+}
+
+void NeuronSimulation::run(Time tDelta)
+{
+	// Reset the recorder and the controller
+	recorder.reset();
+	controller.reset();
+
+	// Run the actual simulation
+	Model::simulate(spikes, recorder, controller, parameters, tDelta);
+}
+
+}
+

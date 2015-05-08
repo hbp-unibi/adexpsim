@@ -70,9 +70,16 @@ public:
 	 * record every event).
 	 */
 	RecorderBase(const Parameters &params, Time interval = 0)
-	    : params(params), interval(interval), last(-(interval + Time(1)))
+	    : params(params), interval(interval)
 	{
+		reset();
 	}
+
+	/**
+	 * Resets the vector recorder, allowing the same instance to record another
+	 * simulation.
+	 */
+	void reset() {last = Time(TimeType(-(interval.t + 1))); }
 
 	/**
 	 * Called by the simulation to record the current internal state.
@@ -238,6 +245,91 @@ struct VectorRecorderData {
 	 * Vector used to store sum current.
 	 */
 	Vector iSum;
+
+	/**
+	 * Minimum recorded time.
+	 */
+	Val minTime;
+
+	/**
+	 * Maximum recorded time.
+	 */
+	Val maxTime;
+
+	/**
+	 * Minimum recorded voltage.
+	 */
+	Val minVoltage;
+
+	/**
+	 * Maximum recorded voltage.
+	 */
+	Val maxVoltage;
+
+	/**
+	 * Minimum recorded conductance.
+	 */
+	Val minConductance;
+
+	/**
+	 * Maximum recorded conductance.
+	 */
+	Val maxConductance;
+
+	/**
+	 * Minimum recorded current.
+	 */
+//	Val minCurrent;
+
+	/**
+	 * Maximum recorded current.
+	 */
+//	Val maxCurrent;
+
+	/**
+	 * Minimum recorded current with rejected outliers.
+	 */
+	Val minCurrentSmooth;
+
+	/**
+	 * Maximum recorded current with rejected outliers.
+	 */
+	Val maxCurrentSmooth;
+
+	/**
+	 * Default constructor, resets the data instance to its initial state.
+	 */
+	VectorRecorderData() { reset(); }
+
+	/**
+	 * Resets the data instance.
+	 */
+	void reset()
+	{
+		// Reset the vectors.
+		ts.clear();
+		v.clear();
+		gE.clear();
+		gI.clear();
+		w.clear();
+		iL.clear();
+		iE.clear();
+		iI.clear();
+		iTh.clear();
+		iSum.clear();
+
+		// Reset the min/max values
+		minTime = std::numeric_limits<Val>::max();
+		maxTime = std::numeric_limits<Val>::lowest();
+		minVoltage = std::numeric_limits<Val>::max();
+		maxVoltage = std::numeric_limits<Val>::lowest();
+		minConductance = std::numeric_limits<Val>::max();
+		maxConductance = std::numeric_limits<Val>::lowest();
+//		minCurrent = std::numeric_limits<Val>::max();
+//		maxCurrent = std::numeric_limits<Val>::lowest();
+		minCurrentSmooth = std::numeric_limits<Val>::max();
+		maxCurrentSmooth = std::numeric_limits<Val>::lowest();
+	}
 };
 
 /**
@@ -245,19 +337,33 @@ struct VectorRecorderData {
  * provide a default transformation that does not change the data.
  */
 struct DefaultRecorderTransformation {
-	Val transformTs(Val ts) const { return ts; }
-	Val transformV(Val v) const { return v; }
-	Val transformGE(Val gE) const { return gE; }
-	Val transformGI(Val gI) const { return gI; }
-	Val transformW(Val w) const { return w; }
-	Val transformIL(Val iL) const { return iL; }
-	Val transformIE(Val iE) const { return iE; }
-	Val transformII(Val iI) const { return iI; }
-	Val transformITh(Val iTh) const { return iTh; }
+	static Val transformTime(Val t) { return t; }
+	static Val transformVoltage(Val v) { return v; }
+	static Val transformConductance(Val g) { return g; }
+	static Val transformCurrent(Val i) { return i; }
 };
 
 /**
- * The VectorRecorder class records the simulation data to the given
+ * Scales the recorded values to more convenient SI-prefixes. Volt is scaled
+ * to millivolt, siemens is scaled to millisiemens and ampere is scaled to
+ * nanoampere, seconds turn to milliseconds.
+ */
+struct SIPrefixTransformation {
+	static constexpr Val TIME_SCALE = 1000.0;
+	static constexpr Val VOLTAGE_SCALE = 1000.0;
+	static constexpr Val CONDUCTANCE_SCALE = 1000.0 * 1000.0;
+	static constexpr Val CURRENT_SCALE = 1000.0 * 1000.0 * 1000.0;
+
+	static Val transformTime(Val t) { return t * TIME_SCALE; }
+	static Val transformVoltage(Val v) { return v * VOLTAGE_SCALE; }
+	static Val transformConductance(Val g) { return g * CONDUCTANCE_SCALE; }
+	static Val transformCurrent(Val i) { return i * CURRENT_SCALE; }
+};
+
+/**
+ * The VectorRecorder class records the simulation to memory and uses the
+ * specified vector type for this operation. Additionally, it tracks the minimum
+ * and maximum values for each recorded modality.
  */
 template <typename Vector,
           typename Transformation = DefaultRecorderTransformation>
@@ -279,24 +385,68 @@ private:
 	VectorRecorderData<Vector> data;
 
 	/**
+	 * Adjusts the given min/max value pairm
+	 *
+	 * @param min is the variable to which the minimum value should be written.
+	 * @param max is the variable to which the maximum value should be written.
+	 */
+	static void minMax(Val &min, Val &max, Val x)
+	{
+		if (x < min) {
+			min = x;
+		}
+		if (x > max) {
+			max = x;
+		}
+	}
+
+	/**
 	 * Actual record function, gets the correctly rescaled state variables and
 	 * prints them to the given output stream.
 	 */
 	void doRecord(Time ts, Val v, Val gE, Val gI, Val w, Val iL, Val iE, Val iI,
 	              Val iTh)
 	{
-		data.ts.push_back(trafo.transformTs(ts.toSeconds()));
-		data.v.push_back(trafo.transformV(v));
-		data.gE.push_back(trafo.transformGE(gE));
-		data.gI.push_back(trafo.transformGI(gI));
-		data.w.push_back(trafo.transformW(w));
-		data.iL.push_back(trafo.transformIL(iL));
-		data.iE.push_back(trafo.transformIE(iE));
-		data.iI.push_back(trafo.transformII(iI));
-		data.iTh.push_back(trafo.transformITh(iTh));
-		data.iSum.push_back(trafo.transformW(w) + trafo.transformIL(iL) +
-		                    trafo.transformIE(iE) + trafo.transformII(iI) +
-		                    trafo.transformITh(iTh));
+		// Transform the values
+		Val t = trafo.transformTime(ts.toSeconds());
+		v = trafo.transformVoltage(v);
+		gE = trafo.transformConductance(gE);
+		gI = trafo.transformConductance(gI);
+		w = trafo.transformCurrent(w);
+		iL = trafo.transformCurrent(iL);
+		iE = trafo.transformCurrent(iE);
+		iI = trafo.transformCurrent(iI);
+		iTh = trafo.transformCurrent(iTh);
+
+		// Calculate compund values
+		Val iSum = w + iL + iE + iI + iTh;
+
+		// Adjust the minimum/maximum values
+		minMax(data.minTime, data.maxTime, t);
+		minMax(data.minVoltage, data.maxVoltage, v);
+		minMax(data.minConductance, data.maxConductance, gE);
+		minMax(data.minConductance, data.maxConductance, gI);
+
+		// Adjust the smooth minimum/maximum values (does not contain iTh and
+		// iSum and is not updated if iTh is smaller then the current minimum
+/*		if (iTh > data.minCurrentSmooth || data.minCurrentSmooth == std::numeric_limits<Val>::max()) {*/
+			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, w);
+			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iL);
+			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iE);
+			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iI);
+//		}
+
+		// Store the data in the vector
+		data.ts.push_back(t);
+		data.v.push_back(v);
+		data.gE.push_back(gE);
+		data.gI.push_back(gI);
+		data.w.push_back(w);
+		data.iL.push_back(iL);
+		data.iE.push_back(iE);
+		data.iI.push_back(iI);
+		data.iTh.push_back(iTh);
+		data.iSum.push_back(iSum);
 	}
 
 public:
@@ -309,6 +459,16 @@ public:
 	VectorRecorder(const Parameters &params, Time interval = 0)
 	    : Base(params, interval)
 	{
+	}
+
+	/**
+	 * Resets the vector recorder, allowing the same instance to record another
+	 * simulation.
+	 */
+	void reset()
+	{
+		Base::reset();
+		data.reset();
 	}
 
 	/**

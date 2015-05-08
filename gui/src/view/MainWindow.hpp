@@ -26,15 +26,27 @@
 #ifndef _ADEXPSIM_MAIN_WINDOW_HPP_
 #define _ADEXPSIM_MAIN_WINDOW_HPP_
 
-#include <QtWidgets>
+#include <memory>
+
+#include <QMainWindow>
 
 namespace AdExpSim {
+
+class NeuronSimulation;
+class NeuronSimulationWidget;
 
 class MainWindow: public QMainWindow {
 	Q_OBJECT
 
+private:
+	float nSpikes = 0.0;
+	std::unique_ptr<NeuronSimulation> sim1;
+//	std::unique_ptr<NeuronSimulation> sim2;
+	NeuronSimulationWidget *neuronSimulationWidget;
+
 public:
 	MainWindow();
+	~MainWindow();
 };
 
 }

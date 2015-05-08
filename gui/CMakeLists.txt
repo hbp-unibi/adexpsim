@@ -36,8 +36,11 @@ SET(CMAKE_AUTOMOC ON)
 # Find the QtWidgets library
 FIND_PACKAGE(Qt5 COMPONENTS Widgets PrintSupport)
 
-# Compile the QCustomPlot library and add it to the include path
+# Add the library and source directories to the search path
 INCLUDE_DIRECTORIES(lib/)
+INCLUDE_DIRECTORIES(src/)
+
+# Compile the QCustomPlot library
 ADD_LIBRARY(qcustomplot
 	lib/qcustomplot
 )
@@ -49,8 +52,10 @@ TARGET_LINK_LIBRARIES(qcustomplot
 
 # Tell CMake to create the helloworld executable
 ADD_EXECUTABLE(AdExpSimGui
-	src/view/MainWindow.cpp
-	src/main.cpp
+	src/model/NeuronSimulation
+	src/view/MainWindow
+	src/view/NeuronSimulationWidget
+	src/main
 )
 
 # Use the Widgets module from Qt 5.
