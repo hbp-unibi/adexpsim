@@ -181,6 +181,14 @@ public:
 	}
 
 	/**
+	 * Calculates the absolute maximum value that could theoretically be
+	 * reached for the given parameter set and the given excitatory input rate.
+	 *
+	 * @param lE0 is the excitatory input rate at time t = 0.
+	 */
+	Val calculateEExtr(double lE0);
+
+	/**
 	 * Returns the inverse spike slope factor. This is a derived value, call
 	 * update() after any of the other parameters were changed to recalculate
 	 * this value.

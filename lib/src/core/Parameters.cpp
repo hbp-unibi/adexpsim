@@ -49,5 +49,12 @@ Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 	}
 	return x;
 }
+
+Val WorkingParameters::calculateEExtr(double lE0)
+{
+	return eE() * (1.0 - exp(-lE0/lE()));
+}
+
+
 }
 

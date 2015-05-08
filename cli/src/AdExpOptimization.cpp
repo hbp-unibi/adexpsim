@@ -63,30 +63,44 @@ void int_handler(int x)
 	cancel = true;
 }
 
+Val estimateW(WorkingParameters params, Val xi)
+{
+	return -log(1 - params.eSpikeEff() / params.eE()) * params.lE() / xi;
+}
+
 int main(int argc, char *argv[])
 {
 	signal(SIGINT, int_handler);
 
 	Terminal term(true);
 
-	Evaluation evaluation(3, 2e-3);
+	Evaluation evaluation(10, 1e-3);
 
 	// Create the initial parameters
-	// TODO: Derive better guess
 	WorkingParameters params;
-	params.wSpike() *= 0.1e-6;
+
+	// Estimate a value for the weight w
+	params.wSpike() = estimateW(params, evaluation.getXi());
+
+	std::cout << "Initial value for w: "
+	          << printVal(1000.0 * 1000.0 * params.wSpike() * DefaultParameters::cM)
+	          << "µS" << std::endl;
 
 	// Define the cost function f
 	auto f = [&evaluation](const WorkingParameters &p) -> Val {
 		auto res = evaluation.evaluate(p);
 
-		// Penalize too large time constants (maximum value: 0.5s)
-		const Val errRate =
-		    exp(100 * (1.0 / p.lL() - 0.5)) + exp(100 * (1.0 / p.lE() - 0.5));
+		// Penalize too large time constants (maximum value: 0.2s)
+		const Val errMaxRate =
+		    exp(100 * (1.0 / p.lL() - 0.2)) + exp(100 * (1.0 / p.lE() - 0.2));
 
-		// Penalize too large voltages (maximum value: 300mV)
+		// Penalize too small time constants (minimum value: 1ms)
+		const Val errMinRate =
+		    exp(100 * (p.lL() - 1000)) + exp(100 * (p.lE() - 1000));
+
+		// Penalize too large voltages (maximum value: 200mV)
 		const Val errVolt =
-		    exp(100 * (p.eE() - 0.3)) + exp(100 * (p.eTh() - 0.3));
+		    exp(100 * (p.eE() - 0.2)) + exp(100 * (p.eTh() - 0.2));
 
 		// Penalize the time that is being used -- calculate the difference
 		// between the time of the last spike in the spike train and the time
@@ -94,8 +108,8 @@ int main(int argc, char *argv[])
 		const Val delay =
 		    (std::get<1>(res) - evaluation.getLastSpikeTime()).toSeconds();
 		const Val timePenalty =
-		    100 * std::max<Val>(0.0, std::min<Val>(1.0, delay));
-		return std::get<0>(res) + timePenalty + errRate + errVolt;
+		    10 * std::max<Val>(0.0, std::min<Val>(0.1, delay));
+		return std::get<0>(res) + timePenalty + errMaxRate + errMinRate + errVolt;
 	};
 
 	Simplex<WorkingParameters> simplex(

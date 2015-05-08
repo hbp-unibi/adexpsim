@@ -88,18 +88,23 @@ public:
 		// Only call the actual record method if the time between two record
 		// calls is larger than the initially specified interval.
 		if (t - last > interval || force) {
-			// Set the last timestamp to the new timestamp
-			last = t;
-
 			// Scale state and auxiliary state by the membrane capacitance
 			State ss = s * params.cM;
 			AuxiliaryState ass = as * params.cM;
+
+			// Make sure the timestamps are monotonous.
+			if (t <= last) {
+				t = Time(last.t + TimeType(1));
+			}
 
 			// Call the actual record function with the correctly rescaled
 			// values.
 			static_cast<Impl *>(this)->doRecord(t, s.v() + params.eL, ss[1],
 			                                    ss[2], ss[3], ass[0], ass[1],
 			                                    ass[2], ass[3]);
+
+			// Set the last timestamp to the new timestamp
+			last = t;
 		}
 	}
 
@@ -111,7 +116,7 @@ public:
 
 /**
  * The NullRecorder class can be used to discard all incomming data for maximum
- * efficiency.
+ * efficiency (in the case the data does not need to be recorded).
  */
 class NullRecorder {
 public:
@@ -134,9 +139,9 @@ public:
  */
 template <bool recordAux = true>
 class CsvRecorder : public RecorderBase<CsvRecorder<recordAux>> {
-private:
 	friend RecorderBase<CsvRecorder<recordAux>>;
 
+private:
 	/**
 	 * Target output stream.
 	 */
@@ -171,12 +176,150 @@ public:
 		if (header) {
 			os << "v" << sep << "gE" << sep << "gI" << sep << "w";
 			if (recordAux) {
-				os << sep << "iL" << sep << "iE" << sep << "iI" << sep
-				   << "iTh";
+				os << sep << "iL" << sep << "iE" << sep << "iI" << sep << "iTh";
 			}
 			os << std::endl;
 		}
 	}
+};
+
+/**
+ * The VectorRecorderData is the class used to store the data recorded by the
+ * VectorRecorder class.
+ */
+template <typename Vector>
+struct VectorRecorderData {
+	/**
+	 * Vector used to store the incomming time stamps.
+	 */
+	Vector ts;
+
+	/**
+	 * Vector used to store the membrane voltage over time.
+	 */
+	Vector v;
+
+	/**
+	 * Vector used to store the excitatory channel conductance over time.
+	 */
+	Vector gE;
+
+	/**
+	 * Vector used to store the inhibitory channel conductance over time.
+	 */
+	Vector gI;
+
+	/**
+	 * Vector used to store the adaptive current over time.
+	 */
+	Vector w;
+
+	/**
+	 * Vector used to store the leak channel current over time.
+	 */
+	Vector iL;
+
+	/**
+	 * Vector used to store the excitatory channel current over time.
+	 */
+	Vector iE;
+
+	/**
+	 * Vector used to store the inhibitory channel current over time.
+	 */
+	Vector iI;
+
+	/**
+	 * Vector used to store the threshold channel current over time.
+	 */
+	Vector iTh;
+
+	/**
+	 * Vector used to store sum current.
+	 */
+	Vector iSum;
+};
+
+/**
+ * The DefaultRecorderTransformation class is used by the vector recorder to
+ * provide a default transformation that does not change the data.
+ */
+struct DefaultRecorderTransformation {
+	Val transformTs(Val ts) const { return ts; }
+	Val transformV(Val v) const { return v; }
+	Val transformGE(Val gE) const { return gE; }
+	Val transformGI(Val gI) const { return gI; }
+	Val transformW(Val w) const { return w; }
+	Val transformIL(Val iL) const { return iL; }
+	Val transformIE(Val iE) const { return iE; }
+	Val transformII(Val iI) const { return iI; }
+	Val transformITh(Val iTh) const { return iTh; }
+};
+
+/**
+ * The VectorRecorder class records the simulation data to the given
+ */
+template <typename Vector,
+          typename Transformation = DefaultRecorderTransformation>
+class VectorRecorder
+    : public RecorderBase<VectorRecorder<Vector, Transformation>> {
+public:
+	using Base = RecorderBase<VectorRecorder<Vector, Transformation>>;
+	friend Base;
+
+private:
+	/**
+	 * Transformation instance used by this class.
+	 */
+	Transformation trafo;
+
+	/**
+	 * Data container used for storing the incomming data.
+	 */
+	VectorRecorderData<Vector> data;
+
+	/**
+	 * Actual record function, gets the correctly rescaled state variables and
+	 * prints them to the given output stream.
+	 */
+	void doRecord(Time ts, Val v, Val gE, Val gI, Val w, Val iL, Val iE, Val iI,
+	              Val iTh)
+	{
+		data.ts.push_back(trafo.transformTs(ts.toSeconds()));
+		data.v.push_back(trafo.transformV(v));
+		data.gE.push_back(trafo.transformGE(gE));
+		data.gI.push_back(trafo.transformGI(gI));
+		data.w.push_back(trafo.transformW(w));
+		data.iL.push_back(trafo.transformIL(iL));
+		data.iE.push_back(trafo.transformIE(iE));
+		data.iI.push_back(trafo.transformII(iI));
+		data.iTh.push_back(trafo.transformITh(iTh));
+		data.iSum.push_back(trafo.transformW(w) + trafo.transformIL(iL) +
+		                    trafo.transformIE(iE) + trafo.transformII(iI) +
+		                    trafo.transformITh(iTh));
+	}
+
+public:
+	/**
+	 * Creates a new instance of the RecorderBase class.
+	 *
+	 * @param interval is the minimum time between two recorded events (default:
+	 * record every event).
+	 */
+	VectorRecorder(const Parameters &params, Time interval = 0)
+	    : Base(params, interval)
+	{
+	}
+
+	/**
+	 * Returns a reference at the recorded data.
+	 */
+	const VectorRecorderData<Vector> &getData() const { return data; }
+
+	/**
+	 * Returns a reference at the transformation instance.
+	 */
+	const Transformation &getTrafo() const { return trafo; }
 };
 }
 

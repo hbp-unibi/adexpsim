@@ -36,6 +36,8 @@ int main(int argc, char *argv[])
 	std::ofstream fOk("exploration_ok.csv");
 	std::ofstream fvMax("exploration_vMax.csv");
 	std::ofstream fvMaxM1("exploration_vMaxM1.csv");
+	std::ofstream fvExtr("exploration_vExtr.csv");
+	std::ofstream fvExtrM1("exploration_vExtrM1.csv");
 
 	WorkingParameters params;
 
@@ -72,6 +74,8 @@ int main(int argc, char *argv[])
 				fOk << ",";
 				fvMax << ",";
 				fvMaxM1 << ",";
+				fvExtr << ",";
+				fvExtrM1 << ",";
 			}
 			auto res = evaluation.evaluate(params);
 			fCost << std::get<0>(res);
@@ -79,6 +83,12 @@ int main(int argc, char *argv[])
 			fOk << std::get<2>(res);
 			fvMax << std::get<3>(res);
 			fvMaxM1 << std::get<4>(res);
+			fvExtr << params.calculateEExtr(evaluation.getXi() *
+			                                params.wSpike()) -
+			              params.eSpikeEff();
+			fvExtrM1 << params.calculateEExtr((evaluation.getXi() - 1) *
+			                                  params.wSpike()) -
+			                params.eSpikeEff();
 			minCost = std::min(minCost, std::get<0>(res));
 			first = false;
 			cOk = cOk + std::get<2>(res);
@@ -89,6 +99,8 @@ int main(int argc, char *argv[])
 		fOk << std::endl;
 		fvMax << std::endl;
 		fvMaxM1 << std::endl;
+		fvExtr << std::endl;
+		fvExtrM1 << std::endl;
 
 		// Print some fancy progress bar
 		if (nY == 0) {
