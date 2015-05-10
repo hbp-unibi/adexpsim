@@ -31,8 +31,8 @@
 #include <cmath>
 #include <tuple>
 
+#include <simulation/Spike.hpp>
 #include <utils/Types.hpp>
-#include <core/Spike.hpp>
 
 namespace AdExpSim {
 
@@ -96,8 +96,8 @@ public:
 	 * @param tDelta is the internally used resolution. Should be smaller than
 	 * the spike delay T.
 	 */
-	std::tuple<Val, Val, bool, Val, Val> evaluate(const WorkingParameters &params,
-	                                    Val sigma = 100, Val tDelta = -1);
+	std::tuple<Val, Val, bool, Val, Val> evaluate(
+		const WorkingParameters &params, Val sigma = 100, Val tDelta = -1);
 
 	Val getXi() { return xi; }
 

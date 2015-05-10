@@ -19,8 +19,8 @@
 #include <cmath>
 #include <limits>
 
-#include <core/Model.hpp>
-#include <core/Recorder.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
 
 #include "Evaluation.hpp"
 

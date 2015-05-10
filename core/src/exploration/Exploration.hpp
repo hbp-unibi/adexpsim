@@ -16,35 +16,46 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
+/**
+ * @file Exploration.hpp
+ *
+ * Implements the Exploration process, iterates over a two dimensional parameter
+ * space.
+ *
+ * @author Andreas Stöckel
+ */
 
-#include <QTimer>
+#ifndef _ADEXPSIM_EXPLORATION_
+#define _ADEXPSIM_EXPLORATION_
 
-#include <simulation/Spike.hpp>
-#include <model/NeuronSimulation.hpp>
-
-#include "MainWindow.hpp"
-#include "NeuronSimulationWidget.hpp"
+#include <utils/Types.hpp>
 
 namespace AdExpSim {
 
-MainWindow::MainWindow() : sim1(new NeuronSimulation())
-{
-	// Create a new NeuronSimulationWidget and set it as the central 
-	// widget
-	neuronSimulationWidget = new NeuronSimulationWidget();
-	setCentralWidget(neuronSimulationWidget);
+/**
+ * The Exploration class performs a two dimensional exploration on 
+ */
+class Exploration {
+private:
+	WorkingParameters params;
+	Val Xi;
+	Val T;
+	size_t dimX;
+	size_t dimY;
+	Range rangeX;
+	Range rangeY;
 
-	resize(1024, 768);
+	Matrix eSpikeEff;
+	Matrix eMaxXi;
+	Matrix eMaxXiM1;
+	Matrix tMaxXi;
+	Matrix tMaxXiM1;
 
-	sim1->prepare(Parameters(), buildInputSpikes(4, 1e-3, 0, 0.03175e-6));
-	sim1->run(0.1e-3);
+public:
+	Exploration(const WorkingParameters &params, Val Xi, Val T, size_t dimX,
+	            size_t dimY, const Range &rangeX, const Range &rangeY);
+};
+};
 
-	neuronSimulationWidget->show({sim1.get()});
-}
-
-MainWindow::~MainWindow() {}
-
-
-}
+#endif /* _ADEXPSIM_EXPLORATION_OPENCL_ */
 

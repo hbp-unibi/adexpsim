@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "core/Model.hpp"
-#include "core/Recorder.hpp"
+#include "simulation/Model.hpp"
+#include "simulation/Recorder.hpp"
 #include "exploration/Evaluation.hpp"
 #include "exploration/Simplex.hpp"
 #include "utils/Terminal.hpp"

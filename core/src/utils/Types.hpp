@@ -233,6 +233,61 @@ constexpr Time MIN_TIME = Time(MIN_INT_TIME);
  */
 using TimeVec = std::vector<Time>;
 
+/**
+ * Range type, represents a range from a minimum to a maximum value in N steps.
+ */
+struct Range {
+	class Iterator {
+	private:
+		size_t i;
+		Val offs;
+		Val scale;
+	public:
+		Iterator(size_t i, Val offs, Val scale) : i(i), offs(offs), scale(scale) {}
+		Iterator& operator++() { i++; return *this; }
+		Iterator operator++(int) { return Iterator(i + 1, offs, scale); }
+		Iterator& operator--() { i--; return *this; }
+		Iterator operator--(int) { return Iterator(i - 1, offs, scale); }
+		Val operator*() {return Val(i) * scale + offs;}
+		bool operator==(const Iterator &rhs) { return i == rhs.i;}
+		bool operator!=(const Iterator &rhs) { return i != rhs.i;}
+	}
+
+	Val min;
+	Val max;
+	size_t steps;
+
+	Range() : min(0), max(0), steps(1) {
+	}
+
+	Range(Val min, Val max, size_t steps) : min(min), max(max), steps(steps) {}
+
+	Val value(size_t i) const {
+		return getOffs() + getScale() * Val(N);
+	}
+
+	Val index(Val x) const {
+		return (x - getOffs()) / getScale();
+	}
+
+	Val getOffs() const {
+		return min;
+	}
+
+	Val getScale() const {
+		return (max - min) / Val(steps);
+	}
+
+	Iterator begin() {
+		return Iterator(0, getOffs(), getScale());
+	}
+
+	Iterator end() {
+		return Iterator(steps, 0.0, 0.0);
+	}
+};
+
+
 }
 
 #endif /* _ADEXPSIM_TYPES_HPP_ */

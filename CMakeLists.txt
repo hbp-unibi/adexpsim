@@ -23,13 +23,14 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 PROJECT (AdExpSim)
 
 # Place all binaries and libraries in the same folder
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
-# Include the library source directory as include directory
-INCLUDE_DIRECTORIES(lib/src)
+# Include the core source directory as include directory
+INCLUDE_DIRECTORIES(core/src)
 
 # Add the subprojects
-ADD_SUBDIRECTORY(lib)
+ADD_SUBDIRECTORY(core)
 ADD_SUBDIRECTORY(cli)
 ADD_SUBDIRECTORY(gui)

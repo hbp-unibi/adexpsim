@@ -16,35 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-
-#include <QTimer>
-
-#include <simulation/Spike.hpp>
-#include <model/NeuronSimulation.hpp>
-
-#include "MainWindow.hpp"
-#include "NeuronSimulationWidget.hpp"
+#include "Matrix.hpp"
 
 namespace AdExpSim {
-
-MainWindow::MainWindow() : sim1(new NeuronSimulation())
-{
-	// Create a new NeuronSimulationWidget and set it as the central 
-	// widget
-	neuronSimulationWidget = new NeuronSimulationWidget();
-	setCentralWidget(neuronSimulationWidget);
-
-	resize(1024, 768);
-
-	sim1->prepare(Parameters(), buildInputSpikes(4, 1e-3, 0, 0.03175e-6));
-	sim1->run(0.1e-3);
-
-	neuronSimulationWidget->show({sim1.get()});
+// Do nothing here, just make sure the header compiles.
 }
-
-MainWindow::~MainWindow() {}
-
-
-}
-

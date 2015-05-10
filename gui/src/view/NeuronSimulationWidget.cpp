@@ -23,9 +23,9 @@
 
 #include <qcustomplot.h>
 
-#include <core/Model.hpp>
-#include <core/Recorder.hpp>
-#include <core/Spike.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+#include <simulation/Spike.hpp>
 #include <model/NeuronSimulation.hpp>
 
 #include "NeuronSimulationWidget.hpp"

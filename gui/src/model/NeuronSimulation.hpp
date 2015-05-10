@@ -29,10 +29,10 @@
 #ifndef _ADEXPSIM_NEURON_SIMULATION_HPP_
 #define _ADEXPSIM_NEURON_SIMULATION_HPP_
 
-#include <core/Parameters.hpp>
-#include <core/Recorder.hpp>
-#include <core/Spike.hpp>
-#include <core/Model.hpp>
+#include <simulation/Parameters.hpp>
+#include <simulation/Recorder.hpp>
+#include <simulation/Spike.hpp>
+#include <simulation/Model.hpp>
 
 #include <QVector>
 
