@@ -112,7 +112,7 @@ private:
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	static constexpr int MAX_LEVEL = 8; // 256x256
+	static constexpr int MAX_LEVEL = 10; // 256x256
 
 	/**
 	 * Memories for the resolution levels.
