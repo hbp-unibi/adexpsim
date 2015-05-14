@@ -24,6 +24,7 @@
 
 #include <simulation/Spike.hpp>
 #include <exploration/Exploration.hpp>
+#include <model/IncrementalExploration.hpp>
 #include <model/NeuronSimulation.hpp>
 
 #include "ExplorationWidget.hpp"
@@ -42,12 +43,25 @@ static QDockWidget *createDockWidget(const QString &name, QMainWindow *parent)
 	return res;
 }
 
-MainWindow::MainWindow()
+MainWindow::MainWindow() : fitExploration(true)
 {
+	// Create the incremental exploration object
+	exploration = new IncrementalExploration(this);
+//	exploration->update();
+
 	// Create a new ExplorationWidget and add it as one dock widget
 	explorationDockWidget = createDockWidget("Exploration", this);
 	explorationWidget = new ExplorationWidget(explorationDockWidget);
 	explorationDockWidget->setWidget(explorationWidget);
+
+	// Connect the exploration events with the exploration widget and vice versa
+	connect(exploration, SIGNAL(progress(float, bool)), explorationWidget,
+	        SLOT(progress(float, bool)));
+	connect(exploration, SIGNAL(data(const Exploration &)), this,
+	        SLOT(data(const Exploration &)));
+	connect(explorationWidget,
+	        SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)),
+	        exploration, SLOT(updateRange(size_t, size_t, Val, Val, Val, Val)));
 
 	// Create a new NeuronSimulationWidget and add it as one dock widget
 	simulationDockWidget = createDockWidget("Simulation", this);
@@ -64,28 +78,13 @@ MainWindow::MainWindow()
 	sim.prepare(Parameters(), buildInputSpikes(4, 1e-3, 0, 0.03175e-6));
 	sim.run(0.1e-3);
 	simulationWidget->show({&sim});
+}
 
-	// Setup the parameters, set an initial value for w
-	WorkingParameters params;
-	float wOrig = params.wSpike();
-	params.wSpike() = wOrig * 0.04e-6;
-
-	// Exploration meta-parameters
-	const Val Xi = 3;
-	const Val T = 1e-3;
-
-	// Setup the exploration
-	ExplorationMemory mem(256, 256);
-	Exploration exploration(mem, params, Xi, T,
-	                        0,    // dimX lL
-	                        1,    // minX
-	                        100,  // maxX
-	                        1,    // dimY lE
-	                        1,    // minY
-	                        100   // maxY
-	                        );
-	exploration.run();
-	explorationWidget->show(exploration);
+void MainWindow::data(const Exploration &exploration)
+{
+	std::cout << "Receive data" << std::endl;
+	explorationWidget->show(exploration, fitExploration);
+	fitExploration = false;
 }
 
 MainWindow::~MainWindow() {}

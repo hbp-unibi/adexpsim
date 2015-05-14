@@ -16,6 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <iostream>
+
+#include <QTimer>
 #include <QThreadPool>
 
 #include "IncrementalExploration.hpp"
@@ -31,6 +34,12 @@ IncrementalExplorationRunner::IncrementalExplorationRunner(
     : aborted(false), exploration(exploration)
 {
 	setAutoDelete(false);
+	std::cout << "Create IncrementalExplorationRunner" << std::endl;
+}
+
+IncrementalExplorationRunner::~IncrementalExplorationRunner() {
+	std::cout << "Destroy IncrementalExplorationRunner" << std::endl;
+
 }
 
 void IncrementalExplorationRunner::run()
@@ -38,21 +47,22 @@ void IncrementalExplorationRunner::run()
 	// Run the exploration process
 	const bool ok = exploration.run([&](float p) -> bool {
 		emit progress(p);
-		return !abort.load();
+		return !aborted.load();
 	});
 
 	// Emit the done event
-	emit done(ok && aborted.load());
+	emit done(ok && !aborted.load());
 }
 
-void IncrementalExplorationRunner::abort() { abort.store(true); }
+void IncrementalExplorationRunner::abort() { aborted.store(true); }
 
 /*
  * Class IncrementalExploration
  */
 
-IncrementalExploration::IncrementalExploration()
-    : dimX(0),
+IncrementalExploration::IncrementalExploration(QObject *parent)
+    : QObject(parent),
+      dimX(0),
       dimY(1),
       minX(1),
       maxX(100),
@@ -66,12 +76,16 @@ IncrementalExploration::IncrementalExploration()
       currentRunner(nullptr)
 {
 	// Choose an estimate for w
-	params.wSpike = params.estimateW(Xi);
+	params.wSpike() = params.estimateW(Xi);
 
 	// Create the exploration memory instances
-	for (int level = MIN_LEVEL; level < MAX_LEVEL; level++) {
+	for (int level = MIN_LEVEL; level <= MAX_LEVEL; level++) {
 		mem.emplace_back(1 << level, 1 << level);
 	}
+
+	// Create the timer
+	updateTimer = new QTimer(this);
+	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateTimeout()));
 }
 
 IncrementalExploration::~IncrementalExploration()
@@ -90,13 +104,14 @@ void IncrementalExploration::start()
 	}
 
 	// Create a new Exploration instance
-	currentExploration = new Exploration(mem[level - MIN_LEVEL], Xi, T, dimX,
-	                                     minX, maxX, dimY, minY, maxY);
+	currentExploration = new Exploration(mem[level - MIN_LEVEL], params, Xi, T,
+	                                     dimX, minX, maxX, dimY, minY, maxY);
 
 	// Create a new IncrementExplorationRunner and connect all signals
 	currentRunner = new IncrementalExplorationRunner(*currentExploration);
-	connect(currentRunner, SIGNAL(progress(float)), this, SLOT(runnerProgress));
-	connect(currentDone, SIGNAL(done(bool)), this, SLOT(runnerDone));
+	connect(currentRunner, SIGNAL(progress(float)), this,
+	        SLOT(runnerProgress(float)));
+	connect(currentRunner, SIGNAL(done(bool)), this, SLOT(runnerDone(bool)));
 
 	// Reset the restart flag and increment the level counter
 	restart = false;
@@ -108,39 +123,59 @@ void IncrementalExploration::start()
 
 void IncrementalExploration::update()
 {
+	// Defer the update action by 100msec
+	updateTimer->start(100);
+}
+
+void IncrementalExploration::updateTimeout()
+{
+	std::cout << "Update" << std::endl;
+	// Kill the update timer
+	updateTimer->stop();
+
 	// Schedule a restart and reset the current level
 	restart = true;
 	level = MIN_LEVEL;
 
-	// If there currently is no runner, start a new one
+	// If there currently is no runner, start a new one, otherwise abort the
+	// current runner
 	if (currentRunner == nullptr) {
 		start();
+	} else {
+		currentRunner->abort();
 	}
 }
 
 void IncrementalExploration::runnerProgress(float p)
 {
-	// Calculate the current progress scale factor -- note that level is always
-	// one larger than the current level. So for the last level f is set to 0.5.
-	Val offs = 0.0;
-	Val norm = 0.0;
-	for (int l = MIN_LEVEL; l < level - 1; l++) {
-		offs += 1.0 / Val(1 << (l - MAX_LEVEL));
-	}
-	Val f = 1.0 / Val(1 << (level - MAX_LEVEL))
+	// l is always set ot the next level, so we have to decrement it by one
+	const int L = level - MIN_LEVEL - 1;
 
-	emit progress((1.0 + p) * f)
+	// Calculate the normalization value (sum over 2^i for i=0..(MAX-MIN))
+	const int norm = (1 << (MAX_LEVEL - MIN_LEVEL + 1)) - 1;
+
+	// Calculate the previous progress (sum over 2^i for i = 0..L-1))
+	const int previous = (1 << L) - 1;
+
+	const Val pTotal = (Val(previous) + Val(1 << L) * p) / Val(norm);
+	//std::cout << "L " << L << " norm " << norm << " previous " << previous << " p " << p << " res " << pTotal << std::endl;
+
+	// Progress is (previous + 2^L * p) / norm
+	emit progress(pTotal, true);
 }
 
 void IncrementalExploration::runnerDone(bool ok)
 {
+	std::cout << "Runner done, ok = " << ok << std::endl;
 	// If the result is ok, emit the data
 	if (ok) {
 		// If the last level is reached, emit a last progress event
-		if (level >= MAX_LEVEL) {
+		if (level > MAX_LEVEL) {
 			emit progress(1.0, false);
 		}
 		emit data(*currentExploration);
+	} else {
+		emit progress(0.0, false);
 	}
 
 	// Delete the runner object and the exploration object
@@ -150,7 +185,7 @@ void IncrementalExploration::runnerDone(bool ok)
 	currentExploration = nullptr;
 
 	// Start the next iteration
-	if ((level < MAX_LEVEL && ok) || restart) {
+	if ((level <= MAX_LEVEL && ok) || restart) {
 		start();
 	}
 }
@@ -177,7 +212,5 @@ void IncrementalExploration::updateRange(size_t dimX, size_t dimY, Val minX,
 	this->maxY = maxY;
 	update();
 }
-
-
 }
 

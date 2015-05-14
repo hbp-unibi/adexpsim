@@ -120,7 +120,7 @@ void ExplorationWidget::axisChange(const QCPRange &newRange)
 	const Val maxY = pltExploration->yAxis->range().upper;
 
 	// Emit the update event
-	emit update(0, 1, minX, maxX, minY, maxY);
+	//emit updateRange(0, 1, minX, maxX, minY, maxY);
 }
 
 void ExplorationWidget::progress(float p, bool show)

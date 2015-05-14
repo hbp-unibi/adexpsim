@@ -30,10 +30,13 @@
 
 #include <atomic>
 
+#include <exploration/Exploration.hpp>
 #include <utils/Types.hpp>
 
 #include <QRunnable>
 #include <QObject>
+
+class QTimer;
 
 namespace AdExpSim {
 
@@ -41,7 +44,7 @@ namespace AdExpSim {
  * The IncrementalExplorationRunner runs a single exploration process in the 
  * background.
  */
-class IncrementalExplorationRunner: public QRunnable {
+class IncrementalExplorationRunner: public QObject, public QRunnable {
 Q_OBJECT
 private:
 	/**
@@ -67,6 +70,9 @@ public:
 	 * run.
 	 */
 	IncrementalExplorationRunner(Exploration &exploration);
+
+	~IncrementalExplorationRunner() override;
+
 
 	/**
 	 * Cancels the current exploration process.
@@ -101,12 +107,12 @@ private:
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	constexpr int MIN_LEVEL = 5; // 32x32
+	static constexpr int MIN_LEVEL = 5; // 32x32
 
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	constexpr int MAX_LEVEL = 10; // 1024x1024
+	static constexpr int MAX_LEVEL = 8; // 256x256
 
 	/**
 	 * Memories for the resolution levels.
@@ -114,6 +120,11 @@ private:
 	std::vector<ExplorationMemory> mem;
 
 private:
+	/**
+	 * Timer used to defer the calls to "update".
+	 */
+	QTimer *updateTimer;
+
 	/**
 	 * Current neuron parameters.
 	 */
@@ -161,13 +172,6 @@ private:
 	 */
 	void start();
 
-	/**
-	 * Prepares the start of a new IncrementalExplorationRunner process with the
-	 * current parameters and directly starts the runner if no other 
-	 * IncrementalExplorationRunner is active.
-	 */
-	void update();
-
 private slots:
 	/**
 	 * Slot used to relay the progress to the corresponding signal of this 
@@ -183,12 +187,21 @@ private slots:
 	 */
 	void runnerDone(bool ok);
 
+	/**
+	 * Method call whenever the update timer fires.
+	 */
+	void updateTimeout();
+
 public:
 	/**
 	 * Constructor of the IncrementalExploration class. Initializes the 
 	 * parameters and dimensions with some sane values.
+	 *
+	 * @param parent is the owner of this object.
 	 */
-	IncrementalExploration();
+	IncrementalExploration(QObject *parent);
+
+	~IncrementalExploration() override;
 
 public slots:
 	/**
@@ -202,6 +215,13 @@ public slots:
 	 */
 	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,
 			Val maxY);
+
+	/**
+	 * Prepares the start of a new IncrementalExplorationRunner process with the
+	 * current parameters and directly starts the runner if no other 
+	 * IncrementalExplorationRunner is active.
+	 */
+	void update();
 
 signals:
 	/**
@@ -217,7 +237,7 @@ signals:
 	 * Signal emitted whenever the exploration for one resolution level has 
 	 * finished.
 	 */
-	void data(const Exploration &exploration, int level, bool last);
+	void data(const Exploration &exploration);
 };
 
 }

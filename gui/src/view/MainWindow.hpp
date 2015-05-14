@@ -26,16 +26,14 @@
 #ifndef _ADEXPSIM_MAIN_WINDOW_HPP_
 #define _ADEXPSIM_MAIN_WINDOW_HPP_
 
-#include <memory>
-
 #include <QMainWindow>
 
 class QDockWidget;
 
 namespace AdExpSim {
 
-class NeuronSimulation;
 class NeuronSimulationWidget;
+class IncrementalExploration;
 class Exploration;
 class ExplorationWidget;
 
@@ -43,13 +41,17 @@ class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 private:
-	float nSpikes = 0.0;
+	bool fitExploration;
+
+	IncrementalExploration *exploration;
+	QDockWidget *explorationDockWidget;
+	ExplorationWidget *explorationWidget;
 
 	QDockWidget *simulationDockWidget;
-	QDockWidget *explorationDockWidget;
-
 	NeuronSimulationWidget *simulationWidget;
-	ExplorationWidget *explorationWidget;
+
+private slots:
+	void data(const Exploration &exploration);
 
 public:
 	MainWindow();

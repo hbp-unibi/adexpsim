@@ -75,7 +75,7 @@ public slots:
 	void progress(float p, bool show);
 
 signals:
-	void update(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY, Val maxY);
+	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY, Val maxY);
 };
 
 
