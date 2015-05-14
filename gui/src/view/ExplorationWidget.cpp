@@ -25,6 +25,7 @@
 
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #include <exploration/Exploration.hpp>
@@ -33,16 +34,16 @@
 
 namespace AdExpSim {
 
-constexpr double CostScale = 0.1;
+constexpr double COST_SCALE = 0.1;
 
 static void fillDimensionCombobox(QComboBox *box)
 {
-	box->addItem("λL");
-	box->addItem("λE");
-	box->addItem("eE");
-	box->addItem("eTh");
-	box->addItem("ΔTh");
-	box->addItem("w");
+	box->addItem("λL", 0);
+	box->addItem("λE", 1);
+	box->addItem("eE", 4);
+	box->addItem("eTh", 6);
+	box->addItem("ΔTh", 9);
+	box->addItem("w", 12);
 
 	box->setItemData(0, "Membrane Leak Frequency", Qt::ToolTipRole);
 	box->setItemData(1, "Excitatory Decay Frequency", Qt::ToolTipRole);
@@ -63,15 +64,26 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Cost C");
-	comboFunction->addItem("Max. potential (ξ)");
-	comboFunction->addItem("Max. potential (ξ - 1)");
-	comboFunction->addItem("Spike Time (ξ)");
-	comboFunction->addItem("Reset Time (ξ)");
-	comboFunction->addItem("Reset Time (ξ - 1)");
+	comboFunction->addItem("Cost C", "cost");
+	comboFunction->addItem("Max. potential (ξ)", "eMaxXi");
+	comboFunction->addItem("Max. potential (ξ - 1)", "eMaxXiM1");
+	comboFunction->addItem("Spike Time (ξ)", "tSpike");
+	comboFunction->addItem("Reset Time (ξ)", "tResetXi");
+	comboFunction->addItem("Reset Time (ξ - 1)", "tResetXiM1");
 
 	fillDimensionCombobox(comboDimX);
+	comboDimX->setCurrentIndex(0);
+
 	fillDimensionCombobox(comboDimY);
+	comboDimY->setCurrentIndex(5);
+
+	connect(comboFunction, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(update()));
+	connect(comboDimX, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(rangeChanged()));
+	connect(comboDimY, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(rangeChanged()));
+
 	toolbar->addWidget(new QLabel("X:"));
 	toolbar->addWidget(comboDimX);
 	toolbar->addWidget(new QLabel("Y:"));
@@ -89,9 +101,9 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	// Connect the axis change events to allow updating the view once the axes
 	// change
 	connect(pltExploration->xAxis, SIGNAL(rangeChanged(const QCPRange &)), this,
-	        SLOT(axisChange(const QCPRange &)));
+	        SLOT(rangeChanged()));
 	connect(pltExploration->yAxis, SIGNAL(rangeChanged(const QCPRange &)), this,
-	        SLOT(axisChange(const QCPRange &)));
+	        SLOT(rangeChanged()));
 
 	// Add the stops to the gradients
 	gradCost.setColorInterpolation(QCPColorGradient::ColorInterpolation::ciRGB);
@@ -136,7 +148,7 @@ ExplorationWidget::~ExplorationWidget()
 	// Only needed for unique_ptr
 }
 
-void ExplorationWidget::axisChange(const QCPRange &newRange)
+void ExplorationWidget::rangeChanged()
 {
 	// Fetch the range
 	const Val minX = pltExploration->xAxis->range().lower;
@@ -144,8 +156,12 @@ void ExplorationWidget::axisChange(const QCPRange &newRange)
 	const Val minY = pltExploration->yAxis->range().lower;
 	const Val maxY = pltExploration->yAxis->range().upper;
 
+	// Fetch the current dimensions
+	const size_t dimX = comboDimX->itemData(comboDimX->currentIndex()).toInt();
+	const size_t dimY = comboDimY->itemData(comboDimY->currentIndex()).toInt();
+
 	// Emit the update event
-	emit updateRange(0, 1, minX, maxX, minY, maxY);
+	emit updateRange(dimX, dimY, minX, maxX, minY, maxY);
 }
 
 void ExplorationWidget::progress(float p, bool show)
@@ -167,20 +183,16 @@ void ExplorationWidget::progress(float p, bool show)
 	}
 }
 
-void ExplorationWidget::show(const Exploration &exploration, bool fit)
+void ExplorationWidget::update()
 {
-	// Clone the given exploration instance
-	currentExploration =
-	    std::unique_ptr<Exploration>(new Exploration(exploration.clone()));
-
 	// Clear the graph
 	pltExploration->clearPlottables();
 
 	// Fetch the X and Y range
-	const Range &rX = exploration.getRangeX();
-	const Range &rY = exploration.getRangeY();
+	const Range &rX = currentExploration->getRangeX();
+	const Range &rY = currentExploration->getRangeY();
 
-	// Create a "plottable" from the
+	// Create a "plottable" for the data
 	QCPColorMap *map =
 	    new QCPColorMap(pltExploration->xAxis, pltExploration->yAxis);
 	pltExploration->addPlottable(map);
@@ -188,21 +200,53 @@ void ExplorationWidget::show(const Exploration &exploration, bool fit)
 	map->data()->setRange(QCPRange(rX.min, rX.max), QCPRange(rY.min, rY.max));
 
 	// Fill the plot data
-	const ExplorationMemory &mem = exploration.getMemory();
+	const QString funStr =
+	    comboFunction->itemData(comboFunction->currentIndex()).toString();
+	Val (*fun)(const EvaluationResult &) =
+	    [](const EvaluationResult &res) -> Val { return log(res.cost()); };
+	if (funStr == "eMaxXi") {
+		fun = [](const EvaluationResult &res) -> Val { return res.eMaxXi; };
+	} else if (funStr == "eMaxXiM1") {
+		fun = [](const EvaluationResult &res) -> Val { return res.eMaxXiM1; };
+	} else if (funStr == "tSpike") {
+		fun = [](const EvaluationResult &res) -> Val { return res.tSpike; };
+	}
+
+	Val minF = std::numeric_limits<Val>::max();
+	Val maxF = std::numeric_limits<Val>::lowest();
+	const ExplorationMemory &mem = currentExploration->getMemory();
 	for (size_t x = 0; x < rX.steps; x++) {
 		for (size_t y = 0; y < rY.steps; y++) {
-			const double cost = mem(x, y).cost() * CostScale;
-			map->data()->setCell(x, y, cost);
+			const EvaluationResult res = mem(x, y);
+			const Val f = fun(res);
+			if (res.valid()) {
+				minF = std::min(minF, f);
+				maxF = std::max(maxF, f);
+			}
+			map->data()->setCell(x, y, f);
 		}
 	}
 
 	// Set the gradient and plot it
 	map->setGradient(gradCost);
-	map->setDataRange(QCPRange(0, 1));
+	map->setDataRange(QCPRange(minF, maxF));
+
+	// Replot the graph
+	pltExploration->replot();
+}
+
+void ExplorationWidget::show(const Exploration &exploration, bool fit)
+{
+	// Clone the given exploration instance
+	currentExploration =
+	    std::unique_ptr<Exploration>(new Exploration(exploration.clone()));
+	update();
+
+	// Rescale the axes according to the exploration
 	if (fit) {
 		pltExploration->rescaleAxes();
+		pltExploration->replot();
 	}
-	pltExploration->replot();
 }
 }
 

@@ -50,7 +50,8 @@ private:
 	std::unique_ptr<Exploration> currentExploration;
 
 private slots:
-	void axisChange(const QCPRange &newRange);
+	void rangeChanged();
+	void update();
 
 public:
 	/**

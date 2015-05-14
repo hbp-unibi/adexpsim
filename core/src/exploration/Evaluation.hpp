@@ -109,6 +109,11 @@ struct EvaluationResult {
 	 * Returns true if the heaviside condition is fulfilled.
 	 */
 	bool ok() const;
+
+	/**
+	 * Returns true if the result is valid (the values are in a sane range).
+	 */
+	bool valid() const;
 };
 
 /**

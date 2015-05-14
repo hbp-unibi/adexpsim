@@ -41,6 +41,14 @@ bool EvaluationResult::ok() const
 	return (eMaxXi > eSpikeEff) && (eMaxXiM1 < eSpikeEff);
 }
 
+bool EvaluationResult::valid() const
+{
+	return eSpikeEff > std::numeric_limits<Val>::lowest() &&
+	       eMaxXi > std::numeric_limits<Val>::lowest() &&
+	       eMaxXiM1 > std::numeric_limits<Val>::lowest() &&
+	       tSpike < MAX_TIME_SEC && tReset < MAX_TIME_SEC;
+}
+
 /*
  * Class Evaluation
  */
@@ -53,7 +61,8 @@ Evaluation::Evaluation(Val xi, Time T)
 {
 }
 
-EvaluationResult Evaluation::evaluate(const WorkingParameters &params, Val tDelta) const
+EvaluationResult Evaluation::evaluate(const WorkingParameters &params,
+                                      Val tDelta) const
 {
 	// Make sure the parameters are inside the valid range, otherwise abort
 	if (!params.valid()) {
@@ -70,12 +79,13 @@ EvaluationResult Evaluation::evaluate(const WorkingParameters &params, Val tDelt
 	MaxValueController cXi, cXiM1;
 
 	// Simulate for both the sXi and the sXiM1 input spike train
-	Model::simulate<SimulationFlags>(sXi, n, cXi, params);
-	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params);
+	Model::simulate<SimulationFlags>(sXi, n, cXi, params, -1, 1.0);
+	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, -1, 1.0);
 
 	// Return the recorded values
-	return EvaluationResult(params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
-	                        cXi.tSpike.toSeconds() - getLastSpikeTime().toSeconds(), 0);
+	return EvaluationResult(
+	    params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
+	    cXi.tSpike.toSeconds() - getLastSpikeTime().toSeconds(), 0);
 }
 }
 
