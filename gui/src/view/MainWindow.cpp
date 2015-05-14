@@ -47,7 +47,7 @@ MainWindow::MainWindow() : fitExploration(true)
 {
 	// Create the incremental exploration object
 	exploration = new IncrementalExploration(this);
-//	exploration->update();
+	exploration->update();
 
 	// Create a new ExplorationWidget and add it as one dock widget
 	explorationDockWidget = createDockWidget("Exploration", this);

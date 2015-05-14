@@ -129,7 +129,6 @@ void IncrementalExploration::update()
 
 void IncrementalExploration::updateTimeout()
 {
-	std::cout << "Update" << std::endl;
 	// Kill the update timer
 	updateTimer->stop();
 
