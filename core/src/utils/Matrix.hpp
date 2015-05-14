@@ -18,7 +18,7 @@
 
 /**
  * @file Matrix.hpp
- * 
+ *
  * Extremely small matrix library, allowing to define a two dimensional memory
  * region with shared memory.
  *
@@ -31,10 +31,11 @@
 #include <memory>
 #include <ostream>
 #include <sstream>
-
 #ifndef NDEBUG
 #include <stdexcept>
 #endif
+
+#include "Types.hpp"
 
 namespace AdExpSim {
 
@@ -43,7 +44,7 @@ namespace AdExpSim {
  *
  * @tparam T is the type stored in the matrix.
  */
-template <typename Value>
+template <typename T>
 class MatrixBase {
 private:
 	/**
@@ -59,22 +60,26 @@ private:
 		 * Creates a new instance of the Buffer class and allocates a memory
 		 * region of the given extent.
 		 */
-		Buffer(size_t w, size_t h) : buf(new Value[w * h]){};
+		Buffer(size_t w, size_t h) : buf(new T[w * h]) {}
 
 		/**
 		 * Deletes the instance of the Buffer class and deallocated the memory.
 		 */
-		~Buffer(){delete[] buf};
+		~Buffer() { delete[] buf; }
 	};
 
 	std::shared_ptr<Buffer> buf;
 	size_t w, h;
 
-	void checkRange(size_t w, size_t h) const
+	/**
+	 * Function used to check whether an access at x, y is correct. Disabled
+	 * in release mode.
+	 */
+	void checkRange(size_t x, size_t y) const
 	{
 #ifndef NDEBUG
 		if (x >= w || y >= h) {
-			std::sstream ss;
+			std::stringstream ss;
 			ss << "[" << x << ", " << y << "] out of range for matrix of size "
 			   << w << " x "
 			   << "h" << std::endl;
@@ -88,15 +93,15 @@ public:
 	 * Constructor of the Matrix type, creates a new matrix with the given
 	 * extent.
 	 */
-	Matrix(size_t w, size_t h)
-	    : buf(std::make_shared<MatrixBuf<Value>>(w, h)), w(w), h(h)
+	MatrixBase(size_t w, size_t h)
+	    : buf(std::make_shared<Buffer>(w, h)), w(w), h(h)
 	{
 	}
 
-	/** 
+	/**
 	 * Returns a reference at the element at position x and y.
 	 */
-	T &operator[](size_t x, size_t y)
+	T &operator()(size_t x, size_t y)
 	{
 		checkRange(x, y);
 		return *(buf->buf + x + y * w);
@@ -105,7 +110,7 @@ public:
 	/**
 	 * Returns a const reference at the element at position x and y.
 	 */
-	const T &operator[](size_t x, size_t y) const
+	const T &operator()(size_t x, size_t y) const
 	{
 		checkRange(x, y);
 		return *(buf->buf + x + y * w);
@@ -134,11 +139,12 @@ public:
 	/**
 	 * Dumps the matrix as CSV.
 	 */
-	friend std::ostream& operator<<(std::ostream& os, const Matrix<T> &m) {
-		T *d= data();
-		for (size_t y = 0; y < h; y++) {
-			for (size_t x = 0; x < w; x++) {
-				os << (x == 0 ? "," : "") << *d;
+	friend std::ostream &operator<<(std::ostream &os, const MatrixBase<T> &m)
+	{
+		T const *d = m.data();
+		for (size_t y = 0; y < m.h; y++) {
+			for (size_t x = 0; x < m.w; x++) {
+				os << (x == 0 ? "" : ",") << *d;
 				d++;
 			}
 			os << std::endl;
@@ -151,8 +157,8 @@ public:
  * Matrix class storing floating posize_t values.
  */
 class Matrix : public MatrixBase<Val> {
+	using MatrixBase<Val>::MatrixBase;
 };
-
 }
 
 #endif /* _ADEXPSIM_MATRIX_HPP_ */

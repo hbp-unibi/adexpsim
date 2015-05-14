@@ -22,13 +22,16 @@
 
 #include "Timer.hpp"
 
-static inline double microtime() {
+static inline double microtime()
+{
 	struct timespec time;
 	clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time);
 	return time.tv_sec * 1.0e6 + time.tv_nsec * 1.0e-3;
 }
 
-Timer::Timer()
+Timer::Timer() { reset(); }
+
+void Timer::reset()
 {
 	value = 0.0;
 	active = true;
@@ -61,7 +64,7 @@ double Timer::time() const
 	return (value) / 1000.0;
 }
 
-std::ostream& operator<<(std::ostream &os, const Timer &t)
+std::ostream &operator<<(std::ostream &os, const Timer &t)
 {
 	double time = t.time();
 	std::stringstream ss;

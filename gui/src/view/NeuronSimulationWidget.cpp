@@ -50,22 +50,23 @@ static const QColor COLOR_II = KS_ORANGE;
 static const QColor COLOR_ITH = KS_PRUNE;
 static const QColor COLOR_ISUM = Qt::black;
 
-NeuronSimulationWidget::NeuronSimulationWidget()
+NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
+    : QWidget(parent)
 {
 	// Create the layout widget
-	layout = new QVBoxLayout();
+	layout = new QVBoxLayout(this);
 
 	// Create the plot widgets and layers for each modality
-	pltVolt = new QCustomPlot();
+	pltVolt = new QCustomPlot(this);
 	pltVolt->addLayer("v");
 	pltVolt->addLayer("spikes");
 
-	pltCond = new QCustomPlot();
+	pltCond = new QCustomPlot(this);
 	pltCond->addLayer("gE");
 	pltCond->addLayer("gI");
 	pltCond->addLayer("spikes");
 
-	pltCurr = new QCustomPlot();
+	pltCurr = new QCustomPlot(this);
 	pltCurr->addLayer("w");
 	pltCurr->addLayer("iL");
 	pltCurr->addLayer("iE");
@@ -88,7 +89,7 @@ NeuronSimulationWidget::NeuronSimulationWidget()
 static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes)
 {
 	plot->setCurrentLayer("spikes");
-	for (const auto &spike: spikes) {
+	for (const auto &spike : spikes) {
 		QCPItemStraightLine *line = new QCPItemStraightLine(plot);
 		plot->addItem(line);
 

@@ -45,10 +45,10 @@ TARGET_LINK_LIBRARIES(AdExploration
 )
 
 # AdExpOptimization executable
-ADD_EXECUTABLE(AdExpOptimization
-	src/AdExpOptimization
-)
+#ADD_EXECUTABLE(AdExpOptimization
+#	src/AdExpOptimization
+#)
 
-TARGET_LINK_LIBRARIES(AdExpOptimization
-	AdExpSimCore
-)
+#TARGET_LINK_LIBRARIES(AdExpOptimization
+#	AdExpSimCore
+#)

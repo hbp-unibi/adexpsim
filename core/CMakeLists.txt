@@ -48,7 +48,9 @@ SET(ADEXPSIM_CORE_SRC
 	src/simulation/Spike
 	src/simulation/State
 	src/exploration/Evaluation
+	src/exploration/Exploration
 	src/exploration/Simplex
+	src/utils/Matrix
 	src/utils/Terminal
 	src/utils/Timer
 	src/utils/Types
@@ -65,6 +67,8 @@ IF (WITH_OPENCL)
 	INCLUDE_DIRECTORIES(
 		${OPENCL_INCLUDE_DIR}
 	)
+ELSE ()
+	SET(OPENCL_LIBRARY "")
 ENDIF ()
 
 # AdExpSimCore library
@@ -72,9 +76,9 @@ ADD_LIBRARY(AdExpSimCore
 	${ADEXPSIM_CORE_SRC}
 )
 
-# Link against the OpenCL library when using OpenCL
-IF (WITH_OPENCL)
-	TARGET_LINK_LIBRARIES(AdExpSimCore
-		${OPENCL_LIBRARY}
-	)
-ENDIF ()
+# Link library
+TARGET_LINK_LIBRARIES(AdExpSimCore
+	${OPENCL_LIBRARY}
+	rt
+)
+

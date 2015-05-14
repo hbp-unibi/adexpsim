@@ -30,6 +30,7 @@ private:
 public:
 	Timer();
 
+	void reset();
 	void pause();
 	void cont();
 	double time() const;

@@ -18,33 +18,76 @@
 
 #include <iostream>
 
+#include <QDockWidget>
 #include <QTimer>
+#include <QLabel>
 
 #include <simulation/Spike.hpp>
+#include <exploration/Exploration.hpp>
 #include <model/NeuronSimulation.hpp>
 
+#include "ExplorationWidget.hpp"
 #include "MainWindow.hpp"
 #include "NeuronSimulationWidget.hpp"
 
 namespace AdExpSim {
 
-MainWindow::MainWindow() : sim1(new NeuronSimulation())
+static QDockWidget *createDockWidget(const QString &name, QMainWindow *parent)
 {
-	// Create a new NeuronSimulationWidget and set it as the central 
-	// widget
-	neuronSimulationWidget = new NeuronSimulationWidget();
-	setCentralWidget(neuronSimulationWidget);
+	QDockWidget *res = new QDockWidget(name, parent);
+	res->setAllowedAreas(Qt::AllDockWidgetAreas);
+	res->setFeatures(QDockWidget::DockWidgetMovable |
+	                 QDockWidget::DockWidgetFloatable);
+	parent->addDockWidget(Qt::TopDockWidgetArea, res);
+	return res;
+}
+
+MainWindow::MainWindow()
+{
+	// Create a new ExplorationWidget and add it as one dock widget
+	explorationDockWidget = createDockWidget("Exploration", this);
+	explorationWidget = new ExplorationWidget(explorationDockWidget);
+	explorationDockWidget->setWidget(explorationWidget);
+
+	// Create a new NeuronSimulationWidget and add it as one dock widget
+	simulationDockWidget = createDockWidget("Simulation", this);
+	simulationWidget = new NeuronSimulationWidget(simulationDockWidget);
+	simulationDockWidget->setWidget(simulationWidget);
+
+	// We have no central widget
+	setCentralWidget(nullptr);
 
 	resize(1024, 768);
 
-	sim1->prepare(Parameters(), buildInputSpikes(4, 1e-3, 0, 0.03175e-6));
-	sim1->run(0.1e-3);
+	// Create and show a simulation
+	NeuronSimulation sim;
+	sim.prepare(Parameters(), buildInputSpikes(4, 1e-3, 0, 0.03175e-6));
+	sim.run(0.1e-3);
+	simulationWidget->show({&sim});
 
-	neuronSimulationWidget->show({sim1.get()});
+	// Setup the parameters, set an initial value for w
+	WorkingParameters params;
+	float wOrig = params.wSpike();
+	params.wSpike() = wOrig * 0.04e-6;
+
+	// Exploration meta-parameters
+	const Val Xi = 3;
+	const Val T = 1e-3;
+
+	// Setup the exploration
+	ExplorationMemory mem(256, 256);
+	Exploration exploration(mem, params, Xi, T,
+	                        0,    // dimX lL
+	                        1,    // minX
+	                        100,  // maxX
+	                        1,    // dimY lE
+	                        1,    // minY
+	                        100   // maxY
+	                        );
+	exploration.run();
+	explorationWidget->show(exploration);
 }
 
 MainWindow::~MainWindow() {}
-
-
 }
 

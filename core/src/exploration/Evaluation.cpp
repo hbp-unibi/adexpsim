@@ -26,6 +26,25 @@
 
 namespace AdExpSim {
 
+/*
+ * Class EvaluationResult
+ */
+
+Val EvaluationResult::cost(Val sigma) const
+{
+	return exp(sigma * (eSpikeEff - eMaxXi)) +
+	       exp(sigma * (eMaxXiM1 - eSpikeEff)) + 40 * tSpike;
+}
+
+bool EvaluationResult::ok() const
+{
+	return (eMaxXi > eSpikeEff) && (eMaxXiM1 < eSpikeEff);
+}
+
+/*
+ * Class Evaluation
+ */
+
 Evaluation::Evaluation(Val xi, Time T)
     : xi(xi),
       T(T),
@@ -34,20 +53,11 @@ Evaluation::Evaluation(Val xi, Time T)
 {
 }
 
-Val Evaluation::cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma)
-{
-	return exp(sigma * (eSpikeEff - vMaxXi)) +
-	       exp(sigma * (vMaxXiM1 - eSpikeEff));
-}
-
-std::tuple<Val, Val, bool, Val, Val> Evaluation::evaluate(
-    const WorkingParameters &params, Val sigma, Val tDelta)
+EvaluationResult Evaluation::evaluate(const WorkingParameters &params, Val tDelta) const
 {
 	// Make sure the parameters are inside the valid range, otherwise abort
 	if (!params.valid()) {
-		return std::tuple<Val, Val, bool, Val, Val>(
-		    std::numeric_limits<Val>::max(), std::numeric_limits<Val>::max(),
-		    false, 0, 0);
+		return EvaluationResult();
 	}
 
 	// Make sure all derived parameters have been calculated correctly
@@ -60,16 +70,12 @@ std::tuple<Val, Val, bool, Val, Val> Evaluation::evaluate(
 	MaxValueController cXi, cXiM1;
 
 	// Simulate for both the sXi and the sXiM1 input spike train
-	Model::simulate<SimulationFlags>(sXi, n, cXi, params, tDelta);
-	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, tDelta);
+	Model::simulate<SimulationFlags>(sXi, n, cXi, params);
+	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params);
 
-	// Return cost, time to spike and whether the parameters generally fulfill
-	// the condition
-	return std::tuple<Val, Val, bool, Val, Val>(
-	    cost(cXi.vMax, cXiM1.vMax, params.eSpikeEff(), sigma),
-	    cXi.tSpike.toSeconds(),
-	    cXi.vMax > params.eSpikeEff() && cXiM1.vMax < params.eSpikeEff(),
-	    cXi.vMax - params.eSpikeEff(), cXiM1.vMax - params.eSpikeEff());
+	// Return the recorded values
+	return EvaluationResult(params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
+	                        cXi.tSpike.toSeconds() - getLastSpikeTime().toSeconds(), 0);
 }
 }
 

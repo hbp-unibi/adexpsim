@@ -175,9 +175,23 @@ public:
 	 */
 	bool valid() const
 	{
-		return lL() > Val(0) && lE() > Val(0) && lI() > Val(0) &&
-		       lW() > Val(0) && deltaTh() > Val(0) && lA() > Val(0) &&
-		       lB() > Val(0);
+		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && deltaTh() > 0 &&
+		       lA() > 0 && lB() > 0;
+	}
+
+	/**
+	 * Estimates a reasonable staring value for the weight w for a certain
+	 * number of input spikes. w is chosen in such a way, that the maximum 
+	 * membrane potential that could theoretically be reached equals the 
+	 * effective spike potential. In practive the returned weight is too small,
+	 * but the order of magnitude is correct.
+	 *
+	 * @param xi is the number of input spikes for which the neuron should
+	 * spike.
+	 */
+	Val estimateW(Val xi) const
+	{
+		return -log(1 - mESpikeEff / eE()) * lE() / xi;
 	}
 
 	/**

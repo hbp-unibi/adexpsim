@@ -29,13 +29,92 @@
 #define _ADEXPSIM_EVALUATION_HPP_
 
 #include <cmath>
+#include <limits>
 #include <tuple>
 
+#include <simulation/Model.hpp>
 #include <simulation/Spike.hpp>
 #include <utils/Types.hpp>
 
 namespace AdExpSim {
 
+/**
+ * Structure containing the result of a call to the "evaluate" method of the
+ * Evaluation class.
+ */
+struct EvaluationResult {
+	/**
+	 * Effective spike potential for this parameter set.
+	 */
+	Val eSpikeEff;
+
+	/**
+	 * Maximum membrane potential for this parameter set and Xi input spikes.
+	 */
+	Val eMaxXi;
+
+	/**
+	 * Maximum membrane potential for this parameter set and Xi - 1 input
+	 * spikes.
+	 */
+	Val eMaxXiM1;
+
+	/**
+	 * Time at which the effective spike potential is reached for Xi input
+	 * spikes.
+	 */
+	Val tSpike;
+
+	/**
+	 * Time at which the original membrane potential is reached for Xi input
+	 * spikes.
+	 */
+	Val tReset;
+
+	/**
+	 * Default constructor, initializes all members with values indicating the
+	 * invalidity of this result.
+	 */
+	EvaluationResult()
+	    : eSpikeEff(std::numeric_limits<Val>::lowest()),
+	      eMaxXi(std::numeric_limits<Val>::lowest()),
+	      eMaxXiM1(std::numeric_limits<Val>::lowest()),
+	      tSpike(MAX_TIME_SEC),
+	      tReset(MAX_TIME_SEC)
+	{
+	}
+
+	/**
+	 * Creates an instance of the EvaluationResult struct and sets all member
+	 * variables to the given values.
+	 */
+	EvaluationResult(Val eSpikeEff, Val eMaxXi, Val eMaxXiM1, Val tSpike,
+	                 Val tReset)
+	    : eSpikeEff(eSpikeEff),
+	      eMaxXi(eMaxXi),
+	      eMaxXiM1(eMaxXiM1),
+	      tSpike(tSpike),
+	      tReset(tReset)
+	{
+	}
+
+	/**
+	 * Implementation of the cost function.
+	 *
+	 * @param sigma is the slope factor that should be used for the evaluation.
+	 */
+	Val cost(Val sigma = 100) const;
+
+	/**
+	 * Returns true if the heaviside condition is fulfilled.
+	 */
+	bool ok() const;
+};
+
+/**
+ * The evaluation class can be used for the evalutation of the behaviour of a
+ * single neuron given Xi and Xi - 1 input spikes.
+ */
 class Evaluation {
 private:
 	/**
@@ -75,35 +154,20 @@ public:
 	Evaluation(Val xi, Time T);
 
 	/**
-	 * Implementation of the cost function.
-	 *
-	 * @param vMaxXi is the maximum membrane potential that has been reached for
-	 * Xi input spikes.
-	 * @param vMaxXiM1 is the maximum membrane potential that has been reached
-	 * for Xi - 1 input spikes.
-	 * @param eSpikeEff is the effective spike potential.
-	 * @param sigma is the slope factor that should be used for the evaluation.
-	 */
-	static Val cost(Val vMaxXi, Val vMaxXiM1, Val eSpikeEff, Val sigma = 100);
-
-	/**
 	 * Returns the cost for the given parameter set.
 	 *
 	 * @param params is a reference at the parameter set that should be
-	 * evaluated.
-	 * @param sigma is the slope factor that should be used in the cost
-	 * function.
-	 * @param tDelta is the internally used resolution. Should be smaller than
-	 * the spike delay T.
+	 * evaluated. Automatically updates the derived values of the parameter set.
+	 * @param tDelta is the timestep used for the ODE integration.
 	 */
-	std::tuple<Val, Val, bool, Val, Val> evaluate(
-		const WorkingParameters &params, Val sigma = 100, Val tDelta = -1);
+	EvaluationResult evaluate(const WorkingParameters &params,
+	                          Val tDelta = -1) const;
 
-	Val getXi() { return xi; }
+	Val getXi() const { return xi; }
 
-	Time getT() { return T; };
+	Time getT() const { return T; };
 
-	Time getLastSpikeTime() { return T * ceil(xi - 1.0); }
+	Time getLastSpikeTime() const { return T * ceil(xi - 1.0); }
 };
 }
 

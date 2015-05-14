@@ -56,7 +56,7 @@ public:
 	/**
 	 * Constructor of the NeuronSimulationWidget class.
 	 */
-	NeuronSimulationWidget();
+	NeuronSimulationWidget(QWidget *parent);
 
 	/**
 	 * Displays the given simulation result instance.

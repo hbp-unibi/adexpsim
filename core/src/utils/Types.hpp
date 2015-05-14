@@ -180,13 +180,9 @@ public:
 		return Time(t1.t % t2.t);
 	}
 
-	friend void operator+=(Time &t1, const Time &t2) {
-		t1.t += t2.t;
-	}
+	friend void operator+=(Time &t1, const Time &t2) { t1.t += t2.t; }
 
-	friend void operator-=(Time &t1, const Time &t2) {
-		t1.t -= t2.t;
-	}
+	friend void operator-=(Time &t1, const Time &t2) { t1.t -= t2.t; }
 
 	friend bool operator==(const Time &t1, const Time &t2)
 	{
@@ -213,7 +209,8 @@ public:
 		return t1.t >= t2.t;
 	}
 
-	friend std::ostream& operator<<(std::ostream& os, const Time &t) {
+	friend std::ostream &operator<<(std::ostream &os, const Time &t)
+	{
 		return os << t.toSeconds();
 	}
 };
@@ -229,6 +226,16 @@ constexpr Time MAX_TIME = Time(MAX_INT_TIME);
 constexpr Time MIN_TIME = Time(MIN_INT_TIME);
 
 /**
+ * Maximum representable time in seconds.
+ */
+constexpr Val MAX_TIME_SEC = MAX_INT_TIME * TIME_TO_SEC;
+
+/**
+ * Maximum representable time in seconds.
+ */
+constexpr Val MIN_TIME_SEC = MIN_INT_TIME * TIME_TO_SEC;
+
+/**
  * Vector of Time values.
  */
 using TimeVec = std::vector<Time>;
@@ -242,52 +249,48 @@ struct Range {
 		size_t i;
 		Val offs;
 		Val scale;
+
 	public:
-		Iterator(size_t i, Val offs, Val scale) : i(i), offs(offs), scale(scale) {}
-		Iterator& operator++() { i++; return *this; }
+		Iterator(size_t i, Val offs, Val scale) : i(i), offs(offs), scale(scale)
+		{
+		}
+		Iterator &operator++()
+		{
+			i++;
+			return *this;
+		}
 		Iterator operator++(int) { return Iterator(i + 1, offs, scale); }
-		Iterator& operator--() { i--; return *this; }
+		Iterator &operator--()
+		{
+			i--;
+			return *this;
+		}
 		Iterator operator--(int) { return Iterator(i - 1, offs, scale); }
-		Val operator*() {return Val(i) * scale + offs;}
-		bool operator==(const Iterator &rhs) { return i == rhs.i;}
-		bool operator!=(const Iterator &rhs) { return i != rhs.i;}
-	}
+		Val operator*() { return Val(i) * scale + offs; }
+		bool operator==(const Iterator &rhs) { return i == rhs.i; }
+		bool operator!=(const Iterator &rhs) { return i != rhs.i; }
+	};
 
 	Val min;
 	Val max;
 	size_t steps;
 
-	Range() : min(0), max(0), steps(1) {
-	}
+	Range() : min(0), max(0), steps(1) {}
 
 	Range(Val min, Val max, size_t steps) : min(min), max(max), steps(steps) {}
 
-	Val value(size_t i) const {
-		return getOffs() + getScale() * Val(N);
-	}
+	Val value(size_t i) const { return getOffs() + getScale() * i; }
 
-	Val index(Val x) const {
-		return (x - getOffs()) / getScale();
-	}
+	Val index(Val x) const { return (x - getOffs()) / getScale(); }
 
-	Val getOffs() const {
-		return min;
-	}
+	Val getOffs() const { return min; }
 
-	Val getScale() const {
-		return (max - min) / Val(steps);
-	}
+	Val getScale() const { return (max - min) / Val(steps); }
 
-	Iterator begin() {
-		return Iterator(0, getOffs(), getScale());
-	}
+	Iterator begin() { return Iterator(0, getOffs(), getScale()); }
 
-	Iterator end() {
-		return Iterator(steps, 0.0, 0.0);
-	}
+	Iterator end() { return Iterator(steps, 0.0, 0.0); }
 };
-
-
 }
 
 #endif /* _ADEXPSIM_TYPES_HPP_ */

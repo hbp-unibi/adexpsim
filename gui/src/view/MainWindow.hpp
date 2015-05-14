@@ -30,19 +30,26 @@
 
 #include <QMainWindow>
 
+class QDockWidget;
+
 namespace AdExpSim {
 
 class NeuronSimulation;
 class NeuronSimulationWidget;
+class Exploration;
+class ExplorationWidget;
 
 class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 private:
 	float nSpikes = 0.0;
-	std::unique_ptr<NeuronSimulation> sim1;
-//	std::unique_ptr<NeuronSimulation> sim2;
-	NeuronSimulationWidget *neuronSimulationWidget;
+
+	QDockWidget *simulationDockWidget;
+	QDockWidget *explorationDockWidget;
+
+	NeuronSimulationWidget *simulationWidget;
+	ExplorationWidget *explorationWidget;
 
 public:
 	MainWindow();

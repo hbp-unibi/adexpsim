@@ -19,7 +19,7 @@
 #ifndef _ADEXPSIM_CONFIG_H_
 #define _ADEXPSIM_CONFIG_H_
 
-#define WITH_OPENCL
+/* #undef WITH_OPENCL */
 
 #endif /* _ADEXPSIM_CONFIG_H_ */
 	
