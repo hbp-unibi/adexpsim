@@ -29,6 +29,7 @@
 #define _ADEXPSIM_EXPLORATION_HPP_
 
 #include <functional>
+#include <memory>
 
 #include <simulation/Parameters.hpp>
 #include <utils/Matrix.hpp>
@@ -118,7 +119,7 @@ private:
 	/**
 	 * ExplorationMemory instance on which the exploration is working.
 	 */
-	ExplorationMemory mem;
+	std::shared_ptr<ExplorationMemory> mem;
 
 	/**
 	 * Base working parameter set.
@@ -163,8 +164,6 @@ public:
 	 * Creates a new Exploration instance and sets all its parameters.
 	 *
 	 * @param mem is a reference at the underlying ExplorationMemory instance.
-	 * Creates a copy of the ExplorationMemory instance, however note that the
-	 * matrices inside ExplorationMemory are shared between all instances.
 	 * @param params is the base parameter set.
 	 * @param xi is the number of input spikes for which the neuron should
 	 * spike. Must be larger than one.
@@ -178,9 +177,9 @@ public:
 	 * @param minY is the minimum parameter value in y-direction.
 	 * @param maxY is the maximum parameter value in y-direction.
 	 */
-	Exploration(const ExplorationMemory &mem, WorkingParameters &params, Val Xi,
-	            Val T, size_t dimX, Val minX, Val maxX, size_t dimY, Val minY,
-	            Val maxY);
+	Exploration(std::shared_ptr<ExplorationMemory> mem,
+	            WorkingParameters &params, Val Xi, Val T, size_t dimX, Val minX,
+	            Val maxX, size_t dimY, Val minY, Val maxY);
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed
@@ -196,7 +195,7 @@ public:
 	/**
 	 * Returns a reference at the exploration memory.
 	 */
-	const ExplorationMemory &getMemory() const { return mem; }
+	const ExplorationMemory &getMemory() const { return *mem; }
 
 	/**
 	 * Returns a reference at the base working parameters.
@@ -212,6 +211,11 @@ public:
 	 * Returns a reference at the y-range.
 	 */
 	const Range &getRangeY() const { return rangeY; }
+
+	/**
+	 * Returns a new Exploration instance with cloned, not shared memory.
+	 */
+	Exploration clone() const;
 };
 }
 

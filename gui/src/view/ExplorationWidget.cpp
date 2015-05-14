@@ -18,10 +18,14 @@
 
 #include <QComboBox>
 #include <QProgressBar>
+#include <QStatusBar>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #include <exploration/Exploration.hpp>
 
@@ -49,6 +53,7 @@ static void fillDimensionCombobox(QComboBox *box)
 }
 
 ExplorationWidget::ExplorationWidget(QWidget *parent)
+    : currentExploration(nullptr)
 {
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
@@ -58,15 +63,13 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Cost 𝓒");
+	comboFunction->addItem("Cost C");
 	comboFunction->addItem("Max. potential (ξ)");
 	comboFunction->addItem("Max. potential (ξ - 1)");
 	comboFunction->addItem("Spike Time (ξ)");
 	comboFunction->addItem("Reset Time (ξ)");
 	comboFunction->addItem("Reset Time (ξ - 1)");
-	progressBar = new QProgressBar(toolbar);
-	progressBar->setMinimum(0);
-	progressBar->setMaximum(1000);
+
 	fillDimensionCombobox(comboDimX);
 	fillDimensionCombobox(comboDimY);
 	toolbar->addWidget(new QLabel("X:"));
@@ -75,12 +78,13 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	toolbar->addWidget(comboDimY);
 	toolbar->addWidget(new QLabel("Function:"));
 	toolbar->addWidget(comboFunction);
-	toolbar->addWidget(progressBar);
 
 	// Add the plot widget
 	pltExploration = new QCustomPlot(this);
 	pltExploration->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
 	pltExploration->axisRect()->setupFullAxesBox(true);
+	pltExploration->moveLayer(pltExploration->layer("grid"),
+	                          pltExploration->layer("main"));
 
 	// Connect the axis change events to allow updating the view once the axes
 	// change
@@ -101,14 +105,35 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	                        {0.875, QColor(5, 112, 176)},
 	                        {1.0, QColor(3, 78, 123)}});
 
+	// Create the status bar
+	QWidget *statusWidget = new QWidget(this);
+	statusWidget->setMaximumHeight(35);
+	statusLabel = new QLabel(statusWidget);
+	statusLabel->setMinimumWidth(50);
+	progressBar = new QProgressBar(statusWidget);
+	progressBar->setMinimum(0);
+	progressBar->setMaximum(1000);
+	progressBar->setTextVisible(false);
+	progressBar->setMaximumHeight(10);
+
+	QHBoxLayout *statusLayout = new QHBoxLayout(statusWidget);
+	statusLayout->addWidget(statusLabel);
+	statusLayout->addWidget(progressBar);
+
 	// Combine the widgets in the layout
 	layout->setSpacing(0);
 	layout->setMargin(0);
 	layout->addWidget(toolbar);
 	layout->addWidget(pltExploration);
+	layout->addWidget(statusWidget);
 
 	// Set the layout instance as the layout of this widget
 	setLayout(layout);
+}
+
+ExplorationWidget::~ExplorationWidget()
+{
+	// Only needed for unique_ptr
 }
 
 void ExplorationWidget::axisChange(const QCPRange &newRange)
@@ -126,15 +151,28 @@ void ExplorationWidget::axisChange(const QCPRange &newRange)
 void ExplorationWidget::progress(float p, bool show)
 {
 	if (show) {
+		std::stringstream ss;
+		ss << std::setprecision(5) << std::setw(4) << ceil(p * 1000) / 10
+		   << "%";
+		statusLabel->setText(QString::fromStdString(ss.str()));
+		progressBar->setValue(p * 1000);
 		progressBar->show();
-		progressBar->setValue(p * 1000.0);
 	} else {
+		if (p == 0.0) {
+			statusLabel->setText("Wait...");
+		} else {
+			statusLabel->setText("Ready.");
+		}
 		progressBar->hide();
 	}
 }
 
 void ExplorationWidget::show(const Exploration &exploration, bool fit)
 {
+	// Clone the given exploration instance
+	currentExploration =
+	    std::unique_ptr<Exploration>(new Exploration(exploration.clone()));
+
 	// Clear the graph
 	pltExploration->clearPlottables();
 

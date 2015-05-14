@@ -29,6 +29,7 @@
 #define _ADEXPSIM_MATRIX_HPP_
 
 #include <memory>
+#include <iostream>
 #include <ostream>
 #include <sstream>
 #ifndef NDEBUG
@@ -40,7 +41,8 @@
 namespace AdExpSim {
 
 /**
- * Base class providing storage for a matrix of an arbitrary type T.
+ * Base class providing storage for a 2D memory region of an arbitrary type T.
+ * Implements copy on write semantics.
  *
  * @tparam T is the type stored in the matrix.
  */
@@ -68,7 +70,15 @@ private:
 		~Buffer() { delete[] buf; }
 	};
 
+	/**
+	 * Shared pointer referencing the memory, used for the copy on write
+	 * behaviour.
+	 */
 	std::shared_ptr<Buffer> buf;
+
+	/**
+	 * Width and height of the matrix.
+	 */
 	size_t w, h;
 
 	/**
@@ -104,6 +114,7 @@ public:
 	T &operator()(size_t x, size_t y)
 	{
 		checkRange(x, y);
+		detatch();
 		return *(buf->buf + x + y * w);
 	}
 
@@ -129,7 +140,11 @@ public:
 	/**
 	 * Returns a posize_ter at the raw data buffer.
 	 */
-	T *data() { return buf->buf; }
+	T *data()
+	{
+		detatch();
+		return buf->buf;
+	}
 
 	/**
 	 * Returns a const posize_ter at the raw data.
@@ -151,6 +166,35 @@ public:
 		}
 		return os;
 	}
+
+
+	/**
+	 * Clones the internal memory buffer, making this instance independent from
+	 * changes made to the memory by others.
+	 */
+	MatrixBase<T> &detatch()
+	{
+		// Only perform the copy operation if more than one instance refers to
+		// the memory
+		if (buf.use_count() > 1) {
+			std::cout << "detatching memory" << std::endl;
+			// Hold a reference to the old buffer on the stack
+			std::shared_ptr<Buffer> oldBuf = buf;
+
+			// Create a new Buffer object
+			buf = std::make_shared<Buffer>(w, h);
+
+			// Copy the memory from the old buffer ot the new buffer
+			std::copy(oldBuf->buf, oldBuf->buf + w * h, buf->buf);
+		}
+		return *this;
+	}
+
+	/**
+	 * Returns a new matrix with the exact same properties as this matrix but
+	 * with detatched memory.
+	 */
+	MatrixBase<T> clone() const { return MatrixBase<T>(*this).detatch(); }
 };
 
 /**

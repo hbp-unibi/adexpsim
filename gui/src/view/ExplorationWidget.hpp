@@ -24,13 +24,11 @@
 #include <qcustomplot.h>
 
 class QComboBox;
-class QProgressBar;
+class QStatusBar;
 class QToolBar;
 class QVBoxLayout;
 
 namespace AdExpSim {
-
-class Exploration;
 
 /**
  * The ExplorationWidget shows the exploration result as colored image.
@@ -43,10 +41,13 @@ private:
 	QComboBox *comboDimX;
 	QComboBox *comboDimY;
 	QComboBox *comboFunction;
-	QProgressBar *progressBar;
 	QVBoxLayout *layout;
+	QProgressBar *progressBar;
+	QLabel *statusLabel;
 	QCustomPlot *pltExploration;
 	QCPColorGradient gradCost;
+
+	std::unique_ptr<Exploration> currentExploration;
 
 private slots:
 	void axisChange(const QCPRange &newRange);
@@ -56,6 +57,11 @@ public:
 	 * Constructor of the ExplorationWidget class.
 	 */
 	ExplorationWidget(QWidget *parent);
+
+	/**
+	 * Destructor of the ExplorationWidget class.
+	 */
+	~ExplorationWidget();
 
 	/**
 	 * Displays the results from the given Exploration instance.

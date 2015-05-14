@@ -80,13 +80,13 @@ MainWindow::MainWindow() : fitExploration(true)
 	simulationWidget->show({&sim});
 }
 
+MainWindow::~MainWindow() {}
+
 void MainWindow::data(const Exploration &exploration)
 {
 	std::cout << "Receive data" << std::endl;
 	explorationWidget->show(exploration, fitExploration);
 	fitExploration = false;
 }
-
-MainWindow::~MainWindow() {}
 }
 

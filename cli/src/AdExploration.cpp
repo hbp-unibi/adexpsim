@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
 	const Val T = 0.1e-3;
 
 	// Setup the exploration
-	ExplorationMemory mem(2048, 2048);
+	auto mem = std::make_shared<ExplorationMemory>(2048, 2048);
 	Exploration exploration(mem, params, Xi, T,
 	                        0,     // dimX lL
 	                        100,     // minX
@@ -97,18 +97,18 @@ int main(int argc, char *argv[])
 		std::cout << "Writing result to disk..." << std::endl;
 
 		// Calculate the cost and the ok matrix
-		Matrix cost(mem.resX, mem.resY);
-		MatrixBase<bool> ok(mem.resX, mem.resY);
-		for (size_t x = 0; x < mem.resX; x++) {
-			for (size_t y = 0; y < mem.resY; y++) {
-				EvaluationResult res = mem(x, y);
+		Matrix cost(mem->resX, mem->resY);
+		MatrixBase<bool> ok(mem->resX, mem->resY);
+		for (size_t x = 0; x < mem->resX; x++) {
+			for (size_t y = 0; y < mem->resY; y++) {
+				EvaluationResult res = (*mem)(x, y);
 				ok(x, y) = res.ok();
 				cost(x, y) = res.cost();
 			}
 		}
 
 		// Dump the matrices
-		std::ofstream("exploration_time.csv") << mem.tSpike;
+		std::ofstream("exploration_time.csv") << mem->tSpike;
 		std::ofstream("exploration_cost.csv") << cost;
 		std::ofstream("exploration_ok.csv") << ok;
 	} else {

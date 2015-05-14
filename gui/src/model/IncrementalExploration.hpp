@@ -29,8 +29,10 @@
 #define _ADEXPSIM_INCREMENTRAL_EXPLORATION_HPP_
 
 #include <atomic>
+#include <memory>
+#include <vector>
 
-#include <exploration/Exploration.hpp>
+#include <simulation/Parameters.hpp>
 #include <utils/Types.hpp>
 
 #include <QRunnable>
@@ -39,6 +41,9 @@
 class QTimer;
 
 namespace AdExpSim {
+
+class Exploration;
+class ExplorationMemory;
 
 /**
  * The IncrementalExplorationRunner runs a single exploration process in the 
@@ -112,12 +117,12 @@ private:
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	static constexpr int MAX_LEVEL = 10; // 256x256
+	static constexpr int MAX_LEVEL = 8; // 256x256
 
 	/**
 	 * Memories for the resolution levels.
 	 */
-	std::vector<ExplorationMemory> mem;
+	std::vector<std::shared_ptr<ExplorationMemory>> mem;
 
 private:
 	/**
@@ -156,6 +161,12 @@ private:
 	 * started in the moment the last IncrementalExplorationRunner finishes.
 	 */
 	bool restart;
+
+	/**
+	 * Flag set to true if were currently emitting data -- in this case range
+	 * updates should be discarded.
+	 */
+	bool inEmitData;
 
 	/**
 	 * The current exploration instance.

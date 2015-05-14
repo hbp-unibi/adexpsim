@@ -16,9 +16,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define PTHREAD_SET_PRIORITY
+#ifdef PTHREAD_SET_PRIORITY
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <iostream>
 
 #include <utils/Timer.hpp>
 
@@ -26,13 +33,13 @@
 
 namespace AdExpSim {
 
-Exploration::Exploration(const ExplorationMemory &mem,
+Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
                          WorkingParameters &params, Val Xi, Val T, size_t dimX,
                          Val minX, Val maxX, size_t dimY, Val minY, Val maxY)
     : mem(mem),
       params(params),
-      rangeX(minX, maxX, mem.resX),
-      rangeY(minY, maxY, mem.resY),
+      rangeX(minX, maxX, mem->resX),
+      rangeY(minY, maxY, mem->resY),
       dimX(dimX),
       dimY(dimY),
       evaluation(Xi, T)
@@ -42,12 +49,13 @@ Exploration::Exploration(const ExplorationMemory &mem,
 bool Exploration::run(const ProgressCallback &progress)
 {
 	// Fetch the total number of evaluations and the number of cores
-	const size_t N = mem.resX * mem.resY;
+	const size_t N = mem->resX * mem->resY;
 	size_t nThreads = std::max<size_t>(1, std::thread::hardware_concurrency());
 
 	// Function containing the actual exploration task
-	auto fun = [&](ExplorationMemory &mem, std::atomic<size_t> &counter,
-	               std::atomic<bool> &abort, size_t idx) -> void {
+	auto fun = [&](std::shared_ptr<ExplorationMemory> mem,
+	               std::atomic<size_t> &counter, std::atomic<bool> &abort,
+	               size_t idx) -> void {
 		// Copy the parameters
 		WorkingParameters p = params;
 
@@ -56,8 +64,8 @@ bool Exploration::run(const ProgressCallback &progress)
 		while (i < N) {
 			// Calculate the x and y coordinate from the index and update the
 			// parameters according to the given range.
-			const size_t x = i % mem.resX;
-			const size_t y = i / mem.resX;
+			const size_t x = i % mem->resX;
+			const size_t y = i / mem->resX;
 			p[dimX] = rangeX.value(x);
 			p[dimY] = rangeY.value(y);
 
@@ -65,11 +73,11 @@ bool Exploration::run(const ProgressCallback &progress)
 			EvaluationResult result = evaluation.evaluate(p);
 
 			// Store the evaluation result in the matrices
-			mem.eSpikeEff(x, y) = result.eSpikeEff;
-			mem.eMaxXi(x, y) = result.eMaxXi;
-			mem.eMaxXiM1(x, y) = result.eMaxXiM1;
-			mem.tSpike(x, y) = result.tSpike;
-			mem.tReset(x, y) = result.tReset;
+			mem->eSpikeEff(x, y) = result.eSpikeEff;
+			mem->eMaxXi(x, y) = result.eMaxXi;
+			mem->eMaxXiM1(x, y) = result.eMaxXiM1;
+			mem->tSpike(x, y) = result.tSpike;
+			mem->tReset(x, y) = result.tReset;
 
 			// Increment the counter
 			counter++;
@@ -84,8 +92,19 @@ bool Exploration::run(const ProgressCallback &progress)
 	std::atomic<size_t> counter(0);
 	std::atomic<bool> abort(false);
 	for (size_t idx = 0; idx < nThreads; idx++) {
-		threads.emplace_back(fun, std::ref(mem), std::ref(counter),
-		                   std::ref(abort), idx);
+		threads.emplace_back(fun, mem, std::ref(counter), std::ref(abort), idx);
+#ifdef PTHREAD_SET_PRIORITY
+		// Fetch the native pthread handle
+		auto handle = threads.back().native_handle();
+
+		// Let's be nice and reduce the thread priority
+		sched_param sch;
+		int policy;
+		if (pthread_getschedparam(handle, &policy, &sch) == 0) {
+			sch.sched_priority = sched_get_priority_min(policy);
+			pthread_setschedparam(handle, policy, &sch);
+		}
+#endif
 	}
 
 	// Wait for all threads to be finished
@@ -113,6 +132,17 @@ bool Exploration::run(const ProgressCallback &progress)
 		thread.join();
 	}
 	return !abort.load();
+}
+
+Exploration Exploration::clone() const
+{
+	// Clone this instance
+	Exploration res(*this);
+
+	// Create a new instance of the ExplorationMemory -- due to CoW semantics
+	// the memory is now decoupled
+	res.mem = std::make_shared<ExplorationMemory>(*mem);
+	return res;
 }
 }
 
