@@ -301,6 +301,14 @@ struct VectorRecorderData {
 	 */
 	VectorRecorderData() { reset(); }
 
+	size_t size() const {
+		return ts.size();
+	}
+
+	State operator[](size_t i) const {
+		return State(v[i], gE[i], gI[i], w[i]);
+	}
+
 	/**
 	 * Resets the data instance.
 	 */
