@@ -65,11 +65,16 @@ private:
 	 */
 	MaxValueController controller;
 
+	/**
+	 * Internally used integrator.
+	 */
+	RungeKuttaIntegrator integrator;
+
 public:
 	/**
 	 * Creates a new NeuronSimulation instance.
 	 */
-	NeuronSimulation(Time interval = 0) : recorder(parameters, interval){};
+	NeuronSimulation(Time interval = Time(0)) : recorder(parameters, interval){};
 
 	/**
 	 * Sets the parameters and input spikes.
@@ -79,7 +84,7 @@ public:
 	/**
 	 * Runs the simulation with the parameters given in the prepare method.
 	 */
-	void run(Time tDelta = -1);
+	void run(Time tDelta = Time(-1));
 
 	/**
 	 * Returns the parameters.

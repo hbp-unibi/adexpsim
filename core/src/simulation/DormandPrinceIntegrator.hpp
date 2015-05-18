@@ -17,26 +17,28 @@
  */
 
 /**
- * @file AdaptiveStepsizeRungeKutta.hpp
+ * @file DormandPrinceIntegrator.hpp
  *
- * Implementation of the fifth-order embedded Runge-Kutta method with adaptive
- * stepsize control. Note that this implementation is for autonomous
- * differential equations (df does not depend on t!). Based on the algorithm
- * presented in Numerical Recipes chapter 17.2.
+ * Implementation of a fifth-order embedded Runge-Kutta method with adaptive
+ * stepsize control. Note that this implementation is particularly tailored for
+ * autonomous differential equations (df does not depend on t). Inspired by the
+ * algorithm presented in Numerical Recipes (NR), 3rd Edition chapter 17.2.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_ADAPTIVE_STEPSIZE_RUNGE_KUTTA_HPP_
-#define _ADEXPSIM_ADAPTIVE_STEPSIZE_RUNGE_KUTTA_HPP_
+#ifndef _ADEXPSIM_DORMAND_PRINCE_HPP_
+#define _ADEXPSIM_DORMAND_PRINCE_HPP_
 
 #include <utility>
 
 #include <utils/Types.hpp>
 
+#include "State.hpp"
+
 namespace AdExpSim {
 
-namespace AdaptiveStepsizeRungeKuttaInternal {
+namespace DormandPrinceInternal {
 
 /**
  * Dormand-Prince Parameters for Embedded Runge-Kutta coefficients. See table in
@@ -55,15 +57,6 @@ static constexpr double COEFF_A[7][6] = {
      11.0 / 84.0}};
 
 /**
- * Returns the Fifth-order Runge-Kutta coefficients. This function is likely
- * to be evaluated at compile time.
- */
-constexpr Val a(size_t i, size_t j)
-{
-	return COEFF_A[i - 1][j - 1];
-}
-
-/**
  * Coefficients used to estimate the error vector (b_i - b_i^* in the
  * afforementioned Table in NR).
  */
@@ -72,13 +65,14 @@ static constexpr double COEFF_E[7] = {
     -17253.0 / 339200.0, 22.0 / 525.0,    -1.0 / 40.0};
 
 /**
- * Returns the error-vector coefficients with range check (evaluated at
- * compile-time).
+ * Returns the Fifth-order Runge-Kutta coefficients.
  */
-constexpr Val e(size_t i)
-{
-	return COEFF_E[i - 1];
-}
+constexpr Val a(size_t i, size_t j) { return COEFF_A[i - 1][j - 1]; }
+
+/**
+ * Returns the error-vector coefficients.
+ */
+constexpr Val e(size_t i) { return COEFF_E[i - 1]; }
 
 /*
  * The RungeKuttaEval function is used to evaluate the inner sum of a
@@ -93,8 +87,7 @@ static inline K RungeKuttaEval(Coeffs c, size_t i, const K &k)
 }
 
 template <typename Coeffs, typename K, typename... KS>
-static inline K RungeKuttaEval(Coeffs c, size_t i, const K &k,
-                                    const KS &... ks)
+static inline K RungeKuttaEval(Coeffs c, size_t i, const K &k, const KS &... ks)
 {
 	return c(i) * k + RungeKuttaEval(c, i + 1, ks...);
 }
@@ -133,8 +126,6 @@ static inline Vector RungeKuttaStep(Val, const Vector &y, Deriv df, size_t)
 {
 	return df(y);
 }
-}
-
 /**
  * Implements the fifth-order embedded RungeKutta method. Returns the value of
  * the function
@@ -142,9 +133,6 @@ static inline Vector RungeKuttaStep(Val, const Vector &y, Deriv df, size_t)
 template <typename Vector, typename Deriv>
 static std::pair<Vector, Vector> RungeKutta5(Val h, const Vector &y, Deriv df)
 {
-	// Import the coefficient namespace (supplies the c, a, b)
-	using namespace AdaptiveStepsizeRungeKuttaInternal;
-
 	// Execute the five Runge-Kutta steps
 	const Vector k1 = RungeKuttaStep(h, y, df, 1);
 	const Vector k2 = RungeKuttaStep(h, y, df, 2, k1);
@@ -163,6 +151,188 @@ static std::pair<Vector, Vector> RungeKutta5(Val h, const Vector &y, Deriv df)
 	// Return both the result vector and the error vector
 	return std::pair<Vector, Vector>(yN, yErr);
 }
+}
+
+/**
+ * Class implementing the stepsize control for a generic integrator. The actual
+ * integrator must provide the integrated solution as well as an error vector
+ * containing the estimated error the integrator made as a feedback for the
+ * stepsize controller.
+ */
+template <typename Impl>
+class AdaptiveIntegratorBase {
+private:
+	/**
+	 * Safety factor -- forces the next step size to be a bit smaller than
+	 * necessary. This is important, as the error value is only an estimate.
+	 */
+	static constexpr Val S = 0.9;
+
+	/**
+	 * Absolute minimum for h.
+	 */
+	static constexpr Val MIN_H = 1e-6;
+
+	/**
+	 * Minimum scale factor.
+	 */
+	static constexpr Val MIN_SCALE = 0.2;
+
+	/**
+	 * Maximum scale factor.
+	 */
+	static constexpr Val MAX_SCALE = 10.0;
+
+	/**
+	 * Inverse target error.
+	 */
+	const Val invETar;
+
+	/**
+	 * Last stepsize.
+	 */
+	Val hOld;
+
+	/**
+	 * Calculates a single error vector form the error vector. Calculates the
+	 * L2-norm of the vector.
+	 */
+	Val error(State errVec) const
+	{
+		errVec = errVec * invETar;
+		errVec = errVec * errVec * 0.25;
+		Val err = 0.0f;
+		for (size_t k = 0; k < 4; k++) {
+			err += errVec[k];
+		}
+		err = sqrtf(err);
+		return err;
+	}
+
+public:
+	/**
+	 * Constructor of the AdaptiveIntegratorBase class. Initializes the scale
+	 * vector depending on the given target error.
+	 *
+	 * @param err is the target integration error.
+	 */
+	AdaptiveIntegratorBase(Val eTar = 1e-3) : invETar(1.0 / eTar) { reset(); }
+
+	/**
+	 * Resets the integrator to its initial state.
+	 */
+	void reset() { hOld = 0.0f; }
+
+	/**
+	 * Implements an integrator with adaptive step size.
+	 *
+	 * @param tDelta is the timestep width.
+	 * @param tDeltaMax is the maximum step size that can be used.
+	 * @param s is the current state vector at the previous timestep.
+	 * @param df is the function which calculates the derivative for a given
+	 * state.
+	 * @return the new state for the next timestep and the actually used
+	 * timestep.
+	 */
+	template <typename Deriv>
+	std::pair<State, Time> integrate(Time tDelta, Time tDeltaMax,
+	                                 const State &s, Deriv df)
+	{
+		// Fetch the step size as floating point number
+		const Val MAX_H = tDeltaMax.sec();
+		Val h = hOld == 0.0f ? MAX_H : std::min(hOld, MAX_H);
+
+		// Integrator result storage. First element is the integrated value,
+		// second value is the estimated error vector
+		std::pair<State, State> res;
+
+		// Stepsize for the next iteration
+		Val hNew;
+
+		// Flags used for infinite loop prevention
+		bool reachedMinH = false;
+		bool reachedMaxH = false;
+		while (true) {
+			// Run the actual integrator
+			res = static_cast<const Impl *>(this)->doIntegrate(h, s, df);
+
+			// Calculate the normalized error
+			const Val e = error(res.second);
+
+			// Calculate the timestep scale factor, limit it to the minimum and
+			// maximum scale. We're neither using the PI controller proposed in
+			// NR here and approximate S * err^{-1/5} with S / err. Works better
+			// and faster.
+			Val scale = (e == 0.0)
+			                ? MAX_SCALE
+			                : std::min(MAX_SCALE, std::max(MIN_SCALE, S / e));
+
+			// Adjust the stepsize, make sure the stepsize is not smaller than
+			// the maximum/minimum stepsize
+			hNew = h * scale;
+			if (hNew < MIN_H) {
+				hNew = MIN_H;
+				if (reachedMinH) {
+					break;  // Abort to prevent infinite loops
+				}
+			}
+			if (hNew > MAX_H) {
+				hNew = MAX_H;
+				if (reachedMaxH) {
+					break;  // Abort to prevent infinite loops
+				}
+			}
+			reachedMinH = hNew == MIN_H;
+			reachedMaxH = hNew == MAX_H;
+
+			// If the error is smaller than 1.0 the operation was successful,
+			// abort
+			if (e < 1.0) {
+				break;
+			}
+
+			// Use the new h in the next iteration
+			h = hNew;
+		}
+
+		// Copy current stepsize
+		hOld = hNew;
+
+		// Return the solution and the time h actually used time h.
+		return std::pair<State, Time>(res.first, Time::sec(h));
+	}
+};
+
+/**
+ * The DormandPrinceIntegrator class implements the fifth-order embedded
+ * Runge-Kutta method with step-size control. This allows the integrator to
+ * skip over regions in which nothing happens.
+ */
+class DormandPrinceIntegrator
+    : public AdaptiveIntegratorBase<DormandPrinceIntegrator> {
+public:
+	using Base = AdaptiveIntegratorBase<DormandPrinceIntegrator>;
+	friend Base;
+
+private:
+	/**
+	 * Implements the fourth-order Runge-Kutta method.
+	 *
+	 * @param h is the timestep width.
+	 * @param s is the current state vector at the previous timestep.
+	 * @param df is the function which calculates the derivative for a given
+	 * state.
+	 * @return the new state for the next timestep.
+	 */
+	template <typename Deriv>
+	std::pair<State, State> doIntegrate(Val h, const State &s, Deriv df) const
+	{
+		return DormandPrinceInternal::RungeKutta5(h, s, df);
+	}
+
+public:
+	using Base::Base;
+};
 }
 
 #endif /* _ADEXPSIM_ADAPTIVE_STEPSIZE_RUNGE_KUTTA_HPP_ */

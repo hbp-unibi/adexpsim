@@ -93,7 +93,7 @@ static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes)
 		QCPItemStraightLine *line = new QCPItemStraightLine(plot);
 		plot->addItem(line);
 
-		Val t = SIPrefixTransformation::transformTime(spike.t.toSeconds());
+		Val t = SIPrefixTransformation::transformTime(spike.t.sec());
 		line->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
 		line->positions()[0]->setCoords(t, 0);
 		line->positions()[1]->setType(QCPItemPosition::ptPlotCoords);

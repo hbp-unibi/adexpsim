@@ -19,6 +19,7 @@
 #include <cmath>
 #include <limits>
 
+#include <simulation/DormandPrinceIntegrator.hpp>
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
 
@@ -62,7 +63,7 @@ Evaluation::Evaluation(Val xi, Time T)
 }
 
 EvaluationResult Evaluation::evaluate(const WorkingParameters &params,
-                                      Val tDelta) const
+                                      Time tDelta) const
 {
 	// Make sure the parameters are inside the valid range, otherwise abort
 	if (!params.valid()) {
@@ -78,14 +79,17 @@ EvaluationResult Evaluation::evaluate(const WorkingParameters &params,
 	// Use max value controller to track the maximum value
 	MaxValueController cXi, cXiM1;
 
+	// Use a RungeKuttaIntegrator
+	DormandPrinceIntegrator iXi, iXiM1;
+
 	// Simulate for both the sXi and the sXiM1 input spike train
-	Model::simulate<SimulationFlags>(sXi, n, cXi, params, -1, 1.0);
-	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, params, -1, 1.0);
+	Model::simulate<SimulationFlags>(sXi, n, cXi, iXi, params, tDelta, Time::sec(1.0));
+	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, iXiM1, params, tDelta, Time::sec(1.0));
 
 	// Return the recorded values
 	return EvaluationResult(
 	    params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
-	    cXi.tSpike.toSeconds() - getLastSpikeTime().toSeconds(), 0);
+	    cXi.tSpike.sec() - getLastSpikeTime().sec(), 0);
 }
 }
 

@@ -166,7 +166,7 @@ public:
 	 * @param tDelta is the timestep used for the ODE integration.
 	 */
 	EvaluationResult evaluate(const WorkingParameters &params,
-	                          Val tDelta = -1) const;
+	                          Time tDelta = Time(-1)) const;
 
 	Val getXi() const { return xi; }
 

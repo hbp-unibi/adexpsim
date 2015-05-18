@@ -34,7 +34,7 @@
 namespace AdExpSim {
 
 Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
-                         WorkingParameters &params, Val Xi, Val T, size_t dimX,
+                         WorkingParameters &params, Val Xi, Time T, size_t dimX,
                          Val minX, Val maxX, size_t dimY, Val minY, Val maxY)
     : mem(mem),
       params(params),

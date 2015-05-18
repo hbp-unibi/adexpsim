@@ -108,8 +108,9 @@ void IncrementalExploration::start()
 	}
 
 	// Create a new Exploration instance
-	currentExploration = new Exploration(mem[level - MIN_LEVEL], params, Xi, T,
-	                                     dimX, minX, maxX, dimY, minY, maxY);
+	currentExploration =
+	    new Exploration(mem[level - MIN_LEVEL], params, Xi, Time::sec(T), dimX,
+	                    minX, maxX, dimY, minY, maxY);
 
 	// Create a new IncrementExplorationRunner and connect all signals
 	currentRunner = new IncrementalExplorationRunner(*currentExploration);

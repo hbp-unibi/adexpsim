@@ -34,7 +34,7 @@ void NeuronSimulation::run(Time tDelta)
 	controller.reset();
 
 	// Run the actual simulation
-	Model::simulate(spikes, recorder, controller, parameters, tDelta);
+	Model::simulate(spikes, recorder, controller, integrator, parameters, tDelta);
 }
 
 }

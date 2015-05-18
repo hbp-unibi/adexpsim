@@ -51,27 +51,27 @@ using ValVec = std::vector<Val>;
 /**
  * Integer type used internally by the Time type to represent times.
  */
-using TimeType = int32_t;
+using TimeType = int64_t;
 
 /**
  * Factor for converting a floating point time in seconds to a time value.
  */
-constexpr Val SEC_TO_TIME = Val(1 << 20);
+constexpr double SEC_TO_TIME = double(1L << 48);
 
 /**
  * Factor for converting a time value to seconds.
  */
-constexpr Val TIME_TO_SEC = Val(1) / SEC_TO_TIME;
+constexpr double TIME_TO_SEC = 1.0 / SEC_TO_TIME;
 
 /**
  * Maximum internal time value.
  */
-constexpr TimeType MAX_INT_TIME = std::numeric_limits<int32_t>::max();
+constexpr TimeType MAX_INT_TIME = std::numeric_limits<TimeType>::max();
 
 /**
  * Minimum internal time value.
  */
-constexpr TimeType MIN_INT_TIME = std::numeric_limits<int32_t>::min();
+constexpr TimeType MIN_INT_TIME = std::numeric_limits<TimeType>::min();
 
 /**
  * Time is the type used for storing time values. Times are stored as a 32 bit
@@ -114,30 +114,19 @@ public:
 	 * @param t is the internal integer time the Time instance should be
 	 * initialized to.
 	 */
-	constexpr Time(TimeType t) : t(t) {}
+	explicit constexpr Time(TimeType t) : t(t) {}
 
 	/**
-	 * Constructor, initializes the time value with the given time in seconds.
-	 *
-	 * @param sec is the floating point time in seconds the Time instance
-	 * should be initialized to.
+	 * Creates a new instance of the Time structure from a float.
 	 */
-	constexpr Time(double sec) : t(secondsToTimeType(sec)) {}
+	static constexpr Time sec(double t) { return Time(secondsToTimeType(t)); }
 
 	/**
 	 * Converts the internal integer Time to a floating point time in seconds.
 	 *
 	 * @return the current time value in seconds.
 	 */
-	Val toSeconds() const { return Val(t) * TIME_TO_SEC; }
-
-	/**
-	 * Sets the internal integer Time to the given floating point time in
-	 * seconds.
-	 *
-	 * @param ft is the floating point value to which the Time should be set.
-	 */
-	void fromSeconds(Val ft) { t = secondsToTimeType(ft); }
+	double sec() const { return double(t) * TIME_TO_SEC; }
 
 	/* Operators */
 
@@ -211,9 +200,11 @@ public:
 
 	friend std::ostream &operator<<(std::ostream &os, const Time &t)
 	{
-		return os << t.toSeconds();
+		return os << t.sec();
 	}
 };
+
+static constexpr Time operator"" _s(long double t) { return Time::sec(t); }
 
 /**
  * Maximum representable time.
@@ -228,12 +219,17 @@ constexpr Time MIN_TIME = Time(MIN_INT_TIME);
 /**
  * Maximum representable time in seconds.
  */
-constexpr Val MAX_TIME_SEC = MAX_INT_TIME * TIME_TO_SEC;
+constexpr double MAX_TIME_SEC = MAX_INT_TIME / SEC_TO_TIME;
 
 /**
  * Maximum representable time in seconds.
  */
-constexpr Val MIN_TIME_SEC = MIN_INT_TIME * TIME_TO_SEC;
+constexpr double MIN_TIME_SEC = MIN_INT_TIME / SEC_TO_TIME;
+
+/**
+ * Minimum time difference representable by the Time type.
+ */
+constexpr double MIN_TIME_DELTA = TIME_TO_SEC;
 
 /**
  * Vector of Time values.

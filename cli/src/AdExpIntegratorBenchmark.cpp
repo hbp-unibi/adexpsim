@@ -16,22 +16,23 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "simulation/Model.hpp"
-#include "simulation/Recorder.hpp"
-#include "utils/Timer.hpp"
+#include <simulation/DormandPrinceIntegrator.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+#include <utils/Timer.hpp>
 
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <limits>
+#include <sstream>
 #include <vector>
 
 using namespace AdExpSim;
 using Recorder = VectorRecorder<std::vector<Val>, SIPrefixTransformation>;
 using RecorderData = VectorRecorderData<std::vector<Val>>;
 
-constexpr size_t SimulationFlags =
-    Model::FAST_EXP | Model::DISABLE_ITH | Model::DISABLE_SPIKING;
+constexpr size_t SimulationFlags = Model::FAST_EXP;
 
 /**
  * The BenchmarkResult class contains the results captured from a single
@@ -111,10 +112,10 @@ struct BenchmarkResult {
 	 */
 	template <typename Vector1, typename Vector2>
 	static void updateSqSum(Vector1 &sum, size_t k, const Vector2 &v1, size_t i,
-	                        const Vector2 &v2, size_t j)
+	                        const Vector2 &v2, size_t j, Val h)
 	{
 		Val d = minDist(v1, i, v2, j);
-		sum[k] += d * d;
+		sum[k] += d * d * h;
 	}
 
 	struct Comparison {
@@ -151,52 +152,56 @@ struct BenchmarkResult {
 		{
 		}
 
+		std::string printPercentage(Val val)
+		{
+			std::stringstream ss;
+			ss << std::setprecision(5) << std::setw(6)
+			   << ceil(val * 10000.0) / 100.0 << "%";
+			return ss.str();
+		}
+
 		void print()
 		{
 			std::cout << std::setw(30) << benchmark.name << "  ";
 
-			std::cout << "| t: " << std::setprecision(4) << std::setw(11)
-			          << benchmark.time << "ms  ";
+			std::cout << "t: " << std::setprecision(4) << std::setw(8)
+			          << benchmark.time << "ms ";
 
-			std::cout << "| N: " << std::setprecision(4) << std::setw(11)
-			          << benchmark.data.size() << "  ";
+			std::cout << "N: " << std::setprecision(4) << std::setw(8)
+			          << benchmark.data.size() << " ";
 
-			std::cout << "| t/N: " << std::setprecision(4) << std::setw(11)
+			std::cout << "t/N: " << std::setprecision(4) << std::setw(8)
 			          << (benchmark.time * 1000.0) / Val(benchmark.data.size())
-			          << "us  ";
+			          << "us ";
 
 			// Error in the v state
 			std::cout << "| v: " << std::setprecision(4) << std::setw(11)
 			          << rmseDelta[0] << "mV  ";
-			std::cout << std::setprecision(4) << std::setw(11)
-			          << rmseDeltaNormalized[0] * 100 << "%  ";
+			std::cout << printPercentage(rmseDeltaNormalized[0]) << " ";
 
 			// Error in the gE state
 			std::cout << "| gE: " << std::setprecision(4) << std::setw(11)
 			          << rmseDelta[1] << "uS  ";
-			std::cout << std::setprecision(4) << std::setw(11)
-			          << rmseDeltaNormalized[1] * 100 << "%  ";
+			std::cout << printPercentage(rmseDeltaNormalized[1]) << " ";
 
 			// Error in the gI state
 			std::cout << "| gI: " << std::setprecision(4) << std::setw(11)
 			          << rmseDelta[2] << "uS ";
-			std::cout << std::setprecision(4) << std::setw(11)
-			          << rmseDeltaNormalized[2] * 100 << "%  ";
+			std::cout << printPercentage(rmseDeltaNormalized[2]) << " ";
 
 			// Error in the w state
 			std::cout << "| w: " << std::setprecision(4) << std::setw(11)
 			          << rmseDelta[3] << "nA  ";
-			std::cout << std::setprecision(4) << std::setw(11)
-			          << rmseDeltaNormalized[3] * 100 << "%  ";
+			std::cout << printPercentage(rmseDeltaNormalized[3]) << " ";
 
 			// Calculate and print the average error
 			Val avg = 0;
+			Val avgMax = 0;
 			for (size_t k = 0; k < 4; k++) {
-				avg += rmseDeltaNormalized[k];
+				avg += rmseDeltaNormalized[k] * 0.25;
+				avgMax += maxDeltaNormalized[k] * 0.25;
 			}
-			avg = avg / 4;
-			std::cout << "| avg: " << std::setprecision(4) << std::setw(11)
-			          << avg * 100 << "% ";
+			std::cout << "| µ: " << printPercentage(avg);
 			std::cout << std::endl;
 		}
 	};
@@ -209,9 +214,10 @@ struct BenchmarkResult {
 		Comparison res(*this);
 
 		// Iterate over all entries in this data vector
-		for (size_t i = 0; i < data.size(); i++) {
+		for (size_t i = 1; i < data.size(); i++) {
 			// Fetch the current timestamp
 			Val t = data.ts[i];
+			Val tDelta = t - data.ts[i - 1];
 
 			// Find the two indices in the reference data next to this timestamp
 			size_t j = std::distance(
@@ -225,15 +231,15 @@ struct BenchmarkResult {
 			updateMaximum(res.maxDelta, 3, data.w, i, ref.w, j);
 
 			// Update the rmse value
-			updateSqSum(res.rmseDelta, 0, data.v, i, ref.v, j);
-			updateSqSum(res.rmseDelta, 1, data.gE, i, ref.gE, j);
-			updateSqSum(res.rmseDelta, 2, data.gI, i, ref.gI, j);
-			updateSqSum(res.rmseDelta, 3, data.w, i, ref.w, j);
+			updateSqSum(res.rmseDelta, 0, data.v, i, ref.v, j, tDelta);
+			updateSqSum(res.rmseDelta, 1, data.gE, i, ref.gE, j, tDelta);
+			updateSqSum(res.rmseDelta, 2, data.gI, i, ref.gI, j, tDelta);
+			updateSqSum(res.rmseDelta, 3, data.w, i, ref.w, j, tDelta);
 		}
 
 		// Calculate the rmse error from the squared sum
 		for (size_t k = 0; k < 4; k++) {
-			res.rmseDelta[k] = sqrt(res.rmseDelta[k] / Val(data.size()));
+			res.rmseDelta[k] = sqrt(res.rmseDelta[k] / ref.ts.back());
 		}
 
 		// Load the min/max reference values
@@ -258,7 +264,7 @@ struct BenchmarkResult {
 };
 
 template <typename Function>
-BenchmarkResult runBenchmark(const Parameters &params, std::string name,
+BenchmarkResult runBenchmark(std::string name, const Parameters &params,
                              Function f)
 {
 	Timer t;
@@ -273,19 +279,42 @@ BenchmarkResult runBenchmark(const Parameters &params, std::string name,
 	return res;
 }
 
-template <uint8_t Flags = 0, typename Integrator = RungeKuttaIntegrator,
-          typename Recorder, typename Controller>
-static void simulate(const SpikeVec &spikes, Recorder &recorder,
-                     Controller &controller,
-                     const WorkingParameters &p = WorkingParameters(),
-                     Time tDelta = -1, Time tEnd = MAX_TIME,
-                     const Integrator &integrator = Integrator(),
-                     const State &s0 = State());
+template <typename Integrator>
+void benchmarkSimple(const std::string &name, double tDelta,
+                     const Parameters &params, const SpikeTrain &train,
+                     const BenchmarkResult &reference)
+{
+	runBenchmark(name, params,
+	             [&](DefaultController &controller, Recorder &recorder) {
+		             Integrator integrator;
+		             Model::simulate<SimulationFlags>(
+		                 train.getSpikes(), recorder, controller, integrator,
+		                 params, Time::sec(tDelta), train.getMaxT());
+		         })
+	    .compare(reference.data)
+	    .print();
+}
+
+template <typename Integrator>
+void benchmarkAdaptive(const std::string &name, Val eTar,
+                       const Parameters &params, const SpikeTrain &train,
+                       const BenchmarkResult &reference)
+{
+	runBenchmark(
+	    name, params, [&](DefaultController &controller, Recorder &recorder) {
+		    Integrator integrator(eTar);
+		    Model::simulate<SimulationFlags>(train.getSpikes(), recorder,
+		                                     controller, integrator, params,
+		                                     Time::sec(1e-6), train.getMaxT());
+		})
+	    .compare(reference.data)
+	    .print();
+}
 
 int main()
 {
 	// Use the default parameters
-	Parameters params;
+	Parameters p;
 
 	// Create a vector containing all input spikes
 	SpikeTrain train({
@@ -293,150 +322,64 @@ int main()
 	                  {4, 1, 1, 1e-3, 0.03175e-6, -0.03175e-6},
 	                  {3, 0, 0, 1e-3, 0.03175e-6, -0.03175e-6},
 	                 },
-	                 100, 0.05, 0.01);
-	const SpikeVec &spikes = train.getSpikes();
+	                 100, 0.1_s, 0.01);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;
-	BenchmarkResult reference =
-	    runBenchmark(params, "Runge-Kutta (t=1uS)",
+	BenchmarkResult ref =
+	    runBenchmark("Runge-Kutta (t=1uS)", p,
 	                 [&](DefaultController &controller, Recorder &recorder) {
-		    Model::simulate<SimulationFlags, RungeKuttaIntegrator>(
-		        spikes, recorder, controller, params, 1e-6, train.getMaxT());
+		    RungeKuttaIntegrator integrator;
+		    Model::simulate<SimulationFlags>(train.getSpikes(), recorder,
+		                                     controller, integrator, p, 1e-6_s,
+		                                     train.getMaxT());
 		});
+	ref.compare(ref.data).print();
+	std::cout << "Done." << std::endl;
+	std::cout << "--" << std::endl;
 
 	// Print the reference data as stub
-
-	runBenchmark(params, "Euler (t=1uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, EulerIntegrator>(
-		                 spikes, recorder, controller, params, 1e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Euler (t=10uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, EulerIntegrator>(
-		                 spikes, recorder, controller, params, 10e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Euler (t=100uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, EulerIntegrator>(
-		                 spikes, recorder, controller, params, 100e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Euler (t=1mS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, EulerIntegrator>(
-		                 spikes, recorder, controller, params, 1e-3,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
+	benchmarkSimple<EulerIntegrator>("Euler (t=1us)", 1e-6, p, train, ref);
+	benchmarkSimple<EulerIntegrator>("Euler (t=10us)", 10e-6, p, train, ref);
+	benchmarkSimple<EulerIntegrator>("Euler (t=100us)", 100e-6, p, train, ref);
+	benchmarkSimple<EulerIntegrator>("Euler (t=1ms)", 1e-3, p, train, ref);
 
 	std::cout << "--" << std::endl;
 
-	runBenchmark(params, "Midpoint (t=1uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, MidpointIntegrator>(
-		                 spikes, recorder, controller, params, 1e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Midpoint (t=10uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, MidpointIntegrator>(
-		                 spikes, recorder, controller, params, 10e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Midpoint (t=100uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, MidpointIntegrator>(
-		                 spikes, recorder, controller, params, 100e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Midpoint (t=1mS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, MidpointIntegrator>(
-		                 spikes, recorder, controller, params, 1e-3,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
+	benchmarkSimple<MidpointIntegrator>("Midpoint (t=1us)", 1e-6, p, train,
+	                                    ref);
+	benchmarkSimple<MidpointIntegrator>("Midpoint (t=10us)", 10e-6, p, train,
+	                                    ref);
+	benchmarkSimple<MidpointIntegrator>("Midpoint (t=100us)", 100e-6, p, train,
+	                                    ref);
+	benchmarkSimple<MidpointIntegrator>("Midpoint (t=1ms)", 1e-3, p, train,
+	                                    ref);
 
 	std::cout << "--" << std::endl;
 
-	reference.compare(reference.data).print();
-	runBenchmark(params, "Runge-Kutta (t=10uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, RungeKuttaIntegrator>(
-		                 spikes, recorder, controller, params, 10e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Runge-Kutta (t=100uS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, RungeKuttaIntegrator>(
-		                 spikes, recorder, controller, params, 100e-6,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(params, "Runge-Kutta (t=1mS)",
-	             [&](DefaultController &controller, Recorder &recorder) {
-		             Model::simulate<SimulationFlags, RungeKuttaIntegrator>(
-		                 spikes, recorder, controller, params, 1e-3,
-		                 train.getMaxT());
-		         })
-	    .compare(reference.data)
-	    .print();
+	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=1us)", 1e-6, p, train,
+	                                      ref);
+	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=10us)", 10e-6, p,
+	                                      train, ref);
+	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=100us)", 100e-6, p,
+	                                      train, ref);
+	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=1ms)", 1e-3, p, train,
+	                                      ref);
 
 	std::cout << "--" << std::endl;
 
-	runBenchmark(
-	    params, "Dormand-Prince (t=1uS)",
-	    [&](DefaultController &controller, Recorder &recorder) {
-		    Model::simulate<SimulationFlags, AdaptiveRungeKuttaIntegrator>(
-		        spikes, recorder, controller, params, 1e-6, train.getMaxT());
-		})
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(
-	    params, "Dormand-Prince (t=10uS)",
-	    [&](DefaultController &controller, Recorder &recorder) {
-		    Model::simulate<SimulationFlags, AdaptiveRungeKuttaIntegrator>(
-		        spikes, recorder, controller, params, 10e-6, train.getMaxT());
-		})
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(
-	    params, "Dormand-Prince (t=100uS)",
-	    [&](DefaultController &controller, Recorder &recorder) {
-		    Model::simulate<SimulationFlags, AdaptiveRungeKuttaIntegrator>(
-		        spikes, recorder, controller, params, 100e-6, train.getMaxT());
-		})
-	    .compare(reference.data)
-	    .print();
-	runBenchmark(
-	    params, "Dormand-Prince (t=1mS)",
-	    [&](DefaultController &controller, Recorder &recorder) {
-		    Model::simulate<SimulationFlags, AdaptiveRungeKuttaIntegrator>(
-		        spikes, recorder, controller, params, 1e-3, train.getMaxT());
-		})
-	    .compare(reference.data)
-	    .print();
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=1u)", 1e-6,
+	                                           p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=10u)",
+	                                           10e-6, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=100u)",
+	                                           100e-6, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=1m)", 1e-3,
+	                                           p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=10m)",
+	                                           10e-3, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=100m)",
+	                                           100e-3, p, train, ref);
 
 	return 0;
 }

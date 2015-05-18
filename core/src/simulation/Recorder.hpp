@@ -69,7 +69,7 @@ public:
 	 * @param interval is the minimum time between two recorded events (default:
 	 * record every event).
 	 */
-	RecorderBase(const Parameters &params, Time interval = 0)
+	RecorderBase(const Parameters &params, Time interval = Time(0))
 	    : params(params), interval(interval)
 	{
 		reset();
@@ -119,22 +119,6 @@ public:
 	 * Returns a reference at the parameter descriptor.
 	 */
 	const Parameters &getParameters() { return params; }
-};
-
-/**
- * The NullRecorder class can be used to discard all incomming data for maximum
- * efficiency (in the case the data does not need to be recorded).
- */
-class NullRecorder {
-public:
-	/**
-	 * Actually called by the simulation to record the internal state, however
-	 * this class just acts as a null sink for this data.
-	 */
-	void record(Time, const State &, const AuxiliaryState &, bool)
-	{
-		// Discard everything
-	}
 };
 
 /**
@@ -416,7 +400,7 @@ private:
 	              Val iTh)
 	{
 		// Transform the values
-		Val t = trafo.transformTime(ts.toSeconds());
+		Val t = trafo.transformTime(ts.sec());
 		v = trafo.transformVoltage(v);
 		gE = trafo.transformConductance(gE);
 		gI = trafo.transformConductance(gI);
@@ -464,7 +448,7 @@ public:
 	 * @param interval is the minimum time between two recorded events (default:
 	 * record every event).
 	 */
-	VectorRecorder(const Parameters &params, Time interval = 0)
+	VectorRecorder(const Parameters &params, Time interval = Time(0))
 	    : Base(params, interval)
 	{
 	}

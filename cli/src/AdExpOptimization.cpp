@@ -16,11 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "simulation/Model.hpp"
-#include "simulation/Recorder.hpp"
-#include "exploration/Evaluation.hpp"
-#include "exploration/Simplex.hpp"
-#include "utils/Terminal.hpp"
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+#include <exploration/Evaluation.hpp>
+#include <exploration/Simplex.hpp>
+#include <utils/Terminal.hpp>
 
 #include <csignal>
 #include <limits>
@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 		// between the time of the last spike in the spike train and the time
 		// of the first output spike
 		const Val delay =
-		    (std::get<1>(res) - evaluation.getLastSpikeTime()).toSeconds();
+		    (std::get<1>(res) - evaluation.getLastSpikeTime()).sec();
 		const Val timePenalty =
 		    10 * std::max<Val>(0.0, std::min<Val>(0.1, delay));
 		return std::get<0>(res) + timePenalty + errMaxRate + errMinRate + errVolt;
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
 	          << std::endl;
 	std::cout << "Final Delay   : "
 	          << (std::get<1>(evalRes) -
-	              evaluation.getLastSpikeTime().toSeconds()) *
+	              evaluation.getLastSpikeTime().sec()) *
 	                 1000 << "ms" << std::endl;
 	std::cout << "Heaviside Beh.: "
 	          << (ok ? term.rgb(64, 128, 32, true) + "   OK   "

@@ -66,7 +66,7 @@ using SpikeVec = std::vector<Spike>;
  * @param t0 is the time at which the first spike should be generated.
  * @param w is the weight factor with which the spike weights are multiplied.
  */
-SpikeVec buildInputSpikes(Val N, Time T, Time t0 = 0, Val w = 1);
+SpikeVec buildInputSpikes(Val N, Time T, Time t0 = Time(0), Val w = 1);
 
 /**
  * The SpikeTrain class is used to construct input spikes as a set of random

@@ -77,16 +77,16 @@ int main(int argc, char *argv[])
 
 	// Exploration meta-parameters
 	const Val Xi = 5;
-	const Val T = 0.1e-3;
+	const Time T = 0.1e-3_s;
 
 	// Setup the exploration
 	auto mem = std::make_shared<ExplorationMemory>(2048, 2048);
 	Exploration exploration(mem, params, Xi, T,
-	                        0,     // dimX lL
-	                        100,     // minX
+	                        0,    // dimX lL
+	                        100,  // minX
 	                        300,  // maxX
-	                        1,     // dimY lE
-	                        100,     // minY
+	                        1,    // dimY lE
+	                        100,  // minY
 	                        300   // maxY
 	                        );
 

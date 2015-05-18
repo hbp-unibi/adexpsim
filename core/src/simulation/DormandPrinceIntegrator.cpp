@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AdaptiveStepsizeRungeKutta.hpp"
+#include "DormandPrinceIntegrator.hpp"
 
 namespace AdExpSim {
 // Do nothing here, just make sure the header compiles

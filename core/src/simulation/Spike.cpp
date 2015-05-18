@@ -34,7 +34,7 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 	SpikeVec res;
 	res.reserve(c);
 	for (size_t i = 0; i < c; i++) {
-		res.emplace_back(t0 + TimeType(T.t * i), std::min(1.0f, xi - i) * w);
+		res.emplace_back(t0 + Time(T.t * i), std::min(1.0f, xi - i) * w);
 	}
 	return res;
 }
@@ -55,12 +55,12 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n, Time T,
 
 		// Generate nE + nI spikes
 		std::vector<Spike> spikeGroup;
-		std::normal_distribution<> distT(t.toSeconds(), descr.sigma);
+		std::normal_distribution<> distT(t.sec(), descr.sigma);
 		for (size_t i = 0; i < descr.nE; i++) {
-			spikeGroup.emplace_back(distT(gen), descr.wE);
+			spikeGroup.emplace_back(Time::sec(distT(gen)), descr.wE);
 		}
 		for (size_t i = 0; i < descr.nI; i++) {
-			spikeGroup.emplace_back(distT(gen), descr.wI);
+			spikeGroup.emplace_back(Time::sec(distT(gen)), descr.wI);
 		}
 
 		// Sort the spike group by spike time
@@ -78,7 +78,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n, Time T,
 		spikes.insert(spikes.end(), spikeGroup.begin(), spikeGroup.end());
 
 		// Go to the next timestamp
-		t += std::normal_distribution<>(T.toSeconds(), sigmaT)(gen);
+		t += Time::sec(std::normal_distribution<>(T.sec(), sigmaT)(gen));
 	}
 
 	// Add a final range at the end

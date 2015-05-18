@@ -37,12 +37,27 @@
 
 #include <utils/FastMath.hpp>
 
-#include "AdaptiveStepsizeRungeKutta.hpp"
 #include "Parameters.hpp"
 #include "Spike.hpp"
 #include "State.hpp"
 
 namespace AdExpSim {
+/**
+ * The NullRecorder class can be used to discard all incomming data for maximum
+ * efficiency (in the case the data does not need to be recorded).
+ */
+class NullRecorder {
+public:
+	/**
+	 * Actually called by the simulation to record the internal state, however
+	 * this class just acts as a null sink for this data.
+	 */
+	void record(Time, const State &, const AuxiliaryState &, bool)
+	{
+		// Discard everything
+	}
+};
+
 /**
  * The EulerIntegrator class represents euler's method for integrating ODEs. Do
  * not use this. For debugging only.
@@ -50,18 +65,21 @@ namespace AdExpSim {
 class EulerIntegrator {
 public:
 	/**
-	 * Implements the standard Euler integrator.
+	 * Implements the second-order Runge-Kutta method (Midpoint method).
 	 *
-	 * @param h is the timestep width.
+	 * @param tDelta is the timestep width.
 	 * @param s is the current state vector at the previous timestep.
 	 * @param df is the function which calculates the derivative for a given
 	 * state.
-	 * @return the new state for the next timestep.
+	 * @return the new state for the next timestep and the actually used
+	 * timestep.
 	 */
 	template <typename Deriv>
-	static State integrate(Val h, const State &s, Deriv df)
+	static std::pair<State, Time> integrate(Time tDelta, Time, const State &s,
+	                                        Deriv df)
 	{
-		return s + h * df(s);
+		const Val h = tDelta.sec();
+		return std::pair<State, Time>(s + h * df(s), tDelta);
 	}
 };
 
@@ -74,19 +92,22 @@ public:
 	/**
 	 * Implements the second-order Runge-Kutta method (Midpoint method).
 	 *
-	 * @param h is the timestep width.
+	 * @param tDelta is the timestep width.
 	 * @param s is the current state vector at the previous timestep.
 	 * @param df is the function which calculates the derivative for a given
 	 * state.
-	 * @return the new state for the next timestep.
+	 * @return the new state for the next timestep and the actually used
+	 * timestep.
 	 */
 	template <typename Deriv>
-	static State integrate(Val h, const State &s, Deriv df)
+	static std::pair<State, Time> integrate(Time tDelta, Time, const State &s,
+	                                        Deriv df)
 	{
+		const Val h = tDelta.sec();
 		const State k1 = h * df(s);
 		const State k2 = h * df(s + 0.5f * k1);
 
-		return s + k2;
+		return std::pair<State, Time>(s + k2, tDelta);
 	}
 };
 
@@ -99,47 +120,25 @@ public:
 	/**
 	 * Implements the fourth-order Runge-Kutta method.
 	 *
-	 * @param h is the timestep width.
+	 * @param tDelta is the timestep width.
 	 * @param s is the current state vector at the previous timestep.
 	 * @param df is the function which calculates the derivative for a given
 	 * state.
-	 * @return the new state for the next timestep.
+	 * @return the new state for the next timestep and the actually used
+	 * timestep.
 	 */
 	template <typename Deriv>
-	static State integrate(Val h, const State &s, Deriv df)
+	static std::pair<State, Time> integrate(Time tDelta, Time, const State &s,
+	                                        Deriv df)
 	{
+		const Val h = tDelta.sec();
 		const State k1 = h * df(s);
 		const State k2 = h * df(s + 0.5f * k1);
 		const State k3 = h * df(s + 0.5f * k2);
 		const State k4 = h * df(s + k3);
 
-		return s + (k1 + 2.0f * (k2 + k3) + k4) / 6.0f;
-	}
-};
-
-/**
- * The AdaptiveRungeKuttaIntegrator class implements the fifth-order embedded
- * Runge-Kutta method with step-size control. This allows the integrator to
- * skip over regions in which nothing happens.
- */
-class AdaptiveRungeKuttaIntegrator {
-public:
-	/**
-	 * Implements the fourth-order Runge-Kutta method.
-	 *
-	 * @param h is the timestep width.
-	 * @param s is the current state vector at the previous timestep.
-	 * @param df is the function which calculates the derivative for a given
-	 * state.
-	 * @return the new state for the next timestep.
-	 */
-	template <typename Deriv>
-	static State integrate(Val h, const State &s, Deriv df)
-	{
-		auto res = RungeKutta5(h, s, df);
-//		State err = res.second;
-//		std::cout << err[0] << ", " << err[1] << ", " << err[2] << ", " << err[3] << std::endl;
-		return res.first;
+		return std::pair<State, Time>(s + (k1 + 2.0f * (k2 + k3) + k4) / 6.0f,
+		                              tDelta);
 	}
 };
 
@@ -254,7 +253,8 @@ public:
 
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
-		return s.lE() > MIN_RATE || (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV);
+		return s.lE() > MIN_RATE ||
+		       (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV);
 	}
 };
 
@@ -349,19 +349,19 @@ private:
 	}
 
 public:
-	template <uint8_t Flags = 0, typename Integrator = RungeKuttaIntegrator,
-	          typename Recorder, typename Controller>
+	template <uint8_t Flags = 0, typename Recorder = NullRecorder,
+	          typename Integrator = RungeKuttaIntegrator,
+	          typename Controller = DefaultController>
 	static void simulate(const SpikeVec &spikes, Recorder &recorder,
-	                     Controller &controller,
-	                     const WorkingParameters &p = WorkingParameters(),
-	                     Time tDelta = -1, Time tEnd = MAX_TIME,
-	                     const Integrator &integrator = Integrator(),
-	                     const State &s0 = State())
+	              Controller &controller, Integrator &integrator,
+	              const WorkingParameters &p = WorkingParameters(),
+	              Time tDelta = Time(-1), Time tEnd = MAX_TIME,
+	              const State &s0 = State())
 	{
 		// Use the automatically calculated tDelta if no user-defined value is
 		// given
-		if (tDelta <= 0.0) {
-			tDelta = p.tDelta();
+		if (tDelta <= Time(0)) {
+			tDelta = Time::sec(p.tDelta());
 		}
 
 		// Number of spikes and index of the next spike that should be processed
@@ -372,10 +372,11 @@ public:
 		State s = s0;
 
 		// Iterate over all time slices
-		Time t = 0;
+		Time t;
 		while (t < tEnd) {
 			// Fetch the next spike time
-			Time nextSpikeTime = (spikeIdx < nSpikes) ? spikes[spikeIdx].t : MAX_TIME;
+			Time nextSpikeTime =
+			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : MAX_TIME;
 
 			// Handle incomming spikes
 			if (nextSpikeTime <= t) {
@@ -402,15 +403,16 @@ public:
 			// Fetch the currently allowed maximum tDelta -- we'll limit this to
 			// the time needed to reach the next spike (otherwise the ODE would
 			// not be autonomous).
-			const Time maxTDelta = nextSpikeTime - t;
-			const Time tDeltaCur = std::min(maxTDelta, tDelta);
+			const Time tDeltaMax = nextSpikeTime - t;
 
-			//
-			const Val h = tDeltaCur.toSeconds();
-			s = integrator.integrate(h, s, [&p](const State &s) {
-				return df(s, aux<Flags>(s, p), p);
-			});
-			t += tDeltaCur;
+			// Perform the actual integration
+			std::pair<State, Time> res = integrator.integrate(
+			    std::min(tDelta, tDeltaMax), tDeltaMax, s,
+			    [&p](const State &s) { return df(s, aux<Flags>(s, p), p); });
+
+			// Copy the result and advance the time by the performed timestep
+			s = res.first;
+			t += res.second;
 
 			// Calculate the auxiliary state for the recorder
 			AuxiliaryState as = aux<Flags>(s, p);

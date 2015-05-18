@@ -74,13 +74,13 @@ MainWindow::MainWindow() : fitExploration(true)
 	resize(1024, 768);
 
 	// Create and show a simulation
-	NeuronSimulation sim(1e-3);
+	NeuronSimulation sim(Time::sec(0.1e-3));
 	SpikeTrain train({
 		{4, 1, 1e-3, 0.03175e-6},
 		{1, 0, 1e-3, 0.03175e-6}
-	}, 5, 0.1, 0.01);
+	}, 5, Time::sec(0.1), 0.01);
 	sim.prepare(Parameters(), train.getSpikes());
-	sim.run(0.01e-3);
+	sim.run();
 	simulationWidget->show({&sim});
 }
 

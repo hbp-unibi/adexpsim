@@ -178,8 +178,8 @@ public:
 	 * @param maxY is the maximum parameter value in y-direction.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            WorkingParameters &params, Val Xi, Val T, size_t dimX, Val minX,
-	            Val maxX, size_t dimY, Val minY, Val maxY);
+	            WorkingParameters &params, Val Xi, Time T, size_t dimX,
+	            Val minX, Val maxX, size_t dimY, Val minY, Val maxY);
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed
