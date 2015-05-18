@@ -42,6 +42,7 @@ CONFIGURE_FILE(
 )
 
 SET(ADEXPSIM_CORE_SRC
+	src/simulation/AdaptiveStepsizeRungeKutta
 	src/simulation/Model
 	src/simulation/Parameters
 	src/simulation/Recorder
