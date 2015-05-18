@@ -204,7 +204,7 @@ public:
 
 	friend Impl operator/(const T &v1, const T &v2)
 	{
-		return Vec4(v1.arr / v2.arr);
+		return Impl(v1.arr / v2.arr);
 	}
 
 	friend Impl operator*(Val s, const T &v) { return Impl(s * v.arr); }
