@@ -22,8 +22,6 @@
 
 #include <iostream>
 
-//#define BENCHMARK
-
 using namespace AdExpSim;
 
 int main(int argc, char *argv[])
@@ -32,31 +30,21 @@ int main(int argc, char *argv[])
 	Parameters params;
 	MaxValueController controller;
 
-// Create the recorder
-#ifdef BENCHMARK
-	NullRecorder recorder;
-#else
+	// Create the recorder
 	CsvRecorder<> recorder(params, 0.1e-3, std::cout);
-#endif
 
 	// Create a vector containing all input spikes
-	SpikeVec spikes = buildInputSpikes(3.1, 1e-3, 0, 0.03175e-6);
+	SpikeTrain train({{4, 1, 1e-3, 0.03175e-6}, {1, 0, 1e-3, 0.03175e-6}}, 1000,
+	                 0.1, 0.01);
 
 	WorkingParameters wParams(params);
 	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() << std::endl;
 	std::cerr << "Effective spike potential: "
 	          << wParams.eSpikeEff() + params.eL << std::endl;
 
-#ifdef BENCHMARK
-	Timer t;
-	for (int i = 0; i < 1000; i++) {
-#endif
-		Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP | Model::DISABLE_SPIKING>(
-		    spikes, recorder, controller, wParams, 0.01e-3);
-#ifdef BENCHMARK
-	}
-	std::cout << t;
-#endif
+	Model::simulate<Model::CLAMP_ITH | Model::FAST_EXP | Model::DISABLE_SPIKING,
+	                AdaptiveRungeKuttaIntegrator>(train.getSpikes(), recorder,
+	                                              controller, wParams);
 	std::cerr << "Max. membrane potential: " << controller.vMax + params.eL
 	          << std::endl;
 	return 0;

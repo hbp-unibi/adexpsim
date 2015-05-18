@@ -44,6 +44,15 @@ TARGET_LINK_LIBRARIES(AdExploration
 	AdExpSimCore
 )
 
+# AdExpIntegratorBenchmark executable
+ADD_EXECUTABLE(AdExpIntegratorBenchmark
+	src/AdExpIntegratorBenchmark
+)
+
+TARGET_LINK_LIBRARIES(AdExpIntegratorBenchmark
+	AdExpSimCore
+)
+
 # AdExpOptimization executable
 #ADD_EXECUTABLE(AdExpOptimization
 #	src/AdExpOptimization
