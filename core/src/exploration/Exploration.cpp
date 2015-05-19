@@ -62,7 +62,7 @@ bool Exploration::run(const ProgressCallback &progress)
 
 		// Iterate over all elements
 		size_t i = idx;
-		while (i < N) {
+		while (i < N && !abort.load()) {
 			// Calculate the x and y coordinate from the index and update the
 			// parameters according to the given range.
 			const size_t x = i % mem->resX;
