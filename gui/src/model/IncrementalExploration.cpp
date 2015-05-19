@@ -70,8 +70,7 @@ IncrementalExploration::IncrementalExploration(QObject *parent)
       maxX(100),
       minY(1),
       maxY(100),
-      Xi(3),
-      T(1e-3),
+      train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s),
       level(MIN_LEVEL),
       restart(false),
       inEmitData(false),
@@ -79,7 +78,8 @@ IncrementalExploration::IncrementalExploration(QObject *parent)
       currentRunner(nullptr)
 {
 	// Choose an estimate for w
-	params.wSpike() = params.estimateW(Xi);
+	// TODO: Somehow estimate w from spike train
+	params.wSpike() = params.wSpike() * 0.04e-6;
 
 	// Create the exploration memory instances
 	for (int level = MIN_LEVEL; level <= MAX_LEVEL; level++) {
@@ -108,9 +108,8 @@ void IncrementalExploration::start()
 	}
 
 	// Create a new Exploration instance
-	currentExploration =
-	    new Exploration(mem[level - MIN_LEVEL], params, Xi, Time::sec(T), dimX,
-	                    minX, maxX, dimY, minY, maxY);
+	currentExploration = new Exploration(mem[level - MIN_LEVEL], params, train,
+	                                     dimX, minX, maxX, dimY, minY, maxY);
 
 	// Create a new IncrementExplorationRunner and connect all signals
 	currentRunner = new IncrementalExplorationRunner(*currentExploration);
@@ -168,11 +167,8 @@ void IncrementalExploration::runnerProgress(float p)
 	// Calculate the previous progress (sum over 2^i for i = 0..L-1))
 	const int previous = (1 << L) - 1;
 
-	const Val pTotal = (Val(previous) + Val(1 << L) * p) / Val(norm);
-	// std::cout << "L " << L << " norm " << norm << " previous " << previous <<
-	// " p " << p << " res " << pTotal << std::endl;
-
 	// Progress is (previous + 2^L * p) / norm
+	const Val pTotal = (Val(previous) + Val(1 << L) * p) / Val(norm);
 	emit progress(pTotal, true);
 }
 
@@ -204,12 +200,11 @@ void IncrementalExploration::runnerDone(bool ok)
 	}
 }
 
-void IncrementalExploration::updateParameters(Val Xi, Val T,
+void IncrementalExploration::updateParameters(const SpikeTrain &train,
                                               const WorkingParameters &params)
 {
 	// Copy the given parameters and schedule an update
-	this->Xi = Xi;
-	this->T = T;
+	this->train = train;
 	this->params = params;
 	update();
 }

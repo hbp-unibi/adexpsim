@@ -35,7 +35,7 @@
 #include <utils/Matrix.hpp>
 #include <utils/Types.hpp>
 
-#include "Evaluation.hpp"
+#include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
 
@@ -56,31 +56,16 @@ struct ExplorationMemory {
 	size_t resY;
 
 	/**
-	 * Matrix containing the effective spike potentials for each parameters set.
+	 * Matrix containing the probability of the number of expected spikes being
+	 * fulfilled for the given spike train.
 	 */
-	Matrix eSpikeEff;
+	Matrix pBinary;
 
 	/**
-	 * Matrix containing the maximum potential for Xi input spikes.
+	 * Matrix containing hte probability of the number of expected spikes begin
+	 * fulfilled under noise.
 	 */
-	Matrix eMaxXi;
-
-	/**
-	 * Matrix containing the maximum potential for Xi - 1 input spikes.
-	 */
-	Matrix eMaxXiM1;
-
-	/**
-	 * Matrix containing the time at which the spike potential is reached for
-	 * Xi input spikes.
-	 */
-	Matrix tSpike;
-
-	/**
-	 * Matrix containing the time at which the membrane potential is reset to
-	 * the original one for Xi input spikes.
-	 */
-	Matrix tReset;
+	Matrix pSoft;
 
 	/**
 	 * Constructor of the ExplorationMemory class for a certain resolution.
@@ -91,11 +76,8 @@ struct ExplorationMemory {
 	ExplorationMemory(size_t resX = 1024, size_t resY = 1024)
 	    : resX(resX),
 	      resY(resY),
-	      eSpikeEff(resX, resY),
-	      eMaxXi(resX, resY),
-	      eMaxXiM1(resX, resY),
-	      tSpike(resX, resY),
-	      tReset(resX, resY)
+	      pBinary(resX, resY),
+	      pSoft(resX, resY)
 	{
 	}
 
@@ -103,10 +85,9 @@ struct ExplorationMemory {
 	 * Returns an evaluation result structure for the matrix entry at the given
 	 * coordinates.
 	 */
-	EvaluationResult operator()(size_t x, size_t y) const
+	SpikeTrainEvaluationResult operator()(size_t x, size_t y) const
 	{
-		return EvaluationResult(eSpikeEff(x, y), eMaxXi(x, y), eMaxXiM1(x, y),
-		                        tSpike(x, y), tReset(x, y));
+		return SpikeTrainEvaluationResult(pBinary(x, y), pSoft(x, y));
 	}
 };
 
@@ -149,7 +130,7 @@ private:
 	/**
 	 * Evaluation object.
 	 */
-	Evaluation evaluation;
+	SpikeTrainEvaluation evaluation;
 
 public:
 	/**
@@ -165,9 +146,8 @@ public:
 	 *
 	 * @param mem is a reference at the underlying ExplorationMemory instance.
 	 * @param params is the base parameter set.
-	 * @param xi is the number of input spikes for which the neuron should
-	 * spike. Must be larger than one.
-	 * @param T is the delay between two incomming input spikes.
+	 * @param train is the spike train for which the exploration should be
+	 * performed.
 	 * @param dimX is the index of the parameter vector entry which is varried
 	 * in x-direction.
 	 * @param minX is the minimum parameter value in x-direction.
@@ -178,7 +158,8 @@ public:
 	 * @param maxY is the maximum parameter value in y-direction.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            WorkingParameters &params, Val Xi, Time T, size_t dimX,
+	            WorkingParameters &params,
+	            const SpikeTrain &train, size_t dimX,
 	            Val minX, Val maxX, size_t dimY, Val minY, Val maxY);
 
 	/**

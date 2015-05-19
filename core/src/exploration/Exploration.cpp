@@ -34,15 +34,16 @@
 namespace AdExpSim {
 
 Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
-                         WorkingParameters &params, Val Xi, Time T, size_t dimX,
-                         Val minX, Val maxX, size_t dimY, Val minY, Val maxY)
+                         WorkingParameters &params, const SpikeTrain &train,
+                         size_t dimX, Val minX, Val maxX, size_t dimY, Val minY,
+                         Val maxY)
     : mem(mem),
       params(params),
       rangeX(minX, maxX, mem->resX),
       rangeY(minY, maxY, mem->resY),
       dimX(dimX),
       dimY(dimY),
-      evaluation(Xi, T)
+      evaluation(train)
 {
 }
 
@@ -70,14 +71,11 @@ bool Exploration::run(const ProgressCallback &progress)
 			p[dimY] = rangeY.value(y);
 
 			// Run the evaluation for these parameters
-			EvaluationResult result = evaluation.evaluate(p);
+			SpikeTrainEvaluationResult result = evaluation.evaluate(p);
 
 			// Store the evaluation result in the matrices
-			mem->eSpikeEff(x, y) = result.eSpikeEff;
-			mem->eMaxXi(x, y) = result.eMaxXi;
-			mem->eMaxXiM1(x, y) = result.eMaxXiM1;
-			mem->tSpike(x, y) = result.tSpike;
-			mem->tReset(x, y) = result.tReset;
+			mem->pBinary(x, y) = result.pBinary;
+			mem->pSoft(x, y) = result.pSoft;
 
 			// Increment the counter
 			counter++;

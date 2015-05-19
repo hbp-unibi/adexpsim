@@ -64,12 +64,14 @@ ExplorationWidget::ExplorationWidget(QWidget *parent)
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Cost C", "cost");
-	comboFunction->addItem("Max. potential (ξ)", "eMaxXi");
-	comboFunction->addItem("Max. potential (ξ - 1)", "eMaxXiM1");
-	comboFunction->addItem("Spike Time (ξ)", "tSpike");
-	comboFunction->addItem("Reset Time (ξ)", "tResetXi");
-	comboFunction->addItem("Reset Time (ξ - 1)", "tResetXiM1");
+	comboFunction->addItem("Soft Success Probability", "pSoft");
+	comboFunction->addItem("Binary Success Probability", "pBinary");
+	/*	comboFunction->addItem("Cost C", "cost");
+	    comboFunction->addItem("Max. potential (ξ)", "eMaxXi");
+	    comboFunction->addItem("Max. potential (ξ - 1)", "eMaxXiM1");
+	    comboFunction->addItem("Spike Time (ξ)", "tSpike");
+	    comboFunction->addItem("Reset Time (ξ)", "tResetXi");
+	    comboFunction->addItem("Reset Time (ξ - 1)", "tResetXiM1");*/
 
 	fillDimensionCombobox(comboDimX);
 	comboDimX->setCurrentIndex(0);
@@ -202,34 +204,25 @@ void ExplorationWidget::update()
 	// Fill the plot data
 	const QString funStr =
 	    comboFunction->itemData(comboFunction->currentIndex()).toString();
-	Val (*fun)(const EvaluationResult &) =
-	    [](const EvaluationResult &res) -> Val { return log(res.cost()); };
-	if (funStr == "eMaxXi") {
-		fun = [](const EvaluationResult &res) -> Val { return res.eMaxXi; };
-	} else if (funStr == "eMaxXiM1") {
-		fun = [](const EvaluationResult &res) -> Val { return res.eMaxXiM1; };
-	} else if (funStr == "tSpike") {
-		fun = [](const EvaluationResult &res) -> Val { return res.tSpike; };
+
+	Val (*fun)(const SpikeTrainEvaluationResult &) =
+	    [](const SpikeTrainEvaluationResult &res) -> Val { return res.pSoft; };
+	if (funStr == "pBinary") {
+		fun = [](const SpikeTrainEvaluationResult &res)
+		          -> Val { return res.pBinary; };
 	}
 
-	Val minF = std::numeric_limits<Val>::max();
-	Val maxF = std::numeric_limits<Val>::lowest();
 	const ExplorationMemory &mem = currentExploration->getMemory();
 	for (size_t x = 0; x < rX.steps; x++) {
 		for (size_t y = 0; y < rY.steps; y++) {
-			const EvaluationResult res = mem(x, y);
-			const Val f = fun(res);
-			if (res.valid()) {
-				minF = std::min(minF, f);
-				maxF = std::max(maxF, f);
-			}
+			const Val f = fun(mem(x, y));
 			map->data()->setCell(x, y, f);
 		}
 	}
 
 	// Set the gradient and plot it
 	map->setGradient(gradCost);
-	map->setDataRange(QCPRange(minF, maxF));
+	map->setDataRange(QCPRange(0, 1));
 
 	// Replot the graph
 	pltExploration->replot();

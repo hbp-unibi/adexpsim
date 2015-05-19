@@ -33,6 +33,7 @@
 #include <vector>
 
 #include <simulation/Parameters.hpp>
+#include <simulation/Spike.hpp>
 #include <utils/Types.hpp>
 
 #include <QRunnable>
@@ -146,9 +147,9 @@ private:
 	Val minX, maxX, minY, maxY;
 
 	/**
-	 * Top-level parameters.
+	 * Spike train used for the exploration.
 	 */
-	Val Xi, T;
+	SpikeTrain train;
 
 	/**
 	 * Contains the resolution level (as power of two) of the currently running
@@ -218,7 +219,7 @@ public slots:
 	/**
 	 * Should be called whenever the base parameters change.
 	 */
-	void updateParameters(Val Xi, Val T, const WorkingParameters &params);
+	void updateParameters(const SpikeTrain &train, const WorkingParameters &params);
 
 	/**
 	 * Should be called whenever the range of the exploration or the exploration

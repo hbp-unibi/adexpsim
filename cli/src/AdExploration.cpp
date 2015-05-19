@@ -25,7 +25,6 @@
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
 #include <exploration/Exploration.hpp>
-#include <exploration/Evaluation.hpp>
 #include <utils/Terminal.hpp>
 
 using namespace AdExpSim;
@@ -76,16 +75,15 @@ int main(int argc, char *argv[])
 	params.wSpike() = wOrig * 0.04e-6;
 
 	// Exploration meta-parameters
-	const Val Xi = 5;
-	const Time T = 0.1e-3_s;
+	SpikeTrain train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s);
 
 	// Setup the exploration
-	auto mem = std::make_shared<ExplorationMemory>(2048, 2048);
-	Exploration exploration(mem, params, Xi, T,
-	                        0,    // dimX lL
+	auto mem = std::make_shared<ExplorationMemory>(512, 512);
+	Exploration exploration(mem, params, train,
+	                        0,    // dimX: lL
 	                        100,  // minX
 	                        300,  // maxX
-	                        1,    // dimY lE
+	                        1,    // dimY: lE
 	                        100,  // minY
 	                        300   // maxY
 	                        );
@@ -96,21 +94,9 @@ int main(int argc, char *argv[])
 		std::cout << std::endl;
 		std::cout << "Writing result to disk..." << std::endl;
 
-		// Calculate the cost and the ok matrix
-		Matrix cost(mem->resX, mem->resY);
-		MatrixBase<bool> ok(mem->resX, mem->resY);
-		for (size_t x = 0; x < mem->resX; x++) {
-			for (size_t y = 0; y < mem->resY; y++) {
-				EvaluationResult res = (*mem)(x, y);
-				ok(x, y) = res.ok();
-				cost(x, y) = res.cost();
-			}
-		}
-
 		// Dump the matrices
-		std::ofstream("exploration_time.csv") << mem->tSpike;
-		std::ofstream("exploration_cost.csv") << cost;
-		std::ofstream("exploration_ok.csv") << ok;
+		std::ofstream("exploration_pBinary.csv") << mem->pBinary;
+		std::ofstream("exploration_pSoft.csv") << mem->pSoft;
 	} else {
 		std::cout << std::endl;
 	}

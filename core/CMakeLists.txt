@@ -51,6 +51,7 @@ SET(ADEXPSIM_CORE_SRC
 	src/exploration/Evaluation
 	src/exploration/Exploration
 	src/exploration/Simplex
+	src/exploration/SpikeTrainEvaluation
 	src/utils/Matrix
 	src/utils/Terminal
 	src/utils/Timer
