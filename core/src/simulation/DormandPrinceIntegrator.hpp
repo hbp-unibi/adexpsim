@@ -223,7 +223,7 @@ public:
 		static constexpr Val MAX_SCALE = 10.0; // Maximum scale factor.
 
 		// Fetch the step size as floating point number
-		const Val MAX_H = tDeltaMax.sec();
+		const Val MAX_H = std::min(10e-3, tDeltaMax.sec());
 		Val h = hOld == 0.0f ? MAX_H : std::min(hOld, MAX_H);
 
 		// Integrator result storage. First element is the integrated value,
