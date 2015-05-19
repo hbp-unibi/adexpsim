@@ -322,7 +322,7 @@ int main()
 	                  {4, 1, 1, 1e-3, 0.03175e-6, -0.03175e-6},
 	                  {3, 0, 0, 1e-3, 0.03175e-6, -0.03175e-6},
 	                 },
-	                 100, 0.1_s, 0.01);
+	                 100, false, 0.1_s, 0.01);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;

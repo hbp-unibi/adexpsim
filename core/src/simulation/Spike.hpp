@@ -48,6 +48,8 @@ struct Spike {
 
 	Spike(Time t, Val w) : t(t), w(w) {}
 
+	Spike(Time t) : t(t) {}
+
 	friend bool operator<(const Spike &s1, const Spike &s2)
 	{
 		return s1.t < s2.t;
@@ -78,9 +80,34 @@ class SpikeTrain {
 public:
 	/**
 	 * The Descriptor structure describes a group of input spikes (with
-	 * both inhibitory and excitatory spikes).
+	 * both inhibitory and excitatory spikes). For technical reasons, a
+	 * descriptor must contain at least one spike. If this condition is not
+	 * fulfilled in the constructor, the descriptor describes an additional
+	 * excitatory dummy spike with no weight attached to it.
 	 */
-	struct Descriptor {
+	class Descriptor {
+	private:
+		/**
+		 * Function used internally to make sure that the Descriptor contains
+		 * at least one spike -- set the number of excitatory spikes to 1 if
+		 * there is no spike.
+		 */
+		static constexpr uint16_t chooseNE(uint16_t nE, uint16_t nI = 0)
+		{
+			return (nE + nI == 0) ? 1 : nE;
+		}
+
+		/**
+		 * Function used internally to make sure that the additionally created
+		 * input spike (see chooseNE) has no weight and thus does not affect
+		 * the result.
+		 */
+		static constexpr uint16_t chooseWE(Val wE, uint16_t nE, uint16_t nI = 0)
+		{
+			return (nE + nI == 0) ? 0.0 : wE;
+		}
+
+	public:
 		/**
 		 * Number of excitatory spikes in the spike group.
 		 */
@@ -120,7 +147,12 @@ public:
 		 * Constructor for a default excitatory spike group.
 		 */
 		Descriptor(uint16_t nE, uint16_t nOut, Val sigma, Val wE = 1.0)
-		    : nE(nE), nI(0), wE(wE), wI(1.0), sigma(sigma), nOut(nOut)
+		    : nE(chooseNE(nE)),
+		      nI(0),
+		      wE(chooseWE(wE, nE)),
+		      wI(1.0),
+		      sigma(sigma),
+		      nOut(nOut)
 		{
 		}
 
@@ -130,7 +162,12 @@ public:
 		 */
 		Descriptor(uint16_t nE, uint16_t nI, uint16_t nOut, Val sigma, Val wE,
 		           Val wI)
-		    : nE(nE), nI(nI), wE(wE), wI(wI), sigma(sigma), nOut(nOut)
+		    : nE(chooseNE(nE, nI)),
+		      nI(nI),
+		      wE(chooseWE(wE, nE, nI)),
+		      wI(wI),
+		      sigma(sigma),
+		      nOut(nOut)
 		{
 		}
 	};
@@ -171,6 +208,12 @@ private:
 	 */
 	std::vector<Range> ranges;
 
+	/**
+	 * Indices of the spikes in the spike list that coincide with the start of a
+	 * new range.
+	 */
+	std::vector<size_t> rangeStartSpikes;
+
 public:
 	/**
 	 * Constructor of the SpikeTrain class -- calculates a new set of input
@@ -178,10 +221,17 @@ public:
 	 *
 	 * @param descrs is the set of spike train descriptors from which to
 	 * (randomly) choose.
-	 * @param
+	 * @param n is the number of spike train groups the should be created. If
+	 * set to zero, the number of groups is set to the number of descriptors.
+	 * @param sorted if set to true,  the descriptors are not chosen randomly,
+	 * but repeated in the order in which they were given in the descriptor
+	 * list.
+	 * @param T is the time between two spike train groups.
+	 * @param sigmaT is the standard deviation that should be added to the inter
+	 * spike train group delay T.
 	 */
-	SpikeTrain(const std::vector<Descriptor> &descrs, size_t n, Time T,
-	           Val sigmaT);
+	SpikeTrain(const std::vector<Descriptor> &descrs, size_t n = 0,
+	           bool sorted = true, Time T = 0.0334_s, Val sigmaT = 0.0);
 
 	const Time getMaxT() const { return getRanges().back().start; }
 
@@ -194,6 +244,15 @@ public:
 	 * Returns the spike ranges, the last element marks the end time.
 	 */
 	const std::vector<Range> &getRanges() const { return ranges; }
+
+	/**
+	 * Returns the indices of the spikes that coincide with the start of a new
+	 * range.
+	 */
+	const std::vector<size_t> &getRangeStartSpikes() const
+	{
+		return rangeStartSpikes;
+	}
 };
 }
 

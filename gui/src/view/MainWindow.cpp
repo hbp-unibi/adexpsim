@@ -78,7 +78,7 @@ MainWindow::MainWindow() : fitExploration(true)
 	SpikeTrain train({
 		{4, 1, 1e-3, 0.03175e-6},
 		{1, 0, 1e-3, 0.03175e-6}
-	}, 5, Time::sec(0.1), 0.01);
+	}, 5, true, Time::sec(0.1), 0.01);
 	sim.prepare(Parameters(), train.getSpikes());
 	sim.run();
 	simulationWidget->show({&sim});

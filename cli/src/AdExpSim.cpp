@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
 
 	// Create a vector containing all input spikes
 	SpikeTrain train({{4, 1, 1e-3, 0.03175e-6}, {1, 0, 1e-3, 0.03175e-6}}, 10,
-	                 0.1_s, 0.01);
+	                 true, 0.1_s, 0.01);
 
 	WorkingParameters wParams(params);
 	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() << std::endl;

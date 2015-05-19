@@ -39,19 +39,26 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 	return res;
 }
 
-SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n, Time T,
-                       Val sigmaT)
+SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
+                       bool sorted, Time T, Val sigmaT)
 {
-	std::default_random_engine gen;
+	// Use the number of descriptors if n is zero
+	const size_t nDescrs = descrs.size();
+	if (n == 0) {
+		n = nDescrs;
+	}
 
 	// Distribution used to fetch the descriptors
-	std::uniform_int_distribution<> distDescr(0, descrs.size() - 1) ;
+	std::uniform_int_distribution<> distDescr(0, nDescrs - 1);
 
 	// Iterate over all spike trains that should be generated
-	Time t(TimeType(0));
+	Time t;
+	Time minT = MAX_TIME;
+	size_t idx = 0;
+	std::default_random_engine gen;
 	for (size_t i = 0; i < n; i++) {
 		// Fetch a descriptor
-		const Descriptor &descr = descrs[distDescr(gen)];
+		const Descriptor &descr = descrs[sorted ? i % nDescrs : distDescr(gen)];
 
 		// Generate nE + nI spikes
 		std::vector<Spike> spikeGroup;
@@ -62,27 +69,41 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n, Time T,
 		for (size_t i = 0; i < descr.nI; i++) {
 			spikeGroup.emplace_back(Time::sec(distT(gen)), descr.wI);
 		}
+		for (const Spike &spike: spikeGroup) {
+			minT = std::min(minT, spike.t);
+		}
 
 		// Sort the spike group by spike time
 		std::sort(spikeGroup.begin(), spikeGroup.end());
 
 		// Allow no spikes during the spike group itself
 		if (spikeGroup.size() > 1) {
+			rangeStartSpikes.emplace_back(idx);
 			ranges.emplace_back(spikeGroup.front().t, 0);
 		}
 
 		// Remember the number of spikes expected after the spike group
+		rangeStartSpikes.emplace_back(idx + spikeGroup.size() - 1);
 		ranges.emplace_back(spikeGroup.back().t, descr.nOut);
 
 		// Add the spikes to the global spike train
 		spikes.insert(spikes.end(), spikeGroup.begin(), spikeGroup.end());
 
-		// Go to the next timestamp
+		// Go to the next timestamp and increment the total spike index
 		t += Time::sec(std::normal_distribution<>(T.sec(), sigmaT)(gen));
+		idx += spikeGroup.size();
 	}
 
 	// Add a final range at the end
 	ranges.emplace_back(t + T, 0);
+
+	// Shift both spikes and ranges by "minT" to have the first spike at zero
+	for (Spike &spike: spikes) {
+		spike.t -= minT;
+	}
+	for (Range &range: ranges) {
+		range.start -= minT;
+	}
 }
 }
 
