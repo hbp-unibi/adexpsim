@@ -162,8 +162,8 @@ SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train)
 {
 }
 
-// TAU is chosen in such a way, that a value of x = params.eSpikeEff - 50mV
-// results in  a value of
+// Roughly spoken TAU_RANGE is the voltage difference from eSpikeEff
+// needed to get a "good" result in the SOFT measurement
 static constexpr double TAU_RANGE = 0.01;       // 10mV
 static constexpr double TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
 static constexpr double TAU = log(1.0 / TAU_RANGE_VAL - 1.0) / TAU_RANGE;
