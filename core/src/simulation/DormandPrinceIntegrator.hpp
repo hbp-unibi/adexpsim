@@ -163,27 +163,6 @@ template <typename Impl>
 class AdaptiveIntegratorBase {
 private:
 	/**
-	 * Safety factor -- forces the next step size to be a bit smaller than
-	 * necessary. This is important, as the error value is only an estimate.
-	 */
-	static constexpr Val S = 0.9;
-
-	/**
-	 * Absolute minimum for h.
-	 */
-	static constexpr Val MIN_H = 1e-6;
-
-	/**
-	 * Minimum scale factor.
-	 */
-	static constexpr Val MIN_SCALE = 0.2;
-
-	/**
-	 * Maximum scale factor.
-	 */
-	static constexpr Val MAX_SCALE = 10.0;
-
-	/**
 	 * Inverse target error.
 	 */
 	const Val invETar;
@@ -238,6 +217,11 @@ public:
 	std::pair<State, Time> integrate(Time tDelta, Time tDeltaMax,
 	                                 const State &s, Deriv df)
 	{
+		static constexpr Val S = 0.9; // Safety factor
+		static constexpr Val MIN_H = 1e-6; // Absolute minimum for h.
+		static constexpr Val MIN_SCALE = 0.2; // Minimum scale factor.
+		static constexpr Val MAX_SCALE = 10.0; // Maximum scale factor.
+
 		// Fetch the step size as floating point number
 		const Val MAX_H = tDeltaMax.sec();
 		Val h = hOld == 0.0f ? MAX_H : std::min(hOld, MAX_H);
