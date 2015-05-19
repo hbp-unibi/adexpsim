@@ -83,13 +83,14 @@ EvaluationResult Evaluation::evaluate(const WorkingParameters &params,
 	DormandPrinceIntegrator iXi, iXiM1;
 
 	// Simulate for both the sXi and the sXiM1 input spike train
-	Model::simulate<SimulationFlags>(sXi, n, cXi, iXi, params, tDelta, Time::sec(1.0));
-	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, iXiM1, params, tDelta, Time::sec(1.0));
+	Model::simulate<SimulationFlags>(sXi, n, cXi, iXi, params, tDelta,
+	                                 Time::sec(1.0));
+	Model::simulate<SimulationFlags>(sXiM1, n, cXiM1, iXiM1, params, tDelta,
+	                                 Time::sec(1.0));
 
 	// Return the recorded values
-	return EvaluationResult(
-	    params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
-	    cXi.tSpike.sec() - getLastSpikeTime().sec(), 0);
+	return EvaluationResult(params.eSpikeEff(), cXi.vMax, cXiM1.vMax,
+	                        cXi.tSpike.sec() - getLastSpikeTime().sec(), 0);
 }
 }
 
