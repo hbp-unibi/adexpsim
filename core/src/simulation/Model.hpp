@@ -56,6 +56,27 @@ public:
 	{
 		// Discard everything
 	}
+
+	/**
+	 * Called whenever an input spike is consumed by the model
+	 *
+	 * @param t is the time at which the input spike has been consumed.
+	 * @param s is the state after the input spike has been consumed.
+	 */
+	void inputSpike(Time, const State &) {
+		// Discard everything
+	}
+
+	/**
+	 * Called whenever an output spike is produced by the model.
+	 *
+	 * @param t is the time at which the output spike has been produced.
+	 * @param s is the neuron state after the spike has been issued (the neuron
+	 * has already been reset).
+	 */
+	void outputSpike(Time t, const State &) {
+		// Discard everything
+	}
 };
 
 /**
@@ -139,6 +160,19 @@ public:
 
 		return std::pair<State, Time>(s + (k1 + 2.0f * (k2 + k3) + k4) / 6.0f,
 		                              tDelta);
+	}
+};
+
+/**
+ * The NullController class runs the simulation until tEnd is reached, producing
+ * no overhead.
+ */
+class NullController {
+public:
+	static bool control(Time, const State &, const AuxiliaryState &,
+	                    const WorkingParameters &)
+	{
+		return true;
 	}
 };
 
@@ -393,6 +427,7 @@ public:
 				}
 
 				// Record the new values
+				recorder.inputSpike(t, s);
 				recorder.record(t, s, aux<Flags>(s, p), true);
 
 				// Advance the spike index and try again
@@ -429,6 +464,7 @@ public:
 					s.v() = p.eReset();
 					s.dvW() += p.lB();
 					as = aux<Flags>(s, p);
+					recorder.outputSpike(t, s);
 					recorder.record(t, s, as, true);
 				}
 			}

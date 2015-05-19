@@ -79,7 +79,30 @@ public:
 	 * Resets the vector recorder, allowing the same instance to record another
 	 * simulation.
 	 */
-	void reset() {last = Time(TimeType(-(interval.t + 1))); }
+	void reset() { last = Time(TimeType(-(interval.t + 1))); }
+
+	/**
+	 * Called whenever an input spike is consumed by the model
+	 *
+	 * @param t is the time at which the input spike has been consumed.
+	 * @param s is the state after the input spike has been consumed.
+	 */
+	void inputSpike(Time t, const State &s)
+	{
+		// The default record implementation does not care for spikes
+	}
+
+	/**
+	 * Called whenever an output spike is produced by the model.
+	 *
+	 * @param t is the time at which the output spike has been produced.
+	 * @param s is the neuron state after the spike has been issued (the neuron
+	 * has already been reset).
+	 */
+	void outputSpike(Time t, const State &s)
+	{
+		// The default record implementation does not care for spikes
+	}
 
 	/**
 	 * Called by the simulation to record the current internal state.
@@ -261,16 +284,6 @@ struct VectorRecorderData {
 	Val maxConductance;
 
 	/**
-	 * Minimum recorded current.
-	 */
-//	Val minCurrent;
-
-	/**
-	 * Maximum recorded current.
-	 */
-//	Val maxCurrent;
-
-	/**
 	 * Minimum recorded current with rejected outliers.
 	 */
 	Val minCurrentSmooth;
@@ -285,13 +298,9 @@ struct VectorRecorderData {
 	 */
 	VectorRecorderData() { reset(); }
 
-	size_t size() const {
-		return ts.size();
-	}
+	size_t size() const { return ts.size(); }
 
-	State operator[](size_t i) const {
-		return State(v[i], gE[i], gI[i], w[i]);
-	}
+	State operator[](size_t i) const { return State(v[i], gE[i], gI[i], w[i]); }
 
 	/**
 	 * Resets the data instance.
@@ -317,8 +326,6 @@ struct VectorRecorderData {
 		maxVoltage = std::numeric_limits<Val>::lowest();
 		minConductance = std::numeric_limits<Val>::max();
 		maxConductance = std::numeric_limits<Val>::lowest();
-//		minCurrent = std::numeric_limits<Val>::max();
-//		maxCurrent = std::numeric_limits<Val>::lowest();
 		minCurrentSmooth = std::numeric_limits<Val>::max();
 		maxCurrentSmooth = std::numeric_limits<Val>::lowest();
 	}
@@ -419,14 +426,11 @@ private:
 		minMax(data.minConductance, data.maxConductance, gE);
 		minMax(data.minConductance, data.maxConductance, gI);
 
-		// Adjust the smooth minimum/maximum values (does not contain iTh and
-		// iSum and is not updated if iTh is smaller then the current minimum
-/*		if (iTh > data.minCurrentSmooth || data.minCurrentSmooth == std::numeric_limits<Val>::max()) {*/
-			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, w);
-			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iL);
-			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iE);
-			minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iI);
-//		}
+		// Adjust the smooth minimum/maximum values (does not contain iTh)
+		minMax(data.minCurrentSmooth, data.maxCurrentSmooth, w);
+		minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iL);
+		minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iE);
+		minMax(data.minCurrentSmooth, data.maxCurrentSmooth, iI);
 
 		// Store the data in the vector
 		data.ts.push_back(t);
