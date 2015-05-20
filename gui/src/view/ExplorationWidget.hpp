@@ -21,20 +21,25 @@
 
 #include <QWidget>
 
-#include <qcustomplot.h>
-
 class QComboBox;
+class QLabel;
+class QProgressBar;
+class QCustomPlot;
+class QCPAxis;
 class QStatusBar;
 class QToolBar;
 class QVBoxLayout;
 
 namespace AdExpSim {
 
+class Parameters;
+class Exploration;
+
 /**
  * The ExplorationWidget shows the exploration result as colored image.
  */
-class ExplorationWidget: public QWidget {
-Q_OBJECT
+class ExplorationWidget : public QWidget {
+	Q_OBJECT
 
 private:
 	QToolBar *toolbar;
@@ -44,20 +49,39 @@ private:
 	QVBoxLayout *layout;
 	QProgressBar *progressBar;
 	QLabel *statusLabel;
+	QLabel *lblDimX;
+	QLabel *lblDimY;
+	QLabel *lblPBinary;
+	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
-	QCPColorGradient gradCost;
+	std::unique_ptr<Exploration> exploration;
+	std::shared_ptr<Parameters> parameters;
 
-	std::unique_ptr<Exploration> currentExploration;
+	void dimensionChanged();
+
+	size_t getDimX();
+	size_t getDimY();
+
+	QPointF workingParametersToPlot(Val x, Val y);
+	QPointF parametersToPlot(Val x, Val y);
+	QPointF plotToWorkingParameters(Val x, Val y);
+
+	QString axisName(size_t dim, bool unit = false);
 
 private slots:
 	void rangeChanged();
+	void dimensionChanged(QCPAxis *axis, size_t dim);
+	void dimensionXChanged();
+	void dimensionYChanged();
+	void updateInfo(QMouseEvent *event = nullptr);
 	void update();
 
 public:
 	/**
 	 * Constructor of the ExplorationWidget class.
 	 */
-	ExplorationWidget(QWidget *parent);
+	ExplorationWidget(QWidget *parent,
+	                  std::shared_ptr<Parameters> parameters);
 
 	/**
 	 * Destructor of the ExplorationWidget class.
@@ -76,16 +100,20 @@ public:
 
 public slots:
 	/**
-	 * Slot that can be connected to the corresponding event of the 
+	 * Slot that can be connected to the corresponding event of the
 	 * IncrementalExploration class.
 	 */
 	void progress(float p, bool show);
 
+	/**
+	 * Centers the view according to the current parameters.
+	 */
+	void centerView();
+
 signals:
-	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY, Val maxY);
+	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,
+	                 Val maxY);
 };
-
-
 }
 
 #endif /* _ADEXPSIM_EXPLORATION_WIDGET_HPP_ */

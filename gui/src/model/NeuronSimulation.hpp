@@ -29,6 +29,7 @@
 #ifndef _ADEXPSIM_NEURON_SIMULATION_HPP_
 #define _ADEXPSIM_NEURON_SIMULATION_HPP_
 
+#include <simulation/DormandPrinceIntegrator.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Recorder.hpp>
 #include <simulation/Spike.hpp>
@@ -68,7 +69,7 @@ private:
 	/**
 	 * Internally used integrator.
 	 */
-	RungeKuttaIntegrator integrator;
+	DormandPrinceIntegrator integrator;
 
 public:
 	/**

@@ -26,6 +26,8 @@
 #ifndef _ADEXPSIM_MAIN_WINDOW_HPP_
 #define _ADEXPSIM_MAIN_WINDOW_HPP_
 
+#include <memory>
+
 #include <QMainWindow>
 
 class QDockWidget;
@@ -36,12 +38,14 @@ class NeuronSimulationWidget;
 class IncrementalExploration;
 class Exploration;
 class ExplorationWidget;
+class Parameters;
 
 class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 private:
 	bool fitExploration;
+	std::shared_ptr<Parameters> parameters;
 
 	IncrementalExploration *exploration;
 	QDockWidget *explorationDockWidget;

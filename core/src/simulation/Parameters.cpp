@@ -22,6 +22,150 @@
 
 namespace AdExpSim {
 
+const std::vector<std::string> WorkingParameters::names = {
+    "λL",     "λE",     "λI",  "λW", "eE", "eI", "eTh",
+    "eSpike", "eReset", "ΔTh", "λA", "λB", "w"};
+
+const std::vector<std::string> WorkingParameters::descriptions = {
+    "Membrane leak rate",            "Excitatory channel decay rate",
+    "Inhibitory channel decay rate", "Adaptation current decay rate",
+    "Excitatory reversal potential", "Inhibitory reveral potential",
+    "Spike threshold potential",     "Spike generation potential",
+    "Reset potential",               "Spike slope factor",
+    "Subthreshold adaptation rate",  "Spike adaptation current",
+    "Synapse weight multiplicator"};
+
+const std::vector<std::string> WorkingParameters::units = {
+    "Hz", "Hz", "Hz", "Hz", "V", "V", "V", "V", "V", "V", "Hz", "V/s", "V/As"};
+
+const std::vector<bool> WorkingParameters::linear = {
+    true, false, false, false, true, true, true,
+    true, true,  true,  true,  true, true};
+
+const std::vector<std::string> WorkingParameters::originalNames = {
+    "gL",     "τE",     "τI",  "τW", "eE", "eI", "eTh",
+    "eSpike", "eReset", "ΔTh", "gA", "iB", "w"};
+
+const std::vector<std::string> WorkingParameters::originalUnits = {
+    "S", "s", "s", "s", "V", "V", "V", "V", "V", "V", "S", "A", "S"};
+
+const std::vector<std::string> WorkingParameters::originalDescriptions = {
+    "Membrane leak conductance",
+    "Excitatory channel decay time const.",
+    "Inhibitory channel decay time const.",
+    "Adaptation current decay time const.",
+    "Excitatory reversal potential",
+    "Inhibitory reveral potential",
+    "Spike threshold potential",
+    "Spike generation potential",
+    "Reset potential",
+    "Spike slope factor",
+    "Subthreshold adaptation time const.",
+    "Spike adaptation current",
+    "Synapse weight multiplicator"};
+
+Parameters WorkingParameters::toParameters(Val cM, Val eL) const
+{
+	Parameters res;
+	res.cM = cM;
+	res.gL = lL() * cM;
+	res.eL = eL;
+	res.eE = eE() + eL;
+	res.eI = eI() + eL;
+	res.eTh = eTh() + eL;
+	res.eSpike = eSpike() + eL;
+	res.eReset = eReset() + eL;
+	res.deltaTh = deltaTh();
+	res.tauI = 1.0 / lI();
+	res.tauE = 1.0 / lE();
+	res.tauW = 1.0 / lW();
+	res.a = lA() * cM;
+	res.b = lB() * cM;
+	res.w = wSpike() * cM;
+	return res;
+}
+
+Val WorkingParameters::toParameter(Val v, size_t idx, Val cM, Val eL)
+{
+	switch (idx) {
+		case 0:
+		case 10:
+		case 11:
+		case 12:
+			return v * cM;
+		case 1:
+		case 2:
+		case 3:
+			return 1.0 / v;
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+			return v + eL;
+		case 9:
+			return v;
+	}
+	return v;
+}
+
+Val WorkingParameters::fromParameter(Val v, size_t idx, Val cM, Val eL)
+{
+	switch (idx) {
+		case 0:
+		case 10:
+		case 11:
+		case 12:
+			return v / cM;
+		case 1:
+		case 2:
+		case 3:
+			return 1.0 / v;
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 8:
+			return v - eL;
+		case 9:
+			return v;
+	}
+	return v;
+}
+
+Val WorkingParameters::fetchParameter(size_t idx, const Parameters &params)
+{
+	switch (idx) {
+		case 0:
+			return params.gL;
+		case 1:
+			return params.tauE;
+		case 2:
+			return params.tauI;
+		case 3:
+			return params.tauW;
+		case 4:
+			return params.eE;
+		case 5:
+			return params.eI;
+		case 6:
+			return params.eTh;
+		case 7:
+			return params.eSpike;
+		case 8:
+			return params.eReset;
+		case 9:
+			return params.deltaTh;
+		case 10:
+			return params.a;
+		case 11:
+			return params.b;
+		case 12:
+			return params.w;
+	}
+	return 0.0;
+}
+
 Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 {
 	constexpr double EPS = 1e-9;
@@ -41,7 +185,7 @@ Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 	double x = eTh + EPS;
 	while (true) {
 		const double dx = (logDeltaTh + (x - eTh) * invDeltaTh - log(x)) *
-		               (x * deltaTh) / (x - deltaTh);
+		                  (x * deltaTh) / (x - deltaTh);
 		x -= dx;
 		if (fabs(dx) < EPS) {
 			break;
@@ -52,9 +196,7 @@ Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 
 Val WorkingParameters::calculateEExtr(double lE0)
 {
-	return eE() * (1.0 - exp(-lE0/lE()));
+	return eE() * (1.0 - exp(-lE0 / lE()));
 }
-
-
 }
 

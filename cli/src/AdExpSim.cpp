@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	CsvRecorder<> recorder(params, 0.1e-3_s, std::cout);
 
 	// Create a vector containing all input spikes
-	SpikeTrain train({{4, 1, 1e-3, 0.03175e-6}, {1, 0, 1e-3, 0.03175e-6}}, 10,
+	SpikeTrain train({{4, 1, 1e-3}, {1, 0, 1e-3}}, 10,
 	                 true, 0.1_s, 0.01);
 
 	WorkingParameters wParams(params);

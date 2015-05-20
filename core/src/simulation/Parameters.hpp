@@ -30,6 +30,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <string>
+#include <vector>
 
 #include <utils/Types.hpp>
 #include <utils/Vector.hpp>
@@ -51,6 +53,7 @@ constexpr Val tauE = 5e-3;      // Time constant for exponential decay of gE
 constexpr Val tauW = 144e-3;    // Time constant for exponential decay of w
 constexpr Val a = 4e-9;         // Subthreshold adaptation [S]
 constexpr Val b = 0.0805e-9;    // Spike triggered adaptation [A]
+constexpr Val w = 0.03e-6;      // Default synapse weight [S]
 }
 
 /**
@@ -71,6 +74,7 @@ struct Parameters {
 	Val tauW = DefaultParameters::tauW;        // Time constant for decay of w
 	Val a = DefaultParameters::a;              // Subthreshold adaptation [S]
 	Val b = DefaultParameters::b;              // Spike triggered adaptation [A]
+	Val w = DefaultParameters::w;              // Synapse weight  [S]
 };
 
 /**
@@ -131,7 +135,7 @@ public:
 	          p.deltaTh,          // deltaTh (9)
 	          p.a / p.cM,         // lA (10)
 	          p.b / p.cM,         // lB (11)
-	          Val(1.0) / p.cM     // wSpike (12)
+	          p.w / p.cM     // wSpike (12)
 	      })
 	{
 		update();
@@ -150,6 +154,123 @@ public:
 	NAMED_VECTOR_ELEMENT(lA, 10);      // Subthreshold adaptation [Hz]
 	NAMED_VECTOR_ELEMENT(lB, 11);      // Spike trig. adaptation cur. [V/s]
 	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [V/A*s]
+
+	/**
+	 * Vector containing the name of each component.
+	 */
+	static const std::vector<std::string> names;
+
+	/**
+	 * Vector containing a description of each component.
+	 */
+	static const std::vector<std::string> descriptions;
+
+	/**
+	 * Vector containing the unit of each component.
+	 */
+	static const std::vector<std::string> units;
+
+	/**
+	 * Vector specifying whether there is a linear/affine transformation from
+	 * the original parameter set to the component in the working parameter set.
+	 */
+	static const std::vector<bool> linear;
+
+	/**
+	 * Names of the corresponding component in the original parameter set.
+	 */
+	static const std::vector<std::string> originalNames;
+
+	/**
+	 * Descriptions of the component in the original parameter set.
+	 */
+	static const std::vector<std::string> originalDescriptions;
+
+	/**
+	 * Units of the component in the original parameter set.
+	 */
+	static const std::vector<std::string> originalUnits;
+
+	/**
+	 * Creates a Parameters instance from the this WorkingParameters instance.
+	 * Requires a reference to a Parameters instance form which the superfluous
+	 * parameters (cM and eL) can be read.
+	 */
+	Parameters toParameters(const Parameters &params) const {
+		return toParameters(params.cM, params.eL);
+	}
+
+	/**
+	 * Creates a Parameters instance from the this WorkingParameters instance.
+	 * Requires a reference to a Parameters instance form which the superfluous
+	 * parameters (cM and eL) can be read.
+	 */
+	Parameters toParameters(Val cM, Val eL) const;
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * WorkingParameters to the Parameters range.
+	 */
+	Val toParameter(size_t idx, const Parameters &params) const {
+		return toParameter(arr[idx], idx, params);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * WorkingParameters to the Parameters range.
+	 */
+	Val toParameter(size_t idx, Val cM, Val eL) const {
+		return toParameter(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * WorkingParameters to the Parameters range.
+	 */
+	static Val toParameter(Val v, size_t idx, const Parameters &params) {
+		return toParameter(v, idx, params.cM, params.eL);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * WorkingParameters to the Parameters range.
+	 */
+	static Val toParameter(Val v, size_t idx, Val cM, Val eL);
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * Parameters to the WorkingParameters range.
+	 */
+	Val fromParameter(size_t idx, const Parameters &params) const {
+		return fromParameter(arr[idx], idx, params);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * Parameters to the WorkingParameters range.
+	 */
+	Val fromParameter(size_t idx, Val cM, Val eL) const {
+		return fromParameter(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * Parameters to the WorkingParameters range.
+	 */
+	static Val fromParameter(Val v, size_t idx, const Parameters &params) {
+		return fromParameter(v, idx, params.cM, params.eL);
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * Parameters to the WorkingParameters range.
+	 */
+	static Val fromParameter(Val v, size_t idx, Val cM, Val eL);
+
+	/**
+	 * Fetches a value from a Parameter set.
+	 */
+	static Val fetchParameter(size_t idx, const Parameters &params);
 
 	/**
 	 * Function used to calculate the effective spike potential.
@@ -175,15 +296,15 @@ public:
 	 */
 	bool valid() const
 	{
-		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && deltaTh() > 0
-		       && lA() > 0 && lB() > 0 && eE() > eI() && eE() > eTh()
-                       && eE() > 0 && eSpike() > eReset();
+		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && deltaTh() > 0 &&
+		       lA() > 0 && lB() > 0 && eE() > eI() && eE() > eTh() &&
+		       eE() > 0 && eSpike() > eReset();
 	}
 
 	/**
 	 * Estimates a reasonable staring value for the weight w for a certain
-	 * number of input spikes. w is chosen in such a way, that the maximum 
-	 * membrane potential that could theoretically be reached equals the 
+	 * number of input spikes. w is chosen in such a way, that the maximum
+	 * membrane potential that could theoretically be reached equals the
 	 * effective spike potential. In practive the returned weight is too small,
 	 * but the order of magnitude is correct.
 	 *

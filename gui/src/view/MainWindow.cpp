@@ -22,6 +22,7 @@
 #include <QTimer>
 #include <QLabel>
 
+#include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <exploration/Exploration.hpp>
 #include <model/IncrementalExploration.hpp>
@@ -43,15 +44,15 @@ static QDockWidget *createDockWidget(const QString &name, QMainWindow *parent)
 	return res;
 }
 
-MainWindow::MainWindow() : fitExploration(true)
+MainWindow::MainWindow()
+    : fitExploration(true), parameters(std::make_shared<Parameters>())
 {
 	// Create the incremental exploration object
 	exploration = new IncrementalExploration(this);
-	exploration->update();
 
 	// Create a new ExplorationWidget and add it as one dock widget
 	explorationDockWidget = createDockWidget("Exploration", this);
-	explorationWidget = new ExplorationWidget(explorationDockWidget);
+	explorationWidget = new ExplorationWidget(explorationDockWidget, parameters);
 	explorationDockWidget->setWidget(explorationWidget);
 
 	// Connect the exploration events with the exploration widget and vice versa
@@ -62,6 +63,8 @@ MainWindow::MainWindow() : fitExploration(true)
 	connect(explorationWidget,
 	        SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)),
 	        exploration, SLOT(updateRange(size_t, size_t, Val, Val, Val, Val)));
+
+	explorationWidget->centerView();
 
 	// Create a new NeuronSimulationWidget and add it as one dock widget
 	simulationDockWidget = createDockWidget("Simulation", this);
@@ -75,11 +78,9 @@ MainWindow::MainWindow() : fitExploration(true)
 
 	// Create and show a simulation
 	NeuronSimulation sim(Time::sec(0.1e-3));
-	SpikeTrain train({
-		{4, 1, 1e-3, 0.03175e-6},
-		{1, 0, 1e-3, 0.03175e-6}
-	}, 5, true, Time::sec(0.1), 0.01);
-	sim.prepare(Parameters(), train.getSpikes());
+	SpikeTrain train({{4, 1, 1e-3}, {1, 0, 1e-3}}, 5,
+	                 true, Time::sec(0.1), 0.01);
+	sim.prepare(*parameters, train.getSpikes());
 	sim.run();
 	simulationWidget->show({&sim});
 }

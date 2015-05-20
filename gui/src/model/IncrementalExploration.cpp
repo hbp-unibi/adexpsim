@@ -70,17 +70,13 @@ IncrementalExploration::IncrementalExploration(QObject *parent)
       maxX(100),
       minY(1),
       maxY(100),
-      train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s),
+      train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 10, false, 0.033_s),
       level(MIN_LEVEL),
       restart(false),
       inEmitData(false),
       currentExploration(nullptr),
       currentRunner(nullptr)
 {
-	// Choose an estimate for w
-	// TODO: Somehow estimate w from spike train
-	params.wSpike() = params.wSpike() * 0.04e-6;
-
 	// Create the exploration memory instances
 	for (int level = MIN_LEVEL; level <= MAX_LEVEL; level++) {
 		mem.emplace_back(

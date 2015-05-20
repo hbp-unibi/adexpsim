@@ -16,27 +16,19 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NeuronSimulation.hpp"
+#ifndef _EXPLORATION_WIDGET_GRADIENTS_HPP_
+#define _EXPLORATION_WIDGET_GRADIENTS_HPP_
+
+#include <qcustomplot.h>
 
 namespace AdExpSim {
 
-void NeuronSimulation::prepare(const Parameters &parameters,
-                               const SpikeVec &spikes)
-{
-	this->parameters = parameters;
-	this->spikes = spikes;
+struct ExplorationWidgetGradients {
+	static const QCPColorGradient& blue();
+	static const QCPColorGradient& green();
+	static const QCPColorGradient& orange();
+	static const QCPColorGradient& spectral();
+};
 }
 
-void NeuronSimulation::run(Time tDelta)
-{
-	// Reset the recorder and the controller
-	recorder.reset();
-	controller.reset();
-	integrator.reset();
-
-	// Run the actual simulation
-	Model::simulate(spikes, recorder, controller, integrator, parameters, tDelta);
-}
-
-}
-
+#endif /* _EXPLORATION_WIDGET_GRADIENTS_HPP_ */

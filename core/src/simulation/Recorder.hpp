@@ -124,7 +124,7 @@ public:
 
 			// Make sure the timestamps are monotonous.
 			if (t <= last) {
-				t = Time(last.t + TimeType(1));
+				t = last + 1e-6_s;
 			}
 
 			// Call the actual record function with the correctly rescaled

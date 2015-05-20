@@ -55,6 +55,8 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/model/NeuronSimulation
 	src/model/IncrementalExploration
 	src/view/ExplorationWidget
+	src/view/ExplorationWidgetGradients
+	src/view/ExplorationWidgetCrosshair
 	src/view/MainWindow
 	src/view/NeuronSimulationWidget
 	src/main

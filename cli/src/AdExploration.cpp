@@ -71,8 +71,6 @@ int main(int argc, char *argv[])
 
 	// Setup the parameters, set an initial value for w
 	WorkingParameters params;
-	float wOrig = params.wSpike();
-	params.wSpike() = wOrig * 0.04e-6;
 
 	// Exploration meta-parameters
 	SpikeTrain train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s);

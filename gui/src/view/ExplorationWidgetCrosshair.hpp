@@ -16,27 +16,33 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "NeuronSimulation.hpp"
+#ifndef _EXPLORATION_WIDGET_CROSSHAIR_HPP_
+#define _EXPLORATION_WIDGET_CROSSHAIR_HPP_
+
+#include <qcustomplot.h>
 
 namespace AdExpSim {
+class ExplorationWidgetCrosshair : public QCPAbstractItem {
+	Q_OBJECT
+public:
+	ExplorationWidgetCrosshair(QCustomPlot *parentPlot);
+	virtual ~ExplorationWidgetCrosshair();
 
-void NeuronSimulation::prepare(const Parameters &parameters,
-                               const SpikeVec &spikes)
-{
-	this->parameters = parameters;
-	this->spikes = spikes;
+	// getters:
+	QPen pen() const { return mPen; }
+
+	// setters;
+	void setPen(const QPen &pen);
+
+	QCPItemPosition *const center;
+
+	double selectTest(const QPointF &pos, bool onlySelectable,
+	                  QVariant *details = 0) const override;
+
+protected:
+	QPen mPen;
+	void draw(QCPPainter *painter) override;
+};
 }
 
-void NeuronSimulation::run(Time tDelta)
-{
-	// Reset the recorder and the controller
-	recorder.reset();
-	controller.reset();
-	integrator.reset();
-
-	// Run the actual simulation
-	Model::simulate(spikes, recorder, controller, integrator, parameters, tDelta);
-}
-
-}
-
+#endif /* _EXPLORATION_WIDGET_CROSSHAIR_HPP_ */
