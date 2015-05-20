@@ -29,7 +29,6 @@
 #define _ADEXPSIM_MATRIX_HPP_
 
 #include <memory>
-#include <iostream>
 #include <ostream>
 #include <sstream>
 #ifndef NDEBUG
@@ -177,7 +176,6 @@ public:
 		// Only perform the copy operation if more than one instance refers to
 		// the memory
 		if (buf.use_count() > 1) {
-			std::cout << "detatching memory" << std::endl;
 			// Hold a reference to the old buffer on the stack
 			std::shared_ptr<Buffer> oldBuf = buf;
 

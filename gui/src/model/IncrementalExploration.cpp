@@ -36,12 +36,11 @@ IncrementalExplorationRunner::IncrementalExplorationRunner(
     : aborted(false), exploration(exploration)
 {
 	setAutoDelete(false);
-	std::cout << "Create IncrementalExplorationRunner" << std::endl;
 }
 
 IncrementalExplorationRunner::~IncrementalExplorationRunner()
 {
-	std::cout << "Destroy IncrementalExplorationRunner" << std::endl;
+	// Destructor needed here for shared pointers
 }
 
 void IncrementalExplorationRunner::run()
@@ -170,7 +169,6 @@ void IncrementalExploration::runnerProgress(float p)
 
 void IncrementalExploration::runnerDone(bool ok)
 {
-	std::cout << "Runner done, ok = " << ok << std::endl;
 	// If the result is ok, emit the data
 	if (ok) {
 		// If the last level is reached, emit a last progress event
