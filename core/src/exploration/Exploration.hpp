@@ -158,7 +158,7 @@ public:
 	 * @param maxY is the maximum parameter value in y-direction.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            WorkingParameters &params,
+	            const WorkingParameters &params,
 	            const SpikeTrain &train, size_t dimX,
 	            Val minX, Val maxX, size_t dimY, Val minY, Val maxY);
 
