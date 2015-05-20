@@ -296,7 +296,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 
 	// Normalize the result by the total simulation time in seconds
 	res.pBinary /= T.sec();
-	res.pSoft /= T.sec();
+	res.pSoft = res.pSoft * res.pBinary / T.sec();
 
 	return res;
 }
