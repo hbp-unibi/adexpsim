@@ -39,13 +39,15 @@ class IncrementalExploration;
 class Exploration;
 class ExplorationWidget;
 class Parameters;
+class SpikeTrain;
 
 class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 private:
 	bool fitExploration;
-	std::shared_ptr<Parameters> parameters;
+	std::shared_ptr<Parameters> params;
+	std::shared_ptr<SpikeTrain> train;
 
 	IncrementalExploration *exploration;
 	QDockWidget *explorationDockWidget;
@@ -56,6 +58,9 @@ private:
 
 private slots:
 	void data(const Exploration &exploration);
+
+	void updateSimulation();
+	void explorationWidgetUpdateParameters();
 
 public:
 	MainWindow();

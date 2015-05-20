@@ -60,8 +60,8 @@ static void fillDimensionCombobox(QComboBox *box)
 }
 
 ExplorationWidget::ExplorationWidget(QWidget *parent,
-                                     std::shared_ptr<Parameters> parameters)
-    : exploration(nullptr), parameters(parameters)
+                                     std::shared_ptr<Parameters> params)
+    : exploration(nullptr), params(params)
 {
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
@@ -116,6 +116,8 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	        SLOT(rangeChanged()));
 	connect(pltExploration, SIGNAL(mouseMove(QMouseEvent *)), this,
 	        SLOT(updateInfo(QMouseEvent *)));
+	connect(pltExploration, SIGNAL(mouseDoubleClick(QMouseEvent *)), this,
+	        SLOT(plotDoubleClick(QMouseEvent *)));
 
 	// Create the status bar
 	QWidget *statusWidget = new QWidget(this);
@@ -183,12 +185,12 @@ QPointF ExplorationWidget::workingParametersToPlot(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::toParameter(x, dimX, *parameters);
+		x = WorkingParameters::toParameter(x, dimX, *params);
 	}
 
 	size_t dimY = getDimY();
 	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::toParameter(y, dimY, *parameters);
+		y = WorkingParameters::toParameter(y, dimY, *params);
 	}
 
 	return QPointF(x, y);
@@ -198,12 +200,12 @@ QPointF ExplorationWidget::parametersToPlot(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (!WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, *parameters);
+		x = WorkingParameters::fromParameter(x, dimX, *params);
 	}
 
 	size_t dimY = getDimY();
 	if (!WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, *parameters);
+		y = WorkingParameters::fromParameter(y, dimY, *params);
 	}
 
 	return QPointF(x, y);
@@ -213,12 +215,27 @@ QPointF ExplorationWidget::plotToWorkingParameters(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, *parameters);
+		x = WorkingParameters::fromParameter(x, dimX, *params);
 	}
 
 	size_t dimY = getDimY();
 	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, *parameters);
+		y = WorkingParameters::fromParameter(y, dimY, *params);
+	}
+
+	return QPointF(x, y);
+}
+
+QPointF ExplorationWidget::plotToParameters(Val x, Val y)
+{
+	size_t dimX = getDimX();
+	if (!WorkingParameters::linear[dimX]) {
+		x = WorkingParameters::toParameter(x, dimX, *params);
+	}
+
+	size_t dimY = getDimY();
+	if (!WorkingParameters::linear[dimY]) {
+		y = WorkingParameters::toParameter(y, dimY, *params);
 	}
 
 	return QPointF(x, y);
@@ -252,9 +269,9 @@ void ExplorationWidget::rangeChanged()
 void ExplorationWidget::dimensionChanged(QCPAxis *axis, size_t dim)
 {
 	// Center the axis around the value
-	Val v = WorkingParameters::fetchParameter(dim, *parameters);
+	Val v = WorkingParameters::fetchParameter(dim, *params);
 	if (!WorkingParameters::linear[dim]) {
-		v = WorkingParameters::fromParameter(v, dim, *parameters);
+		v = WorkingParameters::fromParameter(v, dim, *params);
 	}
 	if (v == 0) {
 		axis->setRange(QCPRange(-0.1, 0.1));
@@ -318,11 +335,39 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 	}
 }
 
+void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
+{
+	// Transform the coordinates to working parameters
+	Val x = pltExploration->xAxis->pixelToCoord(event->localPos().x());
+	Val y = pltExploration->yAxis->pixelToCoord(event->localPos().y());
+	QPointF p = plotToWorkingParameters(x, y);
+
+	// Create working parameters from the current parameters
+	WorkingParameters wp(*params);
+
+	// Update the corrsponding dimensions and check whether the working
+	// parameters are still valid -- if yes, update the parameters and emit the
+	// updateParameters event
+	wp[getDimX()] = p.x();
+	wp[getDimY()] = p.y();
+	if (wp.valid()) {
+		// Update the parameters and emit the corrsponding event
+		QPointF wpp = plotToParameters(x, y);
+		WorkingParameters::fetchParameter(getDimX(), *params) = wpp.x();
+		WorkingParameters::fetchParameter(getDimY(), *params) = wpp.y();
+		emit updateParameters();
+
+		// Move the parameter crosshair to a new position and replot
+		updateCrosshair();
+		pltExploration->replot();
+	}
+}
+
 void ExplorationWidget::centerView()
 {
 	QPointF p = parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), *parameters),
-	    WorkingParameters::fetchParameter(getDimY(), *parameters));
+	    WorkingParameters::fetchParameter(getDimX(), *params),
+	    WorkingParameters::fetchParameter(getDimY(), *params));
 	pltExploration->xAxis->setRange(QCPRange(p.x() * 0.5, p.x() * 1.5));
 	pltExploration->yAxis->setRange(QCPRange(p.y() * 0.5, p.y() * 1.5));
 	pltExploration->replot();
@@ -361,11 +406,22 @@ static void fillColorMap(QCPColorMap *map, size_t nx, size_t ny, Fun f)
 	}
 }
 
+void ExplorationWidget::updateCrosshair()
+{
+	pltExploration->clearItems();
+	ExplorationWidgetCrosshair *crosshair =
+	    new ExplorationWidgetCrosshair(pltExploration);
+	pltExploration->addItem(crosshair);
+	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
+	crosshair->positions()[0]->setCoords(parametersToPlot(
+	    WorkingParameters::fetchParameter(getDimX(), *params),
+	    WorkingParameters::fetchParameter(getDimY(), *params)));
+}
+
 void ExplorationWidget::update()
 {
 	// Clear the graph
 	pltExploration->clearPlottables();
-	pltExploration->clearItems();
 
 	// Update the x- and y- axis labels
 	pltExploration->xAxis->setLabel(axisName(getDimX(), true));
@@ -407,14 +463,7 @@ void ExplorationWidget::update()
 		map->setDataRange(QCPRange(0, 1));
 	}
 
-	// Add a marker at the current parameters
-	ExplorationWidgetCrosshair *crosshair =
-	    new ExplorationWidgetCrosshair(pltExploration);
-	pltExploration->addItem(crosshair);
-	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
-	crosshair->positions()[0]->setCoords(parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), *parameters),
-	    WorkingParameters::fetchParameter(getDimY(), *parameters)));
+	updateCrosshair();
 
 	// Replot the graph
 	pltExploration->replot();

@@ -45,14 +45,17 @@ static QDockWidget *createDockWidget(const QString &name, QMainWindow *parent)
 }
 
 MainWindow::MainWindow()
-    : fitExploration(true), parameters(std::make_shared<Parameters>())
+    : fitExploration(true),
+      params(std::make_shared<Parameters>()),
+      train(std::make_shared<SpikeTrain>(
+          SpikeTrain({{4, 1, 1e-3}, {3, 0, 1e-3}}, 20, false, 0.033_s)))
 {
 	// Create the incremental exploration object
-	exploration = new IncrementalExploration(this);
+	exploration = new IncrementalExploration(this, params, train);
 
 	// Create a new ExplorationWidget and add it as one dock widget
 	explorationDockWidget = createDockWidget("Exploration", this);
-	explorationWidget = new ExplorationWidget(explorationDockWidget, parameters);
+	explorationWidget = new ExplorationWidget(explorationDockWidget, params);
 	explorationDockWidget->setWidget(explorationWidget);
 
 	// Connect the exploration events with the exploration widget and vice versa
@@ -63,35 +66,43 @@ MainWindow::MainWindow()
 	connect(explorationWidget,
 	        SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)),
 	        exploration, SLOT(updateRange(size_t, size_t, Val, Val, Val, Val)));
+	connect(explorationWidget, SIGNAL(updateParameters()), this,
+	        SLOT(explorationWidgetUpdateParameters()));
 
 	explorationWidget->centerView();
 
 	// Create a new NeuronSimulationWidget and add it as one dock widget
 	simulationDockWidget = createDockWidget("Simulation", this);
 	simulationWidget = new NeuronSimulationWidget(simulationDockWidget);
+	simulationWidget->setMinimumWidth(300);
 	simulationDockWidget->setWidget(simulationWidget);
+
 
 	// We have no central widget
 	setCentralWidget(nullptr);
 
 	resize(1024, 768);
 
-	// Create and show a simulation
-	NeuronSimulation sim(Time::sec(0.1e-3));
-	SpikeTrain train({{4, 1, 1e-3}, {1, 0, 1e-3}}, 5,
-	                 true, Time::sec(0.1), 0.01);
-	sim.prepare(*parameters, train.getSpikes());
-	sim.run();
-	simulationWidget->show({&sim});
+	// Update the simulation according to the current parameters
+	updateSimulation();
 }
 
 MainWindow::~MainWindow() {}
 
 void MainWindow::data(const Exploration &exploration)
 {
-	std::cout << "Receive data" << std::endl;
 	explorationWidget->show(exploration, fitExploration);
 	fitExploration = false;
+}
+
+void MainWindow::explorationWidgetUpdateParameters() { updateSimulation(); }
+
+void MainWindow::updateSimulation()
+{
+	NeuronSimulation sim;
+	sim.prepare(*params, train->getSpikes());
+	sim.run();
+	simulationWidget->show({&sim});
 }
 }
 

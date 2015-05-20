@@ -55,7 +55,7 @@ private:
 	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
 	std::unique_ptr<Exploration> exploration;
-	std::shared_ptr<Parameters> parameters;
+	std::shared_ptr<Parameters> params;
 
 	void dimensionChanged();
 
@@ -65,6 +65,7 @@ private:
 	QPointF workingParametersToPlot(Val x, Val y);
 	QPointF parametersToPlot(Val x, Val y);
 	QPointF plotToWorkingParameters(Val x, Val y);
+	QPointF plotToParameters(Val x, Val y);
 
 	QString axisName(size_t dim, bool unit = false);
 
@@ -75,13 +76,15 @@ private slots:
 	void dimensionYChanged();
 	void updateInfo(QMouseEvent *event = nullptr);
 	void update();
+	void updateCrosshair();
+	void plotDoubleClick(QMouseEvent *event);
 
 public:
 	/**
 	 * Constructor of the ExplorationWidget class.
 	 */
 	ExplorationWidget(QWidget *parent,
-	                  std::shared_ptr<Parameters> parameters);
+	                  std::shared_ptr<Parameters> params);
 
 	/**
 	 * Destructor of the ExplorationWidget class.
@@ -113,6 +116,8 @@ public slots:
 signals:
 	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,
 	                 Val maxY);
+
+	void updateParameters();
 };
 }
 

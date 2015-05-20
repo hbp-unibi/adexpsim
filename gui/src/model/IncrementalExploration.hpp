@@ -19,7 +19,7 @@
 /**
  * @file IncrementalExploration.hpp
  *
- * The IncrementalExploration class implements a background exploration with 
+ * The IncrementalExploration class implements a background exploration with
  * multiple resolution levels.
  *
  * @author Andreas Stöckel
@@ -32,8 +32,6 @@
 #include <memory>
 #include <vector>
 
-#include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
 #include <utils/Types.hpp>
 
 #include <QRunnable>
@@ -43,15 +41,17 @@ class QTimer;
 
 namespace AdExpSim {
 
+class SpikeTrain;
+class Parameters;
 class Exploration;
 class ExplorationMemory;
 
 /**
- * The IncrementalExplorationRunner runs a single exploration process in the 
+ * The IncrementalExplorationRunner runs a single exploration process in the
  * background.
  */
-class IncrementalExplorationRunner: public QObject, public QRunnable {
-Q_OBJECT
+class IncrementalExplorationRunner : public QObject, public QRunnable {
+	Q_OBJECT
 private:
 	/**
 	 * Flag used to abort the exploration process.
@@ -79,7 +79,6 @@ public:
 
 	~IncrementalExplorationRunner() override;
 
-
 	/**
 	 * Cancels the current exploration process.
 	 */
@@ -96,29 +95,29 @@ signals:
 	/**
 	 * Signal emitted whenever the exploration has finished.
 	 *
-	 * @param ok is set to true if the exploration was successful, false 
+	 * @param ok is set to true if the exploration was successful, false
 	 * otherwise.
 	 */
 	void done(bool ok);
 };
 
 /**
- * The IncrementalExploration class is used for the exploration of the 
- * incremental update of the 
+ * The IncrementalExploration class is used for the exploration of the
+ * incremental update of the
  */
-class IncrementalExploration: public QObject {
-Q_OBJECT
+class IncrementalExploration : public QObject {
+	Q_OBJECT
 
 private:
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	static constexpr int MIN_LEVEL = 5; // 32x32
+	static constexpr int MIN_LEVEL = 5;  // 32x32
 
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	static constexpr int MAX_LEVEL = 8; // 256x256
+	static constexpr int MAX_LEVEL = 8;  // 256x256
 
 	/**
 	 * Memories for the resolution levels.
@@ -132,11 +131,6 @@ private:
 	QTimer *updateTimer;
 
 	/**
-	 * Current neuron parameters.
-	 */
-	WorkingParameters params;
-
-	/**
 	 * Dimensions x and y for the exploration.
 	 */
 	size_t dimX, dimY;
@@ -147,9 +141,14 @@ private:
 	Val minX, maxX, minY, maxY;
 
 	/**
+	 * Current neuron parameters.
+	 */
+	std::shared_ptr<Parameters> params;
+
+	/**
 	 * Spike train used for the exploration.
 	 */
-	SpikeTrain train;
+	std::shared_ptr<SpikeTrain> train;
 
 	/**
 	 * Contains the resolution level (as power of two) of the currently running
@@ -186,7 +185,7 @@ private:
 
 private slots:
 	/**
-	 * Slot used to relay the progress to the corresponding signal of this 
+	 * Slot used to relay the progress to the corresponding signal of this
 	 * instance, while rescaling the progress according to the current
 	 * resolution level.
 	 */
@@ -206,31 +205,27 @@ private slots:
 
 public:
 	/**
-	 * Constructor of the IncrementalExploration class. Initializes the 
+	 * Constructor of the IncrementalExploration class. Initializes the
 	 * parameters and dimensions with some sane values.
 	 *
 	 * @param parent is the owner of this object.
 	 */
-	IncrementalExploration(QObject *parent);
+	IncrementalExploration(QObject *parent, std::shared_ptr<Parameters> params,
+	                       std::shared_ptr<SpikeTrain> train);
 
 	~IncrementalExploration() override;
 
 public slots:
 	/**
-	 * Should be called whenever the base parameters change.
-	 */
-	void updateParameters(const SpikeTrain &train, const WorkingParameters &params);
-
-	/**
 	 * Should be called whenever the range of the exploration or the exploration
 	 * dimensions changes.
 	 */
 	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,
-			Val maxY);
+	                 Val maxY);
 
 	/**
 	 * Prepares the start of a new IncrementalExplorationRunner process with the
-	 * current parameters and directly starts the runner if no other 
+	 * current parameters and directly starts the runner if no other
 	 * IncrementalExplorationRunner is active.
 	 */
 	void update();
@@ -246,12 +241,11 @@ signals:
 	void progress(float p, bool show);
 
 	/**
-	 * Signal emitted whenever the exploration for one resolution level has 
+	 * Signal emitted whenever the exploration for one resolution level has
 	 * finished.
 	 */
 	void data(const Exploration &exploration);
 };
-
 }
 
 #endif /* _ADEXPSIM_INCREMENTRAL_EXPLORATION_HPP_ */
