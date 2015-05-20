@@ -273,6 +273,11 @@ public:
 	static Val fetchParameter(size_t idx, const Parameters &params);
 
 	/**
+	 * Fetches a value from a Parameter set.
+	 */
+	static Val& fetchParameter(size_t idx, Parameters &params);
+
+	/**
 	 * Function used to calculate the effective spike potential.
 	 */
 	static Val calculateESpikeEff(double eTh, double deltaTh);

@@ -135,6 +135,11 @@ Val WorkingParameters::fromParameter(Val v, size_t idx, Val cM, Val eL)
 
 Val WorkingParameters::fetchParameter(size_t idx, const Parameters &params)
 {
+	return fetchParameter(idx, const_cast<Parameters&>(params));
+}
+
+Val& WorkingParameters::fetchParameter(size_t idx, Parameters &params)
+{
 	switch (idx) {
 		case 0:
 			return params.gL;
@@ -163,7 +168,7 @@ Val WorkingParameters::fetchParameter(size_t idx, const Parameters &params)
 		case 12:
 			return params.w;
 	}
-	return 0.0;
+	return params.w;
 }
 
 Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
