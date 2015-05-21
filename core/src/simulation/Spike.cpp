@@ -79,12 +79,12 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 		// Allow no spikes during the spike group itself
 		if (spikeGroup.size() > 1) {
 			rangeStartSpikes.emplace_back(idx);
-			ranges.emplace_back(spikeGroup.front().t, 0);
+			ranges.emplace_back(spikeGroup.front().t, i, 0);
 		}
 
 		// Remember the number of spikes expected after the spike group
 		rangeStartSpikes.emplace_back(idx + spikeGroup.size() - 1);
-		ranges.emplace_back(spikeGroup.back().t, descr.nOut);
+		ranges.emplace_back(spikeGroup.back().t, i, descr.nOut);
 
 		// Add the spikes to the global spike train
 		spikes.insert(spikes.end(), spikeGroup.begin(), spikeGroup.end());
@@ -95,7 +95,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 	}
 
 	// Add a final range at the end
-	ranges.emplace_back(t + T, 0);
+	ranges.emplace_back(t + T, n, 0);
 
 	// Shift both spikes and ranges by "minT" to have the first spike at zero
 	for (Spike &spike: spikes) {

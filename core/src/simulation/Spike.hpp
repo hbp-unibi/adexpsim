@@ -183,13 +183,21 @@ public:
 		Time start;
 
 		/**
+		 * Spike group to which this range belongs.
+		 */
+		size_t group;
+
+		/**
 		 * Number of spikes to occur inside this range.
 		 */
 		uint16_t nSpikes;
 
-		Range() : nSpikes(0) {}
+		Range() : group(0), nSpikes(0) {}
 
-		Range(Time start, uint16_t nSpikes) : start(start), nSpikes(nSpikes) {}
+		Range(Time start, size_t group, uint16_t nSpikes)
+		    : start(start), group(group), nSpikes(nSpikes)
+		{
+		}
 
 		friend bool operator<(const Range &r1, const Range &r2)
 		{
