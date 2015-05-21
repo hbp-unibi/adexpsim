@@ -42,9 +42,8 @@ struct RecordedSpike;
  */
 struct SpikeTrainEvaluationResult {
 	/**
-	 * Percentage of ranges in which the number of spikes equals the expected
-	 * number of spikes, weighted by the relative length of the ranges. Ranges
-	 * between 0.0 and 1.0.
+	 * Percentage of spike train groups for which all conditions were fulfilled.
+	 * Ranges between 0.0 and 1.0.
 	 */
 	Val pBinary;
 

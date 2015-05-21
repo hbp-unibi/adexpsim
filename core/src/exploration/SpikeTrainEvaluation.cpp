@@ -164,7 +164,7 @@ SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train)
 
 // Roughly spoken TAU_RANGE is the voltage difference from eSpikeEff
 // needed to get a "good" result in the SOFT measurement
-static constexpr double TAU_RANGE = 0.01;       // 10mV
+static constexpr double TAU_RANGE = 0.01;     // 10mV
 static constexpr double TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
 static constexpr double TAU = log(1.0 / TAU_RANGE_VAL - 1.0) / TAU_RANGE;
 
@@ -232,6 +232,9 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 	// according to whether how well the range condition (number of expected
 	// output spikes) has been fulfilled.
 	SpikeTrainEvaluationResult res;
+	bool groupOk = true;
+	size_t group = 0;
+	size_t nGroups = 1;
 	const std::vector<RecordedSpike> &inputSpikes = recorder.getInputSpikes();
 	const std::vector<RecordedSpike> &outputSpikes = recorder.getOutputSpikes();
 	const std::vector<SpikeTrain::Range> &ranges = train.getRanges();
@@ -241,6 +244,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 		const Time rangeStart = ranges[rangeIdx].start;
 		const Time rangeEnd = ranges[rangeIdx + 1].start;
 		const Time rangeLen = rangeEnd - rangeStart;
+		const size_t rangeGroup = ranges[rangeIdx].group;
 
 		// Skip this range if it has a non-positive length
 		if (rangeLen <= Time(0)) {
@@ -260,27 +264,31 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 		// Calculate the number of encountered spikes
 		const size_t nSpikesReceived = std::distance(firstSpike, lastSpike);
 
-		// Update the binaryExpectationRatio weighted by the length of this
-		// range
-		if (nSpikesReceived == nSpikesExpected) {
-			res.pBinary += rangeLen.sec();
+		// If this range belongs to another group than the previous, update the
+		// binaryExpectationRatio
+		if (group != rangeGroup) {
+			res.pBinary += groupOk ? 1.0 : 0.0;
+			nGroups++;
+			groupOk = true;
+			group = rangeGroup;
 		}
+		groupOk = groupOk && (nSpikesReceived == nSpikesExpected);
 
 		// Update the softExpectationRatio: Iterate over all output spikes while
 		// there are expected output spikes and measure the maximum potential
-		RecordedSpike const *curSpike = &inputSpike;
+		/*RecordedSpike const *curSpike = &inputSpike;
 		for (auto it = firstSpike; it != lastSpike && nSpikesExpected > 0;
 		     it++, nSpikesExpected--) {
-			// Track the maximum potential between the current spike and the
-			// next output spike
-			const std::pair<Val, Time> simRes =
-			    trackMaxPotential(params, *curSpike, it->t, eTar);
+		    // Track the maximum potential between the current spike and the
+		    // next output spike
+		    const std::pair<Val, Time> simRes =
+		        trackMaxPotential(params, *curSpike, it->t, eTar);
 
-			// Adapt the softExpectationRatio
-			res.pSoft += sigma(simRes.first, params) * simRes.second.sec();
+		    // Adapt the softExpectationRatio
+		    res.pSoft += sigma(simRes.first, params) * simRes.second.sec();
 
-			// Advance the curSpike pointer to the last processed output spike
-			curSpike = &(*it);
+		    // Advance the curSpike pointer to the last processed output spike
+		    curSpike = &(*it);
 		}
 
 		// Now there are either no more expected output spikes, or no more
@@ -291,12 +299,12 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 		const std::pair<Val, Time> simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
 		res.pSoft += sigma(simRes.first, params, nSpikesExpected == 0) *
-		             simRes.second.sec();
+		             simRes.second.sec();*/
 	}
 
 	// Normalize the result by the total simulation time in seconds
-	res.pBinary /= T.sec();
-	res.pSoft = res.pSoft * res.pBinary / T.sec();
+	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
+	res.pSoft = res.pBinary;  // res.pSoft / T.sec();
 
 	return res;
 }
