@@ -57,17 +57,13 @@ struct SpikeTrainEvaluationResult {
 	/**
 	 * Default constructor. Initializes the values with zeros.
 	 */
-	SpikeTrainEvaluationResult()
-	    : pBinary(0.0), pSoft(0.0)
-	{
-	}
+	SpikeTrainEvaluationResult() : pBinary(0.0), pSoft(0.0) {}
 
 	/**
 	 * Constructor of the EvaluationResult class. Initializes all members with
 	 * the given values.
 	 */
-	SpikeTrainEvaluationResult(Val pBinary,
-	                           Val pSoft)
+	SpikeTrainEvaluationResult(Val pBinary, Val pSoft)
 	    : pBinary(pBinary), pSoft(pSoft)
 	{
 	}
@@ -99,7 +95,51 @@ private:
 	                                       const RecordedSpike &s0, Time tEnd,
 	                                       Val eTar) const;
 
+	template <typename Function>
+	SpikeTrainEvaluationResult evaluateInternal(
+	    const WorkingParameters &params, Val eTar,
+	    Function recordOutputSpike) const;
+
 public:
+	/**
+	 * Structure describing a recorded output spike.
+	 */
+	struct OutputSpike {
+		/**
+		 * Time at which the spike was recorded.
+		 */
+		Time t;
+
+		/**
+		 * Index of the group to which the spike belongs.
+		 */
+		size_t group;
+
+		/**
+		 * Flag indicating whether the spike was ok or not.
+		 */
+		bool ok;
+
+		/**
+		 * Creates a new OutputSpike instance and fills it with the given
+		 * parameters.
+		 */
+		OutputSpike(Time t, size_t group, bool ok) : t(t), group(group), ok(ok)
+		{
+		}
+	};
+
+	/**
+	 * Structure describing the time range of a group of input/output spikes
+	 * and whether the spikes in this range fulfilled the binary condition.
+	 */
+	struct OutputGroup {
+		Time start, end;
+		bool ok;
+
+		OutputGroup(Time start, Time end, bool ok) : start(start), end(end), ok(ok) {}
+	};
+
 	/**
 	 * Constructor of the evaluation class.
 	 *
@@ -118,6 +158,23 @@ public:
 	                                    Val eTar = 1e-3) const;
 
 	/**
+	 * Evaluates the given parameter set and writes information about the
+	 * encountered output spikes to the corresponding list.
+	 *
+	 * @param params is a reference at the parameter set that should be
+	 * evaluated. Automatically updates the derived values of the parameter set.
+	 * @param eTar is the target error used in the adaptive stepsize controller.
+	 * @param outputSpikes is a list to which the captured output spikes should
+	 * be added.
+	 * @param outputGroups is a list to which information about the groups
+	 * should be written.
+	 */
+	SpikeTrainEvaluationResult evaluate(const WorkingParameters &params,
+	                                    std::vector<OutputSpike> &outputSpikes,
+	                                    std::vector<OutputGroup> &outputGroups,
+	                                    Val eTar = 1e-3) const;
+
+	/**
 	 * Returns a reference at the internally used spike train instance.
 	 */
 	const SpikeTrain &getTrain() { return train; }
@@ -125,3 +182,4 @@ public:
 }
 
 #endif /* _ADEXPSIM_SPIKE_TRAIN_EVALUATION_HPP_ */
+

@@ -48,7 +48,11 @@ MainWindow::MainWindow()
     : fitExploration(true),
       params(std::make_shared<Parameters>()),
       train(std::make_shared<SpikeTrain>(
-          SpikeTrain({{4, 1, 1e-3}, {3, 0, 1e-3}}, 20, false, 0.033_s)))
+          SpikeTrain({
+               {4, 1, 1e-3},
+               {3, 0, 1e-3},
+//               {4, 1, 0, 1e-3, 1.0, 1.0}
+         }, 100, false, 0.033_s)))
 {
 	// Create the incremental exploration object
 	exploration = new IncrementalExploration(this, params, train);
@@ -99,10 +103,10 @@ void MainWindow::explorationWidgetUpdateParameters() { updateSimulation(); }
 
 void MainWindow::updateSimulation()
 {
-	NeuronSimulation sim;
+/*	NeuronSimulation sim;
 	sim.prepare(*params, train->getSpikes());
 	sim.run();
-	simulationWidget->show({&sim});
+	simulationWidget->show({&sim});*/
 }
 }
 

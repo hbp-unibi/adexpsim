@@ -211,8 +211,9 @@ std::pair<Val, Time> SpikeTrainEvaluation::trackMaxPotential(
 	return std::pair<Val, Time>(controller.vMax, tLen);
 }
 
-SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
-    const WorkingParameters &params, Val eTar) const
+template <typename Function>
+SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
+    const WorkingParameters &params, Val eTar, Function recordOutputSpike) const
 {
 	// Abort if the given parameters are invalid
 	if (!params.valid()) {
@@ -274,21 +275,29 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 		}
 		groupOk = groupOk && (nSpikesReceived == nSpikesExpected);
 
+		// Iterate over all output spikes and call the "output" function for
+		// each of them
+		size_t i = 0;
+		for (auto it = firstSpike; it != lastSpike; it++, i++) {
+			recordOutputSpike(
+			    OutputSpike(it->t, rangeGroup, i < nSpikesExpected));
+		}
+
 		// Update the softExpectationRatio: Iterate over all output spikes while
 		// there are expected output spikes and measure the maximum potential
-		/*RecordedSpike const *curSpike = &inputSpike;
+		RecordedSpike const *curSpike = &inputSpike;
 		for (auto it = firstSpike; it != lastSpike && nSpikesExpected > 0;
 		     it++, nSpikesExpected--) {
-		    // Track the maximum potential between the current spike and the
-		    // next output spike
-		    const std::pair<Val, Time> simRes =
-		        trackMaxPotential(params, *curSpike, it->t, eTar);
+			// Track the maximum potential between the current spike and the
+			// next output spike
+			const std::pair<Val, Time> simRes =
+			    trackMaxPotential(params, *curSpike, it->t, eTar);
 
-		    // Adapt the softExpectationRatio
-		    res.pSoft += sigma(simRes.first, params) * simRes.second.sec();
+			// Adapt the softExpectationRatio
+			res.pSoft += sigma(simRes.first, params) * simRes.second.sec();
 
-		    // Advance the curSpike pointer to the last processed output spike
-		    curSpike = &(*it);
+			// Advance the curSpike pointer to the last processed output spike
+			curSpike = &(*it);
 		}
 
 		// Now there are either no more expected output spikes, or no more
@@ -299,14 +308,30 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 		const std::pair<Val, Time> simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
 		res.pSoft += sigma(simRes.first, params, nSpikesExpected == 0) *
-		             simRes.second.sec();*/
+		             simRes.second.sec();
 	}
 
 	// Normalize the result by the total simulation time in seconds
 	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
-	res.pSoft = res.pBinary;  // res.pSoft / T.sec();
+	res.pSoft = res.pBinary * res.pSoft / T.sec();
 
 	return res;
+}
+
+SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
+    const WorkingParameters &params, Val eTar) const
+{
+	return evaluateInternal(params, eTar, [](const OutputSpike &) -> void {});
+}
+
+SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
+    const WorkingParameters &params,
+    std::vector<OutputSpike> &outputSpikes,
+    Val eTar) const
+{
+	return evaluateInternal(params, eTar,
+	                        [&outputSpikes](const OutputSpike &spike)
+	                            -> void { outputSpikes.push_back(spike); });
 }
 }
 
