@@ -178,6 +178,11 @@ public:
 		return t1.t == t2.t;
 	}
 
+	friend bool operator!=(const Time &t1, const Time &t2)
+	{
+		return t1.t != t2.t;
+	}
+
 	friend bool operator<(const Time &t1, const Time &t2)
 	{
 		return t1.t < t2.t;
