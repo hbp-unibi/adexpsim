@@ -109,5 +109,15 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 		range.start -= minT;
 	}
 }
+
+size_t SpikeTrain::getExpectedOutputSpikeCount() const
+{
+	size_t res = 0;
+	for (const auto &range: ranges) {
+		res += range.nSpikes;
+	}
+	return res;
+}
+
 }
 

@@ -289,6 +289,11 @@ public:
 	{
 		return rangeStartSpikes;
 	}
+
+	/**
+	 * Returns the number of expected output spikes.
+	 */
+	size_t getExpectedOutputSpikeCount() const;
 };
 }
 
