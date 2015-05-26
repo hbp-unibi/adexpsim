@@ -63,7 +63,8 @@ public:
 	 * @param t is the time at which the input spike has been consumed.
 	 * @param s is the state after the input spike has been consumed.
 	 */
-	void inputSpike(Time, const State &) {
+	void inputSpike(Time, const State &)
+	{
 		// Discard everything
 	}
 
@@ -74,7 +75,8 @@ public:
 	 * @param s is the neuron state after the spike has been issued (the neuron
 	 * has already been reset).
 	 */
-	void outputSpike(Time t, const State &) {
+	void outputSpike(Time t, const State &)
+	{
 		// Discard everything
 	}
 };
@@ -163,16 +165,18 @@ public:
 	}
 };
 
+enum class ControllerResult { CONTINUE, MAY_CONTINUE, ABORT };
+
 /**
  * The NullController class runs the simulation until tEnd is reached, producing
  * no overhead.
  */
 class NullController {
 public:
-	static bool control(Time, const State &, const AuxiliaryState &,
-	                    const WorkingParameters &)
+	static ControllerResult control(Time, const State &, const AuxiliaryState &,
+	                                const WorkingParameters &)
 	{
-		return true;
+		return ControllerResult::CONTINUE;
 	}
 };
 
@@ -202,10 +206,13 @@ public:
 	 * @param s is the current neuron state.
 	 * @return true if the neuron should continue, false otherwise.
 	 */
-	static bool control(Time, const State &s, const AuxiliaryState &,
-	                    const WorkingParameters &)
+	static ControllerResult control(Time, const State &s,
+	                                const AuxiliaryState &,
+	                                const WorkingParameters &)
 	{
-		return fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE;
+		return (fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE)
+		           ? ControllerResult::CONTINUE
+		           : ControllerResult::MAY_CONTINUE;
 	}
 };
 
@@ -268,8 +275,8 @@ public:
 	 * @param s is the current neuron state.
 	 * @return true if the neuron should continue, false otherwise.
 	 */
-	bool control(Time t, const State &s, const AuxiliaryState &aux,
-	             const WorkingParameters &p)
+	ControllerResult control(Time t, const State &s, const AuxiliaryState &aux,
+	                         const WorkingParameters &p)
 	{
 		// Track the maximum voltage
 		if (s.v() > vMax) {
@@ -287,8 +294,10 @@ public:
 
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
-		return s.lE() > MIN_RATE ||
-		       (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV);
+		return (s.lE() > MIN_RATE ||
+		        (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV))
+		           ? ControllerResult::CONTINUE
+		           : ControllerResult::MAY_CONTINUE;
 	}
 };
 
@@ -387,10 +396,10 @@ public:
 	          typename Integrator = RungeKuttaIntegrator,
 	          typename Controller = DefaultController>
 	static void simulate(const SpikeVec &spikes, Recorder &recorder,
-	              Controller &controller, Integrator &integrator,
-	              const WorkingParameters &p = WorkingParameters(),
-	              Time tDelta = Time(-1), Time tEnd = MAX_TIME,
-	              const State &s0 = State())
+	                     Controller &controller, Integrator &integrator,
+	                     const WorkingParameters &p = WorkingParameters(),
+	                     Time tDelta = Time(-1), Time tEnd = MAX_TIME,
+	                     const State &s0 = State())
 	{
 		// Use the automatically calculated tDelta if no user-defined value is
 		// given
@@ -474,7 +483,10 @@ public:
 			recorder.record(t, s, as, false);
 
 			// Ask the controller whether it is time to abort
-			if (!controller.control(t, s, as, p) && spikeIdx >= nSpikes) {
+			const ControllerResult cres = controller.control(t, s, as, p);
+			if (cres == ControllerResult::ABORT ||
+			    (cres == ControllerResult::MAY_CONTINUE &&
+			     spikeIdx >= nSpikes)) {
 				break;
 			}
 		}
