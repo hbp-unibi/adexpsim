@@ -64,7 +64,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 		// Generate nE + nI spikes
 		std::vector<Spike> spikeGroup;
 		std::normal_distribution<> distT(t.sec(), descr.sigmaT);
-		std::normal_distribution<> distW(t.sec(), descr.sigmaW);
+		std::normal_distribution<> distW(0, descr.sigmaW);
 		for (size_t i = 0; i < descr.nE; i++) {
 			spikeGroup.emplace_back(Time::sec(distT(gen)),
 			                        descr.wE + distW(gen));
