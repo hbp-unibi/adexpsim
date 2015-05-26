@@ -157,6 +157,34 @@ public:
 	}
 };
 
+/**
+ * Controller class used to limit the number of output spikes to a reasonable
+ * count.
+ */
+class MaxOutputSpikeCountController {
+private:
+	const SpikeRecorder &recorder;
+	size_t maxCount;
+
+public:
+	MaxOutputSpikeCountController(const SpikeRecorder &recorder,
+	                              size_t maxCount)
+	    : recorder(recorder), maxCount(maxCount)
+	{
+	}
+
+	ControllerResult control(Time, const State &, const AuxiliaryState &,
+	                         const WorkingParameters &) const
+	{
+		return tripped() ? ControllerResult::ABORT : ControllerResult::CONTINUE;
+	}
+
+	bool tripped() const
+	{
+		return recorder.getOutputSpikes().size() > maxCount;
+	}
+};
+
 SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train)
     : train(train)
 {
@@ -227,10 +255,16 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	// collect all spikes
 	const Time T = train.getMaxT();
 	SpikeRecorder recorder(train.getRangeStartSpikes());
-	NullController controller;
+	MaxOutputSpikeCountController controller(
+	    recorder, train.getExpectedOutputSpikeCount() * 5);
 	DormandPrinceIntegrator integrator(eTar);
 	Model::simulate<Model::FAST_EXP>(train.getSpikes(), recorder, controller,
 	                                 integrator, params, Time(-1), T);
+
+	// Abort if the maximum spike count controller has tripped.
+	if (controller.tripped()) {
+		return SpikeTrainEvaluationResult();
+	}
 
 	// Iterate over all ranges described in the spike train and adapt the result
 	// according to whether how well the range condition (number of expected
@@ -314,7 +348,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 			    trackMaxPotential(params, *curSpike, it->t, eTar);
 
 			// Adapt the softExpectationRatio
-			res.pSoft += sigma(simRes.vMax, params) * simRes.tLen.sec()/* *
+			res.pSoft += sigma(simRes.vMax, params) * simRes.tLen.sec() /* *
 			             simRes.tMaxRel()*/;
 
 			// Advance the curSpike pointer to the last processed output spike
@@ -329,7 +363,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		const auto simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
 		res.pSoft += sigma(simRes.vMax, params, nSpikesExpected == 0) *
-		             simRes.tLen.sec()/* * simRes.tMaxRel()*/;
+		             simRes.tLen.sec() /* * simRes.tMaxRel()*/;
 	}
 
 	// Record the last output group
