@@ -131,7 +131,12 @@ public:
 		/**
 		 * Standard deviation of the input spikes in seconds.
 		 */
-		Val sigma;
+		Val sigmaT;
+
+		/**
+		 * Standard deviation of the input weights.
+		 */
+		Val sigmaW;
 
 		/**
 		 * Number of expected output spikes.
@@ -141,17 +146,22 @@ public:
 		/**
 		 * Default constructor.
 		 */
-		Descriptor() : nE(0), nI(0), wE(1.0), wI(1.0), sigma(1.0), nOut(0) {}
+		Descriptor()
+		    : nE(0), nI(0), wE(1.0), wI(1.0), sigmaT(0.0), sigmaW(0.0), nOut(0)
+		{
+		}
 
 		/**
 		 * Constructor for a default excitatory spike group.
 		 */
-		Descriptor(uint16_t nE, uint16_t nOut, Val sigma, Val wE = 1.0)
+		Descriptor(uint16_t nE, uint16_t nOut, Val sigmaT, Val wE = 1.0,
+		           Val sigmaW = 0.0)
 		    : nE(chooseNE(nE)),
 		      nI(0),
 		      wE(chooseWE(wE, nE)),
 		      wI(1.0),
-		      sigma(sigma),
+		      sigmaT(sigmaT),
+		      sigmaW(sigmaW),
 		      nOut(nOut)
 		{
 		}
@@ -160,13 +170,14 @@ public:
 		 * Constructor allowing to initialize all members of the Descriptor
 		 * structure.
 		 */
-		Descriptor(uint16_t nE, uint16_t nI, uint16_t nOut, Val sigma, Val wE,
-		           Val wI)
+		Descriptor(uint16_t nE, uint16_t nI, uint16_t nOut, Val sigmaT, Val wE,
+		           Val wI, Val sigmaW)
 		    : nE(chooseNE(nE, nI)),
 		      nI(nI),
 		      wE(chooseWE(wE, nE, nI)),
 		      wI(wI),
-		      sigma(sigma),
+		      sigmaT(sigmaT),
+		      sigmaW(sigmaW),
 		      nOut(nOut)
 		{
 		}
@@ -188,14 +199,19 @@ public:
 		size_t group;
 
 		/**
+		 * Spike train descriptor index this range belongs to.
+		 */
+		size_t descrIdx;
+
+		/**
 		 * Number of spikes to occur inside this range.
 		 */
 		uint16_t nSpikes;
 
 		Range() : group(0), nSpikes(0) {}
 
-		Range(Time start, size_t group, uint16_t nSpikes)
-		    : start(start), group(group), nSpikes(nSpikes)
+		Range(Time start, size_t group, size_t descrIdx, uint16_t nSpikes)
+		    : start(start), group(group), descrIdx(descrIdx), nSpikes(nSpikes)
 		{
 		}
 
@@ -224,6 +240,11 @@ private:
 
 public:
 	/**
+	 * Default constructor. Creates an empty spike train.
+	 */
+	SpikeTrain() {}
+
+	/**
 	 * Constructor of the SpikeTrain class -- calculates a new set of input
 	 * spikes trains.
 	 *
@@ -241,7 +262,14 @@ public:
 	SpikeTrain(const std::vector<Descriptor> &descrs, size_t n = 0,
 	           bool sorted = true, Time T = 0.0334_s, Val sigmaT = 0.0);
 
-	const Time getMaxT() const { return getRanges().back().start; }
+	/**
+	 * Returns the simulation end time, which is set to the end of the last
+	 * spike train group (approximately n * T, depending on sigmaT).
+	 */
+	const Time getMaxT() const
+	{
+		return ranges.empty() ? Time(0) : ranges.back().start;
+	}
 
 	/**
 	 * Returns the generated input spikes.

@@ -58,18 +58,22 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 	std::default_random_engine gen;
 	for (size_t i = 0; i < n; i++) {
 		// Fetch a descriptor
-		const Descriptor &descr = descrs[sorted ? i % nDescrs : distDescr(gen)];
+		const size_t descrIdx = sorted ? i % nDescrs : distDescr(gen);
+		const Descriptor &descr = descrs[descrIdx];
 
 		// Generate nE + nI spikes
 		std::vector<Spike> spikeGroup;
-		std::normal_distribution<> distT(t.sec(), descr.sigma);
+		std::normal_distribution<> distT(t.sec(), descr.sigmaT);
+		std::normal_distribution<> distW(t.sec(), descr.sigmaW);
 		for (size_t i = 0; i < descr.nE; i++) {
-			spikeGroup.emplace_back(Time::sec(distT(gen)), descr.wE);
+			spikeGroup.emplace_back(Time::sec(distT(gen)),
+			                        descr.wE + distW(gen));
 		}
 		for (size_t i = 0; i < descr.nI; i++) {
-			spikeGroup.emplace_back(Time::sec(distT(gen)), descr.wI);
+			spikeGroup.emplace_back(Time::sec(distT(gen)),
+			                        descr.wI + distW(gen));
 		}
-		for (const Spike &spike: spikeGroup) {
+		for (const Spike &spike : spikeGroup) {
 			minT = std::min(minT, spike.t);
 		}
 
@@ -79,12 +83,12 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 		// Allow no spikes during the spike group itself
 		if (spikeGroup.size() > 1) {
 			rangeStartSpikes.emplace_back(idx);
-			ranges.emplace_back(spikeGroup.front().t, i, 0);
+			ranges.emplace_back(spikeGroup.front().t, i, descrIdx, 0);
 		}
 
 		// Remember the number of spikes expected after the spike group
 		rangeStartSpikes.emplace_back(idx + spikeGroup.size() - 1);
-		ranges.emplace_back(spikeGroup.back().t, i, descr.nOut);
+		ranges.emplace_back(spikeGroup.back().t, i, descrIdx, descr.nOut);
 
 		// Add the spikes to the global spike train
 		spikes.insert(spikes.end(), spikeGroup.begin(), spikeGroup.end());
@@ -95,13 +99,13 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 	}
 
 	// Add a final range at the end
-	ranges.emplace_back(t + T, n, 0);
+	ranges.emplace_back(t + T, n, 0, 0);
 
 	// Shift both spikes and ranges by "minT" to have the first spike at zero
-	for (Spike &spike: spikes) {
+	for (Spike &spike : spikes) {
 		spike.t -= minT;
 	}
-	for (Range &range: ranges) {
+	for (Range &range : ranges) {
 		range.start -= minT;
 	}
 }

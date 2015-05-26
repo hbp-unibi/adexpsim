@@ -49,10 +49,9 @@ MainWindow::MainWindow()
       params(std::make_shared<Parameters>()),
       train(std::make_shared<SpikeTrain>(
           SpikeTrain({
-               {4, 1, 1e-3},
-               {3, 0, 1e-3},
-//               {4, 1, 0, 1e-3, 1.0, 1.0}
-         }, 100, false, 0.033_s)))
+               {4, 1, 1e-3, 1.0, 0.2},
+               {3, 0, 1e-3, 1.0, 0.2},
+         }, 2, true, 0.033_s)))
 {
 	// Create the incremental exploration object
 	exploration = new IncrementalExploration(this, params, train);
