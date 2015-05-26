@@ -54,6 +54,7 @@ TARGET_LINK_LIBRARIES(qcustomplot
 ADD_EXECUTABLE(AdExpSimGui
 	src/model/NeuronSimulation
 	src/model/IncrementalExploration
+	src/view/Colors
 	src/view/ExplorationWidget
 	src/view/ExplorationWidgetGradients
 	src/view/ExplorationWidgetCrosshair

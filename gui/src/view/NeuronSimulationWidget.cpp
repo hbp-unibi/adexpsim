@@ -28,27 +28,10 @@
 #include <simulation/Spike.hpp>
 #include <model/NeuronSimulation.hpp>
 
+#include "Colors.hpp"
 #include "NeuronSimulationWidget.hpp"
 
 namespace AdExpSim {
-
-static const QColor KS_ORANGE(245, 159, 0);
-static const QColor KS_BLUE(0, 98, 154);
-static const QColor KS_GREEN(0, 117, 86);
-static const QColor KS_LIGHT_GREEN(182, 200, 40);
-static const QColor KS_RED(121, 16, 17);
-static const QColor KS_PRUNE(127, 13, 93);
-static const QColor KS_GRAY(191, 191, 191);
-
-static const QColor COLOR_V = Qt::black;
-static const QColor COLOR_GE = KS_BLUE;
-static const QColor COLOR_GI = KS_ORANGE;
-static const QColor COLOR_W = KS_RED;
-static const QColor COLOR_IL = KS_LIGHT_GREEN;
-static const QColor COLOR_IE = KS_BLUE;
-static const QColor COLOR_II = KS_ORANGE;
-static const QColor COLOR_ITH = KS_PRUNE;
-static const QColor COLOR_ISUM = Qt::black;
 
 NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
     : QWidget(parent)
