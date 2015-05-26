@@ -76,6 +76,24 @@ struct SpikeTrainEvaluationResult {
 class SpikeTrainEvaluation {
 private:
 	/**
+	 * Used internally as a result of the trackMaxPotential function.
+	 */
+	struct MaxPotentialResult {
+		Val vMax;
+		Time tMax;
+		Time tLen;
+
+		MaxPotentialResult(Val vMax, Time tMax, Time tLen)
+		    : vMax(vMax), tMax(tMax), tLen(tLen) {};
+
+		Val tMaxRel() const
+		{
+			return std::max(0.0,
+			                std::min(1.0, 1.0 - tMax.sec() / tLen.sec()));
+		}
+	};
+
+	/**
 	 * SpikeTrain instance on which the evaluation is tested.
 	 */
 	SpikeTrain train;
@@ -91,14 +109,14 @@ private:
 	 * Measures the theoretically reached, maximum mebrance potential for the
 	 * given range. This measurement deactivates the spiking mechanism.
 	 */
-	std::pair<Val, Time> trackMaxPotential(const WorkingParameters &params,
-	                                       const RecordedSpike &s0, Time tEnd,
-	                                       Val eTar) const;
+	MaxPotentialResult trackMaxPotential(const WorkingParameters &params,
+	                                     const RecordedSpike &s0, Time tEnd,
+	                                     Val eTar) const;
 
-	template <typename Function>
-	SpikeTrainEvaluationResult evaluateInternal(
-	    const WorkingParameters &params, Val eTar,
-	    Function recordOutputSpike) const;
+	template <typename F1, typename F2>
+	SpikeTrainEvaluationResult evaluateInternal(const WorkingParameters &params,
+	                                            Val eTar, F1 recordOutputSpike,
+	                                            F2 recordOutputGroup) const;
 
 public:
 	/**
@@ -121,6 +139,11 @@ public:
 		bool ok;
 
 		/**
+		 * Default constructor.
+		 */
+		OutputSpike() {}
+
+		/**
 		 * Creates a new OutputSpike instance and fills it with the given
 		 * parameters.
 		 */
@@ -134,11 +157,52 @@ public:
 	 * and whether the spikes in this range fulfilled the binary condition.
 	 */
 	struct OutputGroup {
-		Time start, end;
+		/**
+		 * Start time of the group.
+		 */
+		Time start;
+
+		/**
+		 * End time of the group.
+		 */
+		Time end;
+
+		/**
+		 * Index of the spike train template this group belongs to.
+		 */
+		size_t descrIdx;
+
+		/**
+		 * Flag indicating whether all conditions were fulfilled for this group.
+		 */
 		bool ok;
 
-		OutputGroup(Time start, Time end, bool ok) : start(start), end(end), ok(ok) {}
+		/**
+		 * Default constructor.
+		 */
+		OutputGroup(){};
+
+		/**
+		 * Creates a new OutputGroup instance and fills it with the given
+		 * parameters.
+		 *
+		 * @param start is the start time.
+		 * @param end is the end time.
+		 * @param descrIdx is the index of the corresponding
+		 *SpikeTrainDescriptor.
+		 * @param ok specifies whether all conditions were fulfilled for this
+		 * group.
+		 */
+		OutputGroup(Time start, Time end, size_t descrIdx, bool ok)
+		    : start(start), end(end), descrIdx(descrIdx), ok(ok)
+		{
+		}
 	};
+
+	/**
+	 * Default constructor.
+	 */
+	SpikeTrainEvaluation() {}
 
 	/**
 	 * Constructor of the evaluation class.
@@ -177,7 +241,7 @@ public:
 	/**
 	 * Returns a reference at the internally used spike train instance.
 	 */
-	const SpikeTrain &getTrain() { return train; }
+	const SpikeTrain &getTrain() const { return train; }
 };
 }
 

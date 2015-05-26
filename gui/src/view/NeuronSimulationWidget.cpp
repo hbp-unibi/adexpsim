@@ -30,6 +30,7 @@
 
 #include "Colors.hpp"
 #include "NeuronSimulationWidget.hpp"
+#include "SpikeWidget.hpp"
 
 namespace AdExpSim {
 
@@ -39,10 +40,15 @@ NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
 
+	// Create the spike widget and the update delay timer
+	spikeWidget = new SpikeWidget(this);
+	updateDelay = new QTimer(this);
+
 	// Create the plot widgets and layers for each modality
 	pltVolt = new QCustomPlot(this);
 	pltVolt->addLayer("v");
 	pltVolt->addLayer("spikes");
+	pltVolt->addLayer("limits");
 
 	pltCond = new QCustomPlot(this);
 	pltCond->addLayer("gE");
@@ -61,33 +67,55 @@ NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
 	// Combine the widgets in the layout
 	layout->setSpacing(0);
 	layout->setMargin(0);
+	layout->addWidget(spikeWidget);
 	layout->addWidget(pltVolt);
 	layout->addWidget(pltCond);
 	layout->addWidget(pltCurr);
 
 	// Set the layout instance as the layout of this widget
 	setLayout(layout);
+
+	// Connect the spikeWidget rangeChange event to the update event
+	connect(spikeWidget, SIGNAL(rangeChange()), this, SLOT(rangeChange()));
+	connect(updateDelay, SIGNAL(timeout()), this, SLOT(updatePlot()));
 }
 
-static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes)
+static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes, Val minT,
+                      Val maxT)
 {
 	plot->setCurrentLayer("spikes");
 	for (const auto &spike : spikes) {
-		QCPItemStraightLine *line = new QCPItemStraightLine(plot);
-		plot->addItem(line);
-
 		Val t = SIPrefixTransformation::transformTime(spike.t.sec());
-		line->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
-		line->positions()[0]->setCoords(t, 0);
-		line->positions()[1]->setType(QCPItemPosition::ptPlotCoords);
-		line->positions()[1]->setCoords(t, 1);
-		line->setPen(QPen(KS_GRAY, 1, Qt::DashLine));
+		if (t >= minT && t <= maxT) {
+			QCPItemStraightLine *line = new QCPItemStraightLine(plot);
+			plot->addItem(line);
+
+			line->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
+			line->positions()[0]->setCoords(t, 0);
+			line->positions()[1]->setType(QCPItemPosition::ptPlotCoords);
+			line->positions()[1]->setCoords(t, 1);
+			line->setPen(QPen(KS_GRAY, 1, Qt::DashLine));
+		}
 	}
 }
 
-void NeuronSimulationWidget::show(
-    const std::vector<const NeuronSimulation *> &sims)
+static void addHorzLine(QCustomPlot *plot, Val y)
 {
+	QCPItemStraightLine *line = new QCPItemStraightLine(plot);
+	plot->addItem(line);
+	line->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
+	line->positions()[0]->setCoords(0, y);
+	line->positions()[1]->setType(QCPItemPosition::ptPlotCoords);
+	line->positions()[1]->setCoords(1, y);
+	line->setPen(QPen(Qt::black, 1, Qt::DotLine));
+}
+
+void NeuronSimulationWidget::rangeChange() { updateDelay->start(100); }
+
+void NeuronSimulationWidget::updatePlot()
+{
+	const float LINE_W = 1.5;  // Line width
+
 	// Clear the graphs
 	pltVolt->clearGraphs();
 	pltCond->clearGraphs();
@@ -96,111 +124,112 @@ void NeuronSimulationWidget::show(
 	pltCond->clearItems();
 	pltCurr->clearItems();
 
-	// Min/max values
-	Val minTime = std::numeric_limits<Val>::max();
-	Val maxTime = std::numeric_limits<Val>::lowest();
-	Val minVoltage = std::numeric_limits<Val>::max();
-	Val maxVoltage = std::numeric_limits<Val>::lowest();
-	Val minConductance = std::numeric_limits<Val>::max();
-	Val maxConductance = std::numeric_limits<Val>::lowest();
-	Val minCurrent = std::numeric_limits<Val>::max();
-	Val maxCurrent = std::numeric_limits<Val>::lowest();
+	// Fetch the current data slice
+	double minT = SIPrefixTransformation::transformTime(
+	    spikeWidget->getRangeStart().sec());
+	double maxT =
+	    SIPrefixTransformation::transformTime(spikeWidget->getRangeEnd().sec());
+	const VectorRecorderData<QVector<double>> &oData = sim.getData();
+	const VectorRecorderData<QVector<double>> &data = oData.slice(minT, maxT);
 
-	// Iterate over all simulations
-	for (ssize_t i = sims.size() - 1; i >= 0; i--) {
-		const int lf = (i == 0) ? 100 : 150;  // Lightness factor (/100)
-		const float lw = (i == 0) ? 1.5 : 1;  // Line width
+	// Create the voltage graph
+	pltVolt->setCurrentLayer("v");
+	pltVolt->addGraph();
+	pltVolt->graph()->setData(data.ts, data.v);
+	pltVolt->graph()->setPen(QPen(COLOR_V, LINE_W));
 
-		// Fetch the simulation and the data
-		const NeuronSimulation &sim = *sims[i];
-		const VectorRecorderData<QVector<double>> &data = sim.getData();
+	pltVolt->setCurrentLayer("limits");
+	const Parameters &p = sim.getParameters();
+	WorkingParameters wp(p);
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eE));
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eI));
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(
+	                         wp.eSpikeEff() + p.eL));
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eTh));
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eL));
+	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eReset));
 
-		// Adapt the min/max values
-		minTime = std::min(minTime, data.minTime);
-		maxTime = std::max(maxTime, data.maxTime);
-		minVoltage = std::min(minVoltage, data.minVoltage);
-		maxVoltage = std::max(maxVoltage, data.maxVoltage);
-		minConductance = std::min(minConductance, data.minConductance);
-		maxConductance = std::max(maxConductance, data.maxConductance);
-		minCurrent = std::min(minCurrent, data.minCurrentSmooth);
-		maxCurrent = std::max(maxCurrent, data.maxCurrentSmooth);
+	addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
 
-		// Create the voltage graph
-		pltVolt->setCurrentLayer("v");
-		pltVolt->addGraph();
-		pltVolt->graph()->setData(data.ts, data.v);
-		pltVolt->graph()->setPen(QPen(COLOR_V.lighter(lf), lw));
+	// Create the conductance graph
+	pltCond->setCurrentLayer("gE");
+	pltCond->addGraph();
+	pltCond->graph()->setData(data.ts, data.gE);
+	pltCond->graph()->setPen(QPen(COLOR_GE, LINE_W));
 
-		addSpikes(pltVolt, sim.getSpikes());
+	pltCond->setCurrentLayer("gI");
+	pltCond->addGraph();
+	pltCond->graph()->setData(data.ts, data.gI);
+	pltCond->graph()->setPen(QPen(COLOR_GI, LINE_W));
 
-		// Create the conductance graph
-		pltCond->setCurrentLayer("gE");
-		pltCond->addGraph();
-		pltCond->graph()->setData(data.ts, data.gE);
-		pltCond->graph()->setPen(QPen(COLOR_GE.lighter(lf), lw));
+	addSpikes(pltCond, sim.getInputSpikes(), minT, maxT);
 
-		pltCond->setCurrentLayer("gI");
-		pltCond->addGraph();
-		pltCond->graph()->setData(data.ts, data.gI);
-		pltCond->graph()->setPen(QPen(COLOR_GI.lighter(lf), lw));
+	// Create the current graph
+	pltCurr->setCurrentLayer("w");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.w);
+	pltCurr->graph()->setPen(QPen(COLOR_W, LINE_W));
 
-		addSpikes(pltCond, sim.getSpikes());
+	pltCurr->setCurrentLayer("iL");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.iL);
+	pltCurr->graph()->setPen(QPen(COLOR_IL, LINE_W));
 
-		// Create the current graph
-		pltCurr->setCurrentLayer("w");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.w);
-		pltCurr->graph()->setPen(QPen(COLOR_W.lighter(lf), lw));
+	pltCurr->setCurrentLayer("iE");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.iE);
+	pltCurr->graph()->setPen(QPen(COLOR_IE, LINE_W));
 
-		pltCurr->setCurrentLayer("iL");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.iL);
-		pltCurr->graph()->setPen(QPen(COLOR_IL.lighter(lf), lw));
+	pltCurr->setCurrentLayer("iI");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.iI);
+	pltCurr->graph()->setPen(QPen(COLOR_II, LINE_W));
 
-		pltCurr->setCurrentLayer("iE");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.iE);
-		pltCurr->graph()->setPen(QPen(COLOR_IE.lighter(lf), lw));
+	pltCurr->setCurrentLayer("iTh");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.iTh);
+	pltCurr->graph()->setPen(QPen(COLOR_ITH, LINE_W));
 
-		pltCurr->setCurrentLayer("iI");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.iI);
-		pltCurr->graph()->setPen(QPen(COLOR_II.lighter(lf), lw));
+	pltCurr->setCurrentLayer("iSum");
+	pltCurr->addGraph();
+	pltCurr->graph()->setData(data.ts, data.iSum);
+	pltCurr->graph()->setPen(QPen(COLOR_ISUM, LINE_W, Qt::DashLine));
 
-		pltCurr->setCurrentLayer("iTh");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.iTh);
-		pltCurr->graph()->setPen(QPen(COLOR_ITH.lighter(lf), lw));
-
-		pltCurr->setCurrentLayer("iSum");
-		pltCurr->addGraph();
-		pltCurr->graph()->setData(data.ts, data.iSum);
-		pltCurr->graph()->setPen(
-		    QPen(COLOR_ISUM.lighter(lf), lw, Qt::DashLine));
-
-		addSpikes(pltCurr, sim.getSpikes());
-	}
+	addSpikes(pltCurr, sim.getInputSpikes(), minT, maxT);
 
 	// Set titles and ranges
 	pltVolt->xAxis->setLabel("Time [ms]");
 	pltVolt->yAxis->setLabel("Membrane Potential [mV]");
-	pltVolt->xAxis->setRange(minTime, maxTime);
-	pltVolt->yAxis->setRange(minVoltage, maxVoltage);
+	pltVolt->xAxis->setRange(minT, maxT);
+	pltVolt->yAxis->setRange(oData.minVoltage, oData.maxVoltage);
 
 	pltCond->xAxis->setLabel("Time t [ms]");
 	pltCond->yAxis->setLabel("Conductance [µS]");
-	pltCond->xAxis->setRange(minTime, maxTime);
-	pltCond->yAxis->setRange(minConductance, maxConductance);
+	pltCond->xAxis->setRange(minT, maxT);
+	pltCond->yAxis->setRange(oData.minConductance, oData.maxConductance);
 
 	pltCurr->xAxis->setLabel("Time t [ms]");
 	pltCurr->yAxis->setLabel("Current [nA]");
-	pltCurr->xAxis->setRange(minTime, maxTime);
-	pltCurr->yAxis->setRange(minCurrent, maxCurrent);
+	pltCurr->xAxis->setRange(minT, maxT);
+	pltCurr->yAxis->setRange(oData.minCurrentSmooth, oData.maxCurrentSmooth);
 
 	// Replot everything
 	pltVolt->replot();
 	pltCond->replot();
 	pltCurr->replot();
+}
+
+void NeuronSimulationWidget::show(const NeuronSimulation &sim)
+{
+	// Copy the simulation
+	this->sim = sim;
+
+	// Update the SpikeWidget (this recalculates the range)
+	spikeWidget->show(sim.getTrain(), sim.getOutputSpikes(),
+	                  sim.getOutputGroups());
+
+	// Force an update of the plots
+	updatePlot();
 }
 }
 

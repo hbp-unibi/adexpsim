@@ -29,7 +29,7 @@
 #ifndef _ADEXPSIM_NEURON_SIMULATION_HPP_
 #define _ADEXPSIM_NEURON_SIMULATION_HPP_
 
-#include <simulation/DormandPrinceIntegrator.hpp>
+#include <exploration/SpikeTrainEvaluation.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Recorder.hpp>
 #include <simulation/Spike.hpp>
@@ -45,6 +45,10 @@ namespace AdExpSim {
  * spikes and the recorded model data.
  */
 class NeuronSimulation {
+public:
+	using OutputSpikeVec = std::vector<SpikeTrainEvaluation::OutputSpike>;
+	using OutputGroupVec = std::vector<SpikeTrainEvaluation::OutputGroup>;
+
 private:
 	/**
 	 * Parameters the experiment ran with.
@@ -52,40 +56,42 @@ private:
 	Parameters parameters;
 
 	/**
-	 * Input spikes sent to the neuron.
+	 * Evaluation used for storing the spike train containing the input
+	 * descriptor.
 	 */
-	SpikeVec spikes;
+	SpikeTrainEvaluation evaluation;
 
 	/**
-	 * Recorder used to record the data from the neuron simulation.
+	 * Output spikes.
+	 */
+	OutputSpikeVec outputSpikes;
+
+	/**
+	 * Output groups.
+	 */
+	OutputGroupVec outputGroups;
+
+	/**
+	 * Recorder used to record and hold the data from the neuron simulation.
 	 */
 	VectorRecorder<QVector<double>, SIPrefixTransformation> recorder;
-
-	/**
-	 * Controller used for tracking the maximum value.
-	 */
-	MaxValueController controller;
-
-	/**
-	 * Internally used integrator.
-	 */
-	DormandPrinceIntegrator integrator;
 
 public:
 	/**
 	 * Creates a new NeuronSimulation instance.
 	 */
-	NeuronSimulation(Time interval = Time(0)) : recorder(parameters, interval){};
+	NeuronSimulation(Time interval = Time(0))
+	    : recorder(parameters, interval){};
 
 	/**
 	 * Sets the parameters and input spikes.
 	 */
-	void prepare(const Parameters &parameters, const SpikeVec &spikes);
+	void prepare(const Parameters &parameters, const SpikeTrain &train);
 
 	/**
 	 * Runs the simulation with the parameters given in the prepare method.
 	 */
-	void run(Time tDelta = Time(-1));
+	void run();
 
 	/**
 	 * Returns the parameters.
@@ -95,7 +101,27 @@ public:
 	/**
 	 * Returns the input spikes.
 	 */
-	const SpikeVec &getSpikes() const { return spikes; }
+	const SpikeVec &getInputSpikes() const { return getTrain().getSpikes(); }
+
+	/**
+	 * Returns the output spikes.
+	 */
+	const OutputSpikeVec &getOutputSpikes() const { return outputSpikes; }
+
+	/**
+	 * Returns the output groups.
+	 */
+	const OutputGroupVec &getOutputGroups() const { return outputGroups; }
+
+	/**
+	 * Returns the input spike train descriptor.
+	 */
+	const SpikeTrain &getTrain() const { return evaluation.getTrain(); }
+
+	/**
+	 * Returns the maximum timestamp of the recorded data.
+	 */
+	const double getMaxT() const { return getData().maxTime; }
 
 	/**
 	 * Returns the recorded data.
@@ -104,11 +130,6 @@ public:
 	{
 		return recorder.getData();
 	}
-
-	/**
-	 * Returns the controller.
-	 */
-	const MaxValueController &getController() const { return controller; }
 };
 
 using NeuronSimulationResultVec = QVector<NeuronSimulation>;

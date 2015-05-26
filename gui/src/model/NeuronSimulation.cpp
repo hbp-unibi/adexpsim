@@ -16,27 +16,34 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <simulation/DormandPrinceIntegrator.hpp>
+
 #include "NeuronSimulation.hpp"
 
 namespace AdExpSim {
 
 void NeuronSimulation::prepare(const Parameters &parameters,
-                               const SpikeVec &spikes)
+                               const SpikeTrain &train)
 {
 	this->parameters = parameters;
-	this->spikes = spikes;
+	this->evaluation = SpikeTrainEvaluation(train);
 }
 
-void NeuronSimulation::run(Time tDelta)
+void NeuronSimulation::run()
 {
-	// Reset the recorder and the controller
+	// Reset the recorder and first run the simulation
 	recorder.reset();
-	controller.reset();
-	integrator.reset();
+	NullController controller;
+	DormandPrinceIntegrator integrator;
 
-	// Run the actual simulation
-	Model::simulate(spikes, recorder, controller, integrator, parameters, tDelta);
+	// Run the actual simulation until the end of the time
+	Model::simulate(getTrain().getSpikes(), recorder, controller, integrator,
+	                parameters, Time(-1), getTrain().getMaxT());
+
+	// Run the evaluation to fetch the output spikes and the output groups
+	outputSpikes.clear();
+	outputGroups.clear();
+	evaluation.evaluate(parameters, outputSpikes, outputGroups);
 }
-
 }
 

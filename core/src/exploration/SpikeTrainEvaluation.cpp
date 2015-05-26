@@ -175,9 +175,10 @@ Val SpikeTrainEvaluation::sigma(Val x, const WorkingParameters &params,
 	return invert ? 1.0 - res : res;
 }
 
-std::pair<Val, Time> SpikeTrainEvaluation::trackMaxPotential(
-    const WorkingParameters &params, const RecordedSpike &s0, Time tEnd,
-    Val eTar) const
+SpikeTrainEvaluation::MaxPotentialResult
+SpikeTrainEvaluation::trackMaxPotential(const WorkingParameters &params,
+                                        const RecordedSpike &s0, Time tEnd,
+                                        Val eTar) const
 {
 	// Fetch the time range
 	const Time tStart = s0.t;
@@ -185,7 +186,7 @@ std::pair<Val, Time> SpikeTrainEvaluation::trackMaxPotential(
 
 	// Abort if the range is invalid, return the voltage at the start time point
 	if (tLen <= Time(0)) {
-		return std::pair<Val, Time>(s0.state.v(), Time(0));
+		return MaxPotentialResult(s0.state.v(), Time(0), Time(1));
 	}
 
 	// Fetch all the input spikes that occured in this period and move their
@@ -208,15 +209,17 @@ std::pair<Val, Time> SpikeTrainEvaluation::trackMaxPotential(
 	                                        s0.state);
 
 	// Return the tracked maximum membrane potential
-	return std::pair<Val, Time>(controller.vMax, tLen);
+	return MaxPotentialResult(
+	    controller.vMax, std::min(controller.tVMax, controller.tSpike), tLen);
 }
 
-template <typename Function>
+template <typename F1, typename F2>
 SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
-    const WorkingParameters &params, Val eTar, Function recordOutputSpike) const
+    const WorkingParameters &params, Val eTar, F1 recordOutputSpike,
+    F2 recordOutputGroup) const
 {
 	// Abort if the given parameters are invalid
-	if (!params.valid()) {
+	if (!params.valid() || train.getRanges().empty()) {
 		return SpikeTrainEvaluationResult();
 	}
 
@@ -232,20 +235,24 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	// Iterate over all ranges described in the spike train and adapt the result
 	// according to whether how well the range condition (number of expected
 	// output spikes) has been fulfilled.
-	SpikeTrainEvaluationResult res;
-	bool groupOk = true;
-	size_t group = 0;
-	size_t nGroups = 1;
 	const std::vector<RecordedSpike> &inputSpikes = recorder.getInputSpikes();
 	const std::vector<RecordedSpike> &outputSpikes = recorder.getOutputSpikes();
 	const std::vector<SpikeTrain::Range> &ranges = train.getRanges();
+
+	SpikeTrainEvaluationResult res;
+	bool groupOk = true;
+	size_t group = 0;
+	size_t groupDescrIdx = ranges.front().descrIdx;
+	Time groupStart;
+	size_t nGroups = 1;
 	for (size_t rangeIdx = 0; rangeIdx < ranges.size() - 1; rangeIdx++) {
 		// Fetch some information about the current spike
 		size_t nSpikesExpected = ranges[rangeIdx].nSpikes;
 		const Time rangeStart = ranges[rangeIdx].start;
 		const Time rangeEnd = ranges[rangeIdx + 1].start;
-		const Time rangeLen = rangeEnd - rangeStart;
 		const size_t rangeGroup = ranges[rangeIdx].group;
+		const size_t rangeDescrIdx = ranges[rangeIdx].descrIdx;
+		const Time rangeLen = rangeEnd - rangeStart;
 
 		// Skip this range if it has a non-positive length
 		if (rangeLen <= Time(0)) {
@@ -268,11 +275,24 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		// If this range belongs to another group than the previous, update the
 		// binaryExpectationRatio
 		if (group != rangeGroup) {
+			// Record the current output group
+			recordOutputGroup(
+			    OutputGroup(groupStart, rangeStart, groupDescrIdx, groupOk));
+
+			// Update the output
 			res.pBinary += groupOk ? 1.0 : 0.0;
+
+			// Increase the group cpunt
 			nGroups++;
+
+			// Reset the current group
 			groupOk = true;
+			groupStart = rangeStart;
 			group = rangeGroup;
+			groupDescrIdx = rangeDescrIdx;
 		}
+
+		// Update the "groupOk" flag
 		groupOk = groupOk && (nSpikesReceived == nSpikesExpected);
 
 		// Iterate over all output spikes and call the "output" function for
@@ -290,11 +310,12 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		     it++, nSpikesExpected--) {
 			// Track the maximum potential between the current spike and the
 			// next output spike
-			const std::pair<Val, Time> simRes =
+			const auto simRes =
 			    trackMaxPotential(params, *curSpike, it->t, eTar);
 
 			// Adapt the softExpectationRatio
-			res.pSoft += sigma(simRes.first, params) * simRes.second.sec();
+			res.pSoft += sigma(simRes.vMax, params) * simRes.tLen.sec()/* *
+			             simRes.tMaxRel()*/;
 
 			// Advance the curSpike pointer to the last processed output spike
 			curSpike = &(*it);
@@ -305,15 +326,19 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		// rest of the range period and adapt the softExpectationRatio. If no
 		// spikes were expected, the sigma function has to be inverted (because
 		// lower potentials are better).
-		const std::pair<Val, Time> simRes =
+		const auto simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
-		res.pSoft += sigma(simRes.first, params, nSpikesExpected == 0) *
-		             simRes.second.sec();
+		res.pSoft += sigma(simRes.vMax, params, nSpikesExpected == 0) *
+		             simRes.tLen.sec()/* * simRes.tMaxRel()*/;
 	}
+
+	// Record the last output group
+	recordOutputGroup(
+	    OutputGroup(groupStart, ranges.back().start, groupDescrIdx, groupOk));
 
 	// Normalize the result by the total simulation time in seconds
 	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
-	res.pSoft = res.pBinary * res.pSoft / T.sec();
+	res.pSoft = /*res.pBinary **/ res.pSoft / T.sec();
 
 	return res;
 }
@@ -321,17 +346,23 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
     const WorkingParameters &params, Val eTar) const
 {
-	return evaluateInternal(params, eTar, [](const OutputSpike &) -> void {});
+	// Call the evaluateInternal template with two empty functions, thus
+	// removing all of the recording code.
+	return evaluateInternal(params, eTar, [](const OutputSpike &) -> void {},
+	                        [](const OutputGroup &) -> void {});
 }
 
 SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
-    const WorkingParameters &params,
-    std::vector<OutputSpike> &outputSpikes,
-    Val eTar) const
+    const WorkingParameters &params, std::vector<OutputSpike> &outputSpikes,
+    std::vector<OutputGroup> &outputGroups, Val eTar) const
 {
+	// Call the evaluateInternal template with record callbacks storing the
+	// to be recorded objects in the given lists.
 	return evaluateInternal(params, eTar,
 	                        [&outputSpikes](const OutputSpike &spike)
-	                            -> void { outputSpikes.push_back(spike); });
+	                            -> void { outputSpikes.emplace_back(spike); },
+	                        [&outputGroups](const OutputGroup &group)
+	                            -> void { outputGroups.emplace_back(group); });
 }
 }
 

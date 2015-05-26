@@ -102,10 +102,10 @@ void MainWindow::explorationWidgetUpdateParameters() { updateSimulation(); }
 
 void MainWindow::updateSimulation()
 {
-/*	NeuronSimulation sim;
-	sim.prepare(*params, train->getSpikes());
+	NeuronSimulation sim(1e-3_s);
+	sim.prepare(*params, *train);
 	sim.run();
-	simulationWidget->show({&sim});*/
+	simulationWidget->show(sim);
 }
 }
 

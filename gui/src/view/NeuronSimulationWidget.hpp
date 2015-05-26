@@ -28,16 +28,17 @@
 #ifndef _ADEXPSIM_NEURON_SIMULATION_WIDGET_HPP_
 #define _ADEXPSIM_NEURON_SIMULATION_WIDGET_HPP_
 
-#include <vector>
-
 #include <QWidget>
+
+#include <model/NeuronSimulation.hpp>
 
 class QVBoxLayout;
 class QCustomPlot;
+class QTimer;
 
 namespace AdExpSim {
 
-class NeuronSimulation;
+class SpikeWidget;
 
 /**
  * The SimulationResultWidget shows the line plot for a single-neuron
@@ -45,12 +46,25 @@ class NeuronSimulation;
  */
 class NeuronSimulationWidget: public QWidget {
 Q_OBJECT
-
 private:
 	QVBoxLayout *layout;
+	SpikeWidget *spikeWidget;
 	QCustomPlot *pltVolt;
 	QCustomPlot *pltCond;
 	QCustomPlot *pltCurr;
+	QTimer *updateDelay;
+	NeuronSimulation sim;
+
+private slots:
+	/**
+	 * Redraws the plot windows according to the current range and simulation.
+	 */
+	void updatePlot();
+
+	/**
+	 * Called whenever the NeuronSimulationWidget indicates a range change.
+	 */
+	void rangeChange();
 
 public:
 	/**
@@ -65,7 +79,7 @@ public:
 	 * should be displayed. The given references are not stored internally, all
 	 * important data is implicitly copied by the plot widgets.
 	 */
-	void show(const std::vector<const NeuronSimulation*> &sims);
+	void show(const NeuronSimulation &sim);
 };
 
 }
