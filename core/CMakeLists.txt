@@ -82,5 +82,6 @@ ADD_LIBRARY(AdExpSimCore
 TARGET_LINK_LIBRARIES(AdExpSimCore
 	${OPENCL_LIBRARY}
 	rt
+	pthread
 )
 
