@@ -251,6 +251,9 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		return SpikeTrainEvaluationResult();
 	}
 
+	// Update the parameters
+	params.update();
+
 	// Run the simulation on the spike train with the given parameters and
 	// collect all spikes
 	const Time T = train.getMaxT();
