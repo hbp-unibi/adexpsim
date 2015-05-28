@@ -24,6 +24,9 @@
 
 namespace AdExpSim {
 
+static constexpr int SPACING = 30;
+static constexpr float LINE_WIDTH = 1;
+
 static void drawHatchLine(QPainter &painter, int startX, int startY, int c)
 {
 	constexpr float ALPHA = 45.0f;
@@ -34,9 +37,6 @@ static void drawHatchLine(QPainter &painter, int startX, int startY, int c)
 
 void ExplorationWidgetInvalidOverlay::rebuildBuffer()
 {
-	constexpr int SPACING = 15;
-	constexpr float LINE_WIDTH = 3;
-
 	// Fetch the axis dimensions, abort if nothing has changed or no data is
 	// available
 	auto axisRect = mParentPlot->axisRect();
@@ -55,29 +55,29 @@ void ExplorationWidgetInvalidOverlay::rebuildBuffer()
 	buffer.fill(QColor(255, 255, 255, 0));
 
 	// Create a QPainter instance accessing the buffer
-	QPainter(&buffer);
+	QPainter painter(&buffer);
 
 	// Draw the line pattern
-	buffer.setPen(mPen);
+	painter.setPen(mPen);
 	for (int x = 0; x < w; x += SPACING) {
-		drawHatchLine(painer, x, 0, c);
+		drawHatchLine(painter, x, 0, c);
 	}
 	for (int y = SPACING; y < h; y += SPACING) {
-		drawHatchLine(painer, 0, y, c);
+		drawHatchLine(painter, 0, y, c);
 	}
 
 	// Erase the regions where the image is explicitly valid
 	painter.setCompositionMode(QPainter::CompositionMode_Source);
 	const int mw = mask.getWidth();
 	const int mh = mask.getHeight();
-	for (int x = 0; x++; x < mw; x++) {
+	for (int x = 0; x < mw; x++) {
 		int x0 = x * w / mw;
-		int x1 = (x + 1) * w / mw - 1;
-		for (int y = 0; y++; y < mw; x++) {
+		int x1 = (x + 1) * w / mw + 1;
+		for (int y = 0; y < mh; y++) {
 			int y0 = y * h / mh;
-			int y1 = (y + 1) * h / mh - 1;
-			if (mask(x, y)) {
-				painter.fillRect(QRect(x0, y0, y1, y1),
+			int y1 = (y + 1) * h / mh + 1;
+			if (mask(x, mh - 1 - y)) {
+				painter.fillRect(QRectF(x0, y0, x1 - x0, y1 - y0),
 				                 QColor(255, 255, 255, 0));
 			}
 		}
@@ -98,12 +98,16 @@ void ExplorationWidgetInvalidOverlay::draw(QCPPainter *painter)
 	double x1 = mParentPlot->xAxis->coordToPixel(rangeDimX.max);
 	double y0 = mParentPlot->yAxis->coordToPixel(rangeDimY.min);
 	double y1 = mParentPlot->yAxis->coordToPixel(rangeDimY.max);
-	painter->drawImage(QRectF(x0, y0, x1 - x0, y1 - y0), buffer);
+	painter->drawImage(QRectF(x0, y1, x1 - x0, y0 - y1), buffer);
 }
 
 ExplorationWidgetInvalidOverlay::ExplorationWidgetInvalidOverlay(
     QCustomPlot *parentPlot)
-    : mPen(KS_GRAY, 5), rangeDimX(0, 0, 0), rangeDimY(0, 0, 0), mask(0, 0)
+    : QCPAbstractItem(parentPlot),
+      mPen(KS_GRAY, LINE_WIDTH),
+      rangeDimX(0, 0, 0),
+      rangeDimY(0, 0, 0),
+      mask(0, 0)
 {
 }
 
@@ -111,19 +115,17 @@ ExplorationWidgetInvalidOverlay::~ExplorationWidgetInvalidOverlay() {}
 
 double ExplorationWidgetInvalidOverlay::selectTest(const QPointF &pos,
                                                    bool onlySelectable,
-                                                   QVariant *details = 0) const
+                                                   QVariant *details) const
 {
 	return -1.0;
 }
 
-void ExplorationWidgetInvalidOverlay::updateMask(Range rangeDimX,
-                                                 Range rangeDimY,
-                                                 MatrixBase<bool> mask)
+void ExplorationWidgetInvalidOverlay::setMask(Range rangeDimX, Range rangeDimY,
+                                              const MatrixBase<bool> &mask)
 {
 	this->rangeDimX = rangeDimX;
 	this->rangeDimY = rangeDimY;
 	this->mask = mask;
 	this->buffer = QImage();
-}
 }
 }

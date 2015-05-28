@@ -34,6 +34,8 @@ namespace AdExpSim {
 
 class Parameters;
 class Exploration;
+class ExplorationWidgetCrosshair;
+class ExplorationWidgetInvalidOverlay;
 
 /**
  * The ExplorationWidget shows the exploration result as colored image.
@@ -54,6 +56,8 @@ private:
 	QLabel *lblPBinary;
 	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
+	ExplorationWidgetCrosshair *crosshair;
+	ExplorationWidgetInvalidOverlay *overlay;
 	std::unique_ptr<Exploration> exploration;
 	std::shared_ptr<Parameters> params;
 

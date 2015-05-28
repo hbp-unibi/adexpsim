@@ -25,10 +25,9 @@
 #include <utils/Types.hpp>
 #include <utils/Matrix.hpp>
 
-
 namespace AdExpSim {
 /**
- * The ExplorationWidgetInvalidOverlay class is used to draw the lines which 
+ * The ExplorationWidgetInvalidOverlay class is used to draw the lines which
  * indicate the regions in an exploration with invalid parameters.
  */
 class ExplorationWidgetInvalidOverlay : public QCPAbstractItem {
@@ -58,7 +57,8 @@ public:
 	double selectTest(const QPointF &pos, bool onlySelectable,
 	                  QVariant *details = 0) const override;
 
-	void setMask(Range rangeDimX, Range rangeDimY, MatrixBase<bool> mask);
+	void setMask(Range rangeDimX, Range rangeDimY,
+	             const MatrixBase<bool> &mask);
 };
 }
 

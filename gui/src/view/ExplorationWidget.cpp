@@ -31,10 +31,12 @@
 
 #include <exploration/Exploration.hpp>
 #include <simulation/Parameters.hpp>
+#include <utils/Matrix.hpp>
 
 #include "ExplorationWidget.hpp"
 #include "ExplorationWidgetCrosshair.hpp"
 #include "ExplorationWidgetGradients.hpp"
+#include "ExplorationWidgetInvalidOverlay.hpp"
 
 namespace AdExpSim {
 
@@ -107,6 +109,17 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	pltExploration->axisRect()->setupFullAxesBox(true);
 	pltExploration->moveLayer(pltExploration->layer("grid"),
 	                          pltExploration->layer("main"));
+
+	// Add the crosshair and the "invalid overlay"
+	overlay = new ExplorationWidgetInvalidOverlay(pltExploration);
+	pltExploration->addItem(overlay);
+	pltExploration->addLayer("overlay");
+	overlay->setLayer("overlay");
+
+	crosshair = new ExplorationWidgetCrosshair(pltExploration);
+	pltExploration->addItem(crosshair);
+	pltExploration->addLayer("crosshair");
+	crosshair->setLayer("crosshair");
 
 	// Connect the axis change events to allow updating the view once the axes
 	// change
@@ -365,9 +378,9 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 
 void ExplorationWidget::centerView()
 {
-	QPointF p = parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), *params),
-	    WorkingParameters::fetchParameter(getDimY(), *params));
+	QPointF p =
+	    parametersToPlot(WorkingParameters::fetchParameter(getDimX(), *params),
+	                     WorkingParameters::fetchParameter(getDimY(), *params));
 	pltExploration->xAxis->setRange(QCPRange(p.x() * 0.5, p.x() * 1.5));
 	pltExploration->yAxis->setRange(QCPRange(p.y() * 0.5, p.y() * 1.5));
 	pltExploration->replot();
@@ -408,10 +421,6 @@ static void fillColorMap(QCPColorMap *map, size_t nx, size_t ny, Fun f)
 
 void ExplorationWidget::updateCrosshair()
 {
-	pltExploration->clearItems();
-	ExplorationWidgetCrosshair *crosshair =
-	    new ExplorationWidgetCrosshair(pltExploration);
-	pltExploration->addItem(crosshair);
 	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
 	crosshair->positions()[0]->setCoords(parametersToPlot(
 	    WorkingParameters::fetchParameter(getDimX(), *params),
@@ -420,12 +429,41 @@ void ExplorationWidget::updateCrosshair()
 
 void ExplorationWidget::updateInvalidRegionsOverlay()
 {
-	// TODO
+	constexpr size_t RES = 256;
+
+	if (exploration != nullptr) {
+		// Calculate the validity mask
+		MatrixBase<bool> mask(RES, RES);
+		const Range &rX = exploration->getRangeX();
+		const Range &rY = exploration->getRangeY();
+		const Range rEX(rX.min, rX.max, RES);
+		const Range rEY(rY.min, rY.max, RES);
+		const size_t dimX = getDimX();
+		const size_t dimY = getDimY();
+		WorkingParameters wp(*params);
+		for (size_t x = 0; x < RES; x++) {
+			for (size_t y = 0; y < RES; y++) {
+				wp[dimX] = rEX.value(x);
+				wp[dimY] = rEY.value(y);
+				mask(x, y) = wp.valid();
+			}
+		}
+
+		// Update the overlay
+		QPointF min = workingParametersToPlot(rX.min, rY.min);
+		QPointF max = workingParametersToPlot(rX.max, rY.max);
+		overlay->setMask(Range(min.x(), max.x(), RES),
+		                 Range(min.y(), max.y(), RES), mask);
+	} else {
+		overlay->setMask(Range(0, 0, 0), Range(0, 0, 0),
+		                 MatrixBase<bool>(0, 0));
+	}
 }
 
 void ExplorationWidget::update()
 {
 	// Clear the graph
+	pltExploration->setCurrentLayer("main");
 	pltExploration->clearPlottables();
 
 	// Update the x- and y- axis labels
@@ -468,6 +506,7 @@ void ExplorationWidget::update()
 		map->setDataRange(QCPRange(0, 1));
 	}
 
+	updateInvalidRegionsOverlay();
 	updateCrosshair();
 
 	// Replot the graph
