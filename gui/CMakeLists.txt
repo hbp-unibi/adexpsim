@@ -56,6 +56,7 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/model/IncrementalExploration
 	src/view/Colors
 	src/view/ExplorationWidget
+	src/view/ExplorationWidgetInvalidOverlay
 	src/view/ExplorationWidgetGradients
 	src/view/ExplorationWidgetCrosshair
 	src/view/MainWindow

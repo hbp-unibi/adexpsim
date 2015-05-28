@@ -77,6 +77,7 @@ private slots:
 	void updateInfo(QMouseEvent *event = nullptr);
 	void update();
 	void updateCrosshair();
+	void updateInvalidRegionsOverlay();
 	void plotDoubleClick(QMouseEvent *event);
 
 public:

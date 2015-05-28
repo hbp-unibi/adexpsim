@@ -418,6 +418,11 @@ void ExplorationWidget::updateCrosshair()
 	    WorkingParameters::fetchParameter(getDimY(), *params)));
 }
 
+void ExplorationWidget::updateInvalidRegionsOverlay()
+{
+	// TODO
+}
+
 void ExplorationWidget::update()
 {
 	// Clear the graph
