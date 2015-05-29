@@ -99,7 +99,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 	}
 
 	// Add a final range at the end
-	ranges.emplace_back(t + T, n, 0, 0);
+	ranges.emplace_back(t, n, 0, 0);
 
 	// Shift both spikes and ranges by "minT" to have the first spike at zero
 	for (Spike &spike : spikes) {
