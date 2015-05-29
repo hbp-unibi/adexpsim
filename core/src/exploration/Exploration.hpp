@@ -62,6 +62,16 @@ struct ExplorationMemory {
 	Matrix pBinary;
 
 	/**
+	 * Matrix containing the probability of false positive spikes.
+	 */
+	Matrix pFalsePositive;
+
+	/**
+	 * Matrix containing the probability of false negative spikes.
+	 */
+	Matrix pFalseNegative;
+
+	/**
 	 * Matrix containing hte probability of the number of expected spikes begin
 	 * fulfilled under noise.
 	 */
@@ -77,6 +87,8 @@ struct ExplorationMemory {
 	    : resX(resX),
 	      resY(resY),
 	      pBinary(resX, resY),
+	      pFalsePositive(resX, resY),
+	      pFalseNegative(resX, resY),
 	      pSoft(resX, resY)
 	{
 	}
@@ -87,7 +99,8 @@ struct ExplorationMemory {
 	 */
 	SpikeTrainEvaluationResult operator()(size_t x, size_t y) const
 	{
-		return SpikeTrainEvaluationResult(pBinary(x, y), pSoft(x, y));
+		return SpikeTrainEvaluationResult(pBinary(x, y), pFalsePositive(x, y),
+		                                  pFalseNegative(x, y), pSoft(x, y));
 	}
 };
 
@@ -158,9 +171,9 @@ public:
 	 * @param maxY is the maximum parameter value in y-direction.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            const WorkingParameters &params,
-	            const SpikeTrain &train, size_t dimX,
-	            Val minX, Val maxX, size_t dimY, Val minY, Val maxY);
+	            const WorkingParameters &params, const SpikeTrain &train,
+	            size_t dimX, Val minX, Val maxX, size_t dimY, Val minY,
+	            Val maxY);
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed

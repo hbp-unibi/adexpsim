@@ -54,6 +54,8 @@ private:
 	QLabel *lblDimX;
 	QLabel *lblDimY;
 	QLabel *lblPBinary;
+	QLabel *lblPFalsePositive;
+	QLabel *lblPFalseNegative;
 	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
 	ExplorationWidgetCrosshair *crosshair;

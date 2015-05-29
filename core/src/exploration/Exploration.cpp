@@ -75,6 +75,8 @@ bool Exploration::run(const ProgressCallback &progress)
 
 			// Store the evaluation result in the matrices
 			mem->pBinary(x, y) = result.pBinary;
+			mem->pFalsePositive(x, y) = result.pFalsePositive;
+			mem->pFalseNegative(x, y) = result.pFalseNegative;
 			mem->pSoft(x, y) = result.pSoft;
 
 			// Increment the counter

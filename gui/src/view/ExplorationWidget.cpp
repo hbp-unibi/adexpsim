@@ -74,6 +74,10 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
 	comboFunction->addItem("Soft Success Probability", "pSoft");
+	comboFunction->addItem("Binary False Positive Probability",
+	                       "pFalsePositive");
+	comboFunction->addItem("Binary False Negative Probability",
+	                       "pFalseNegative");
 	comboFunction->addItem("Binary Success Probability", "pBinary");
 
 	fillDimensionCombobox(comboDimX);
@@ -141,9 +145,13 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	lblDimY = new QLabel(statusWidget);
 	lblDimY->setMinimumWidth(100);
 	lblPBinary = new QLabel(statusWidget);
-	lblPBinary->setMinimumWidth(100);
+	lblPBinary->setMinimumWidth(75);
+	lblPFalsePositive = new QLabel(statusWidget);
+	lblPFalsePositive->setMinimumWidth(75);
+	lblPFalseNegative = new QLabel(statusWidget);
+	lblPFalseNegative->setMinimumWidth(75);
 	lblPSoft = new QLabel(statusWidget);
-	lblPSoft->setMinimumWidth(100);
+	lblPSoft->setMinimumWidth(75);
 
 	statusLabel = new QLabel(statusWidget);
 	statusLabel->setMinimumWidth(50);
@@ -159,6 +167,8 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	statusLayout->addWidget(lblDimY);
 	statusLayout->addWidget(lblPBinary);
 	statusLayout->addWidget(lblPSoft);
+	statusLayout->addWidget(lblPFalsePositive);
+	statusLayout->addWidget(lblPFalseNegative);
 	statusLayout->addWidget(progressBar);
 	statusLayout->addWidget(statusLabel);
 
@@ -317,6 +327,8 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 	// If event is set to nullptr, just update the label captions
 	lblPBinary->setText("");
 	lblPSoft->setText("");
+	lblPFalsePositive->setText("");
+	lblPFalseNegative->setText("");
 	if (!event) {
 		lblDimX->setText(axisName(getDimX()));
 		lblDimY->setText(axisName(getDimY()));
@@ -341,8 +353,14 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 			    iY < (int)rY.steps) {
 				SpikeTrainEvaluationResult res =
 				    exploration->getMemory()(iX, iY);
-				lblPBinary->setText("pBinary: " + QString::number(res.pBinary));
-				lblPSoft->setText("pSoft: " + QString::number(res.pSoft));
+				lblPBinary->setText("pBin: " +
+				                    QString::number(res.pBinary, 'f', 3));
+				lblPFalsePositive->setText(
+				    "pFPos: " + QString::number(res.pFalsePositive, 'f', 3));
+				lblPFalseNegative->setText(
+				    "pFNeg: " + QString::number(res.pFalseNegative, 'f', 3));
+				lblPSoft->setText("pSoft: " +
+				                  QString::number(res.pSoft, 'f', 3));
 			}
 		}
 	}
@@ -502,6 +520,16 @@ void ExplorationWidget::update()
 				return mem.pBinary(x, y);
 			});
 			map->setGradient(ExplorationWidgetGradients::orange());
+		} else if (funStr == "pFalsePositive") {
+			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
+				return mem.pFalsePositive(x, y);
+			});
+			map->setGradient(ExplorationWidgetGradients::green());
+		} else if (funStr == "pFalseNegative") {
+			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
+				return mem.pFalseNegative(x, y);
+			});
+			map->setGradient(ExplorationWidgetGradients::green());
 		}
 		map->setDataRange(QCPRange(0, 1));
 	}

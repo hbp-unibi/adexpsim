@@ -48,6 +48,18 @@ struct SpikeTrainEvaluationResult {
 	Val pBinary;
 
 	/**
+	 * Percentage of spike train groups where the number of output spikes was
+	 * larger than the expected number of output spikes.
+	 */
+	Val pFalsePositive;
+
+	/**
+	 * Percentage of spike train groups where the number of output spikes was
+	 * smaller than the expected number of output spikes.
+	 */
+	Val pFalseNegative;
+
+	/**
 	 * Soft expectation ratio -- same as the binary ratio, but takes the maximum
 	 * voltage that is theoretically reached in each range into account,
 	 * creating a smooth function. Ranges between 0.0 and 1.0.
@@ -55,16 +67,24 @@ struct SpikeTrainEvaluationResult {
 	Val pSoft;
 
 	/**
-	 * Default constructor. Initializes the values with zeros.
+	 * Default constructor. Initializes the values with the worst possible
+	 * result.
 	 */
-	SpikeTrainEvaluationResult() : pBinary(0.0), pSoft(0.0) {}
+	SpikeTrainEvaluationResult()
+	    : pBinary(0.0), pFalsePositive(1.0), pFalseNegative(1.0), pSoft(0.0)
+	{
+	}
 
 	/**
 	 * Constructor of the EvaluationResult class. Initializes all members with
 	 * the given values.
 	 */
-	SpikeTrainEvaluationResult(Val pBinary, Val pSoft)
-	    : pBinary(pBinary), pSoft(pSoft)
+	SpikeTrainEvaluationResult(Val pBinary, Val pFalsePositive,
+	                           Val pFalseNegative, Val pSoft)
+	    : pBinary(pBinary),
+	      pFalsePositive(pFalsePositive),
+	      pFalseNegative(pFalseNegative),
+	      pSoft(pSoft)
 	{
 	}
 };
@@ -84,12 +104,11 @@ private:
 		Time tLen;
 
 		MaxPotentialResult(Val vMax, Time tMax, Time tLen)
-		    : vMax(vMax), tMax(tMax), tLen(tLen) {};
+		    : vMax(vMax), tMax(tMax), tLen(tLen){};
 
 		Val tMaxRel() const
 		{
-			return std::max(0.0,
-			                std::min(1.0, 1.0 - tMax.sec() / tLen.sec()));
+			return std::max(0.0, std::min(1.0, 1.0 - tMax.sec() / tLen.sec()));
 		}
 	};
 

@@ -266,7 +266,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 
 	// Abort if the maximum spike count controller has tripped.
 	if (controller.tripped()) {
-		return SpikeTrainEvaluationResult();
+		return SpikeTrainEvaluationResult(0.0, 1.0, 0.0, 0.0);
 	}
 
 	// Iterate over all ranges described in the spike train and adapt the result
@@ -276,10 +276,11 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	const std::vector<RecordedSpike> &outputSpikes = recorder.getOutputSpikes();
 	const std::vector<SpikeTrain::Range> &ranges = train.getRanges();
 
-	SpikeTrainEvaluationResult res;
-	bool groupOk = true;
+	SpikeTrainEvaluationResult res(0.0, 0.0, 0.0, 0.0);
 	size_t group = 0;
 	size_t groupDescrIdx = ranges.front().descrIdx;
+	size_t groupExpected = 0;
+	size_t groupReceived = 0;
 	Time groupStart;
 	size_t nGroups = 1;
 	for (size_t rangeIdx = 0; rangeIdx < ranges.size() - 1; rangeIdx++) {
@@ -313,24 +314,28 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		// binaryExpectationRatio
 		if (group != rangeGroup) {
 			// Record the current output group
-			recordOutputGroup(
-			    OutputGroup(groupStart, rangeStart, groupDescrIdx, groupOk));
+			recordOutputGroup(OutputGroup(groupStart, rangeStart, groupDescrIdx,
+			                              groupReceived == groupExpected));
 
 			// Update the output
-			res.pBinary += groupOk ? 1.0 : 0.0;
+			res.pBinary += (groupReceived == groupExpected) ? 1.0 : 0.0;
+			res.pFalsePositive += (groupReceived > groupExpected) ? 1.0 : 0.0;
+			res.pFalseNegative += (groupReceived < groupExpected) ? 1.0 : 0.0;
 
 			// Increase the group cpunt
 			nGroups++;
 
 			// Reset the current group
-			groupOk = true;
 			groupStart = rangeStart;
 			group = rangeGroup;
 			groupDescrIdx = rangeDescrIdx;
+			groupExpected = 0;
+			groupReceived = 0;
 		}
 
-		// Update the "groupOk" flag
-		groupOk = groupOk && (nSpikesReceived == nSpikesExpected);
+		// Update the number of expected and received spikes
+		groupExpected += nSpikesExpected;
+		groupReceived += nSpikesReceived;
 
 		// Iterate over all output spikes and call the "output" function for
 		// each of them
@@ -370,11 +375,20 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	}
 
 	// Record the last output group
-	recordOutputGroup(
-	    OutputGroup(groupStart, ranges.back().start, groupDescrIdx, groupOk));
+	recordOutputGroup(OutputGroup(groupStart, ranges.back().start,
+	                              groupDescrIdx,
+	                              groupExpected == groupReceived));
 
 	// Normalize the result by the total simulation time in seconds
-	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
+	res.pBinary =
+	    (res.pBinary + ((groupExpected == groupReceived) ? 1.0 : 0.0)) /
+	    Val(nGroups);
+	res.pFalsePositive =
+	    (res.pFalsePositive + ((groupReceived > groupExpected) ? 1.0 : 0.0)) /
+	    Val(nGroups);
+	res.pFalseNegative =
+	    (res.pFalseNegative + ((groupReceived < groupExpected) ? 1.0 : 0.0)) /
+	    Val(nGroups);
 	res.pSoft = /*res.pBinary **/ res.pSoft / T.sec();
 
 	return res;
