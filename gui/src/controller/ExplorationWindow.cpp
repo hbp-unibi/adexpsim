@@ -83,6 +83,8 @@ void ExplorationWindow::createWidgets()
 	QWidget *container = new QWidget(this);
 	QHBoxLayout *layout = new QHBoxLayout(container);
 	layout->addWidget(explorationWidget);
+	layout->setSpacing(0);
+	layout->setMargin(0);
 	container->setLayout(layout);
 
 	setCentralWidget(container);
