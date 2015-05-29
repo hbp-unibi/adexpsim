@@ -19,7 +19,12 @@
 #ifndef _ADEXPSIM_EXPLORATION_WIDGET_HPP_
 #define _ADEXPSIM_EXPLORATION_WIDGET_HPP_
 
+#include <memory>
+#include <set>
+
 #include <QWidget>
+
+#include <utils/Types.hpp>
 
 class QComboBox;
 class QLabel;
@@ -60,13 +65,10 @@ private:
 	QCustomPlot *pltExploration;
 	ExplorationWidgetCrosshair *crosshair;
 	ExplorationWidgetInvalidOverlay *overlay;
-	std::unique_ptr<Exploration> exploration;
 	std::shared_ptr<Parameters> params;
+	std::shared_ptr<Exploration> exploration;
 
 	void dimensionChanged();
-
-	size_t getDimX();
-	size_t getDimY();
 
 	QPointF workingParametersToPlot(Val x, Val y);
 	QPointF parametersToPlot(Val x, Val y);
@@ -81,7 +83,6 @@ private slots:
 	void dimensionXChanged();
 	void dimensionYChanged();
 	void updateInfo(QMouseEvent *event = nullptr);
-	void update();
 	void updateCrosshair();
 	void updateInvalidRegionsOverlay();
 	void plotDoubleClick(QMouseEvent *event);
@@ -90,8 +91,9 @@ public:
 	/**
 	 * Constructor of the ExplorationWidget class.
 	 */
-	ExplorationWidget(QWidget *parent,
-	                  std::shared_ptr<Parameters> params);
+	ExplorationWidget(std::shared_ptr<Parameters> params,
+	                  std::shared_ptr<Exploration> exploration,
+	                  QWidget *parent = nullptr);
 
 	/**
 	 * Destructor of the ExplorationWidget class.
@@ -99,14 +101,14 @@ public:
 	~ExplorationWidget();
 
 	/**
-	 * Displays the results from the given Exploration instance.
-	 *
-	 * @param exploration is the exploration instance containing the data that
-	 * should be shown.
-	 * @param fit if set to true, fits the view to the given data, otherwise
-	 * leaves the view as it is.
+	 * Returns the current X-dimension index.
 	 */
-	void show(const Exploration &exploration, bool fit = true);
+	size_t getDimX();
+
+	/**
+	 * Returns the current Y-dimension index.
+	 */
+	size_t getDimY();
 
 public slots:
 	/**
@@ -116,15 +118,25 @@ public slots:
 	void progress(float p, bool show);
 
 	/**
+	 * Redraws the results based on the current exploration instance.
+	 */
+	void refresh();
+
+	/**
 	 * Centers the view according to the current parameters.
 	 */
 	void centerView();
+
+	/**
+	 * Fits the view according to the current exploration.
+	 */
+	void fitView();
 
 signals:
 	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,
 	                 Val maxY);
 
-	void updateParameters();
+	void updateParameters(std::set<size_t> dims);
 };
 }
 

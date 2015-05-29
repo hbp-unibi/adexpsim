@@ -25,8 +25,11 @@
  */
 
 #include <memory>
+#include <set>
 
 #include <QWidget>
+
+class QTimer;
 
 namespace AdExpSim {
 
@@ -36,19 +39,22 @@ class ParameterWidget;
 class ParametersWidget : public QWidget {
 	Q_OBJECT
 private:
+	std::set<size_t> updatedDims;
 	std::shared_ptr<Parameters> params;
+	QTimer *updateTimer;
 	ParameterWidget *paramCM;
 	ParameterWidget *paramEL;
 	ParameterWidget *workingParams[13];
 
 private slots:
+	void triggerUpdateParameters();
 	void handleParameterUpdate(Val value, const QVariant &data);
 
 public:
 	ParametersWidget(QWidget *parent, std::shared_ptr<Parameters> params);
 
 signals:
-	void updateParameters();
+	void updateParameters(std::set<size_t> dims);
 };
 }
 

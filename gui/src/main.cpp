@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QtWidgets>
 
-#include "view/MainWindow.hpp"
+#include "controller/MainWindow.hpp"
 
 using namespace AdExpSim;
 

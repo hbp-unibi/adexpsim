@@ -32,6 +32,7 @@
 #include <memory>
 #include <vector>
 
+#include <exploration/Exploration.hpp>
 #include <utils/Types.hpp>
 
 #include <QRunnable>
@@ -43,8 +44,6 @@ namespace AdExpSim {
 
 class SpikeTrain;
 class Parameters;
-class Exploration;
-class ExplorationMemory;
 
 /**
  * The IncrementalExplorationRunner runs a single exploration process in the
@@ -112,7 +111,7 @@ private:
 	/**
 	 * Minimum resolution level as power of two.
 	 */
-	static constexpr int MIN_LEVEL = 5;  // 32x32
+	static constexpr int MIN_LEVEL = 4;  // 16x16
 
 	/**
 	 * Minimum resolution level as power of two.
@@ -210,8 +209,9 @@ public:
 	 *
 	 * @param parent is the owner of this object.
 	 */
-	IncrementalExploration(QObject *parent, std::shared_ptr<Parameters> params,
-	                       std::shared_ptr<SpikeTrain> train);
+	IncrementalExploration(std::shared_ptr<Parameters> params,
+	                       std::shared_ptr<SpikeTrain> train,
+	                       QObject *parent = nullptr);
 
 	~IncrementalExploration() override;
 
@@ -244,7 +244,7 @@ signals:
 	 * Signal emitted whenever the exploration for one resolution level has
 	 * finished.
 	 */
-	void data(const Exploration &exploration);
+	void data(Exploration exploration);
 };
 }
 

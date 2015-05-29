@@ -64,8 +64,8 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
  */
 
 IncrementalExploration::IncrementalExploration(
-    QObject *parent, std::shared_ptr<Parameters> params,
-    std::shared_ptr<SpikeTrain> train)
+    std::shared_ptr<Parameters> params,
+    std::shared_ptr<SpikeTrain> train, QObject *parent)
     : QObject(parent),
       dimX(0),
       dimY(1),

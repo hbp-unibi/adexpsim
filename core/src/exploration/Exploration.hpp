@@ -155,6 +155,11 @@ public:
 	using ProgressCallback = std::function<bool(Val)>;
 
 	/**
+	 * Default constructor. Resulting exploration is invalid.
+	 */
+	Exploration() : mem(nullptr), dimX(0), dimY(1) {}
+
+	/**
 	 * Creates a new Exploration instance and sets all its parameters.
 	 *
 	 * @param mem is a reference at the underlying ExplorationMemory instance.
@@ -185,6 +190,11 @@ public:
 	 * @return true if the operation was sucessful, false otherwise.
 	 */
 	bool run(const ProgressCallback &progress = [](Val) { return true; });
+
+	/**
+	 * Flag indicating whether the exploration is valid or not.
+	 */
+	bool valid() const { return mem != nullptr; }
 
 	/**
 	 * Returns a reference at the exploration memory.

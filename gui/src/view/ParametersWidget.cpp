@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <iostream>
 
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QFrame>
 
@@ -50,6 +51,11 @@ ParametersWidget::ParametersWidget(QWidget *parent,
                                    std::shared_ptr<Parameters> params)
     : QWidget(parent), params(params)
 {
+	// Create the update timer
+	updateTimer = new QTimer(this);
+	updateTimer->setSingleShot(true);
+	connect(updateTimer, SIGNAL(timeout()), this, SLOT(triggerUpdateParameters()));
+
 	// Create the widgets for the parameters which are not in the working set
 	paramCM = new ParameterWidget(this, "cM", params->cM, params->cM * 0.1,
 	                              params->cM * 10, "F", "cM");
@@ -115,6 +121,7 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 {
 	if (data.type() == QVariant::String) {
 		QString p = data.toString();
+		updatedDims.clear();
 		if (p == "cM") {
 			params->cM = value;
 		} else if (p == "eL") {
@@ -122,6 +129,7 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 		}
 	} else if (data.type() == QVariant::UInt) {
 		size_t i = data.toUInt();
+		updatedDims.emplace(i);
 		if (WorkingParameters::linear[i]) {
 			WorkingParameters::fetchParameter(i, *params) = value;
 		} else {
@@ -129,7 +137,15 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 			    WorkingParameters::toParameter(value, i, *params);
 		}
 	}
-	emit updateParameters();
+
+	// Wait 100ms with triggering the update
+	updateTimer->start(100);
+}
+
+void ParametersWidget::triggerUpdateParameters()
+{
+	emit updateParameters(updatedDims);
+	updatedDims.clear();
 }
 }
 

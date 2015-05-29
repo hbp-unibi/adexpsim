@@ -61,9 +61,10 @@ static void fillDimensionCombobox(QComboBox *box)
 	}
 }
 
-ExplorationWidget::ExplorationWidget(QWidget *parent,
-                                     std::shared_ptr<Parameters> params)
-    : exploration(nullptr), params(params)
+ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
+                                     std::shared_ptr<Exploration> exploration,
+                                     QWidget *parent)
+    : params(params), exploration(exploration)
 {
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
@@ -87,7 +88,7 @@ ExplorationWidget::ExplorationWidget(QWidget *parent,
 	comboDimY->setCurrentIndex(1);
 
 	connect(comboFunction, SIGNAL(currentIndexChanged(int)), this,
-	        SLOT(update()));
+	        SLOT(refresh()));
 	connect(comboDimX, SIGNAL(currentIndexChanged(int)), this,
 	        SLOT(dimensionXChanged()));
 	connect(comboDimY, SIGNAL(currentIndexChanged(int)), this,
@@ -303,11 +304,11 @@ void ExplorationWidget::dimensionChanged(QCPAxis *axis, size_t dim)
 	}
 
 	// Invalidate the exploration instance
-	exploration = nullptr;
+	*exploration = Exploration();
 
 	// Notify about the range change and replot
 	rangeChanged();
-	update();
+	refresh();
 }
 
 void ExplorationWidget::dimensionXChanged()
@@ -344,7 +345,7 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 		// Convert it to working parameters and check whether a corresponding
 		// value can be found in the current exploration
 		QPointF p = plotToWorkingParameters(x, y);
-		if (exploration != nullptr) {
+		if (exploration->valid()) {
 			Range rX = exploration->getRangeX();
 			Range rY = exploration->getRangeY();
 			int iX = floor(rX.index(p.x()));
@@ -386,7 +387,7 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 		QPointF wpp = plotToParameters(x, y);
 		WorkingParameters::fetchParameter(getDimX(), *params) = wpp.x();
 		WorkingParameters::fetchParameter(getDimY(), *params) = wpp.y();
-		emit updateParameters();
+		emit updateParameters({getDimX(), getDimY()});
 
 		// Move the parameter crosshair to a new position and replot
 		updateCrosshair();
@@ -449,7 +450,7 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 {
 	constexpr size_t RES = 256;
 
-	if (exploration != nullptr) {
+	if (exploration->valid()) {
 		// Calculate the validity mask
 		MatrixBase<bool> mask(RES, RES);
 		const Range &rX = exploration->getRangeX();
@@ -478,7 +479,7 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 	}
 }
 
-void ExplorationWidget::update()
+void ExplorationWidget::refresh()
 {
 	// Clear the graph
 	pltExploration->setCurrentLayer("main");
@@ -489,7 +490,7 @@ void ExplorationWidget::update()
 	pltExploration->yAxis->setLabel(axisName(getDimY(), true));
 
 	// Plot the exploration data
-	if (exploration != nullptr) {
+	if (exploration->valid()) {
 		// Fetch the X and Y range
 		Range rX = exploration->getRangeX();
 		Range rY = exploration->getRangeY();
@@ -541,18 +542,10 @@ void ExplorationWidget::update()
 	pltExploration->replot();
 }
 
-void ExplorationWidget::show(const Exploration &exploration, bool fit)
+void ExplorationWidget::fitView()
 {
-	// Clone the given exploration instance
-	this->exploration =
-	    std::unique_ptr<Exploration>(new Exploration(exploration.clone()));
-	update();
-
-	// Rescale the axes according to the exploration
-	if (fit) {
-		pltExploration->rescaleAxes();
-		pltExploration->replot();
-	}
+	pltExploration->rescaleAxes();
+	pltExploration->replot();
 }
 }
 

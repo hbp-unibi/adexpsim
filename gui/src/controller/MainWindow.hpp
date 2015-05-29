@@ -19,49 +19,67 @@
 /**
  * @file MainWindow.hpp
  *
- * Contains the declaration of the MainWindow class, which contains the
- * complete GUI application.
+ * Contains the declaration of the MainWindow class, which manages the GUI 
+ * application.
+ *
+ * @author Andreas Stöckel
  */
 
 #ifndef _ADEXPSIM_MAIN_WINDOW_HPP_
 #define _ADEXPSIM_MAIN_WINDOW_HPP_
 
 #include <memory>
+#include <set>
+#include <vector>
 
+#include <QPointer>
 #include <QMainWindow>
 
-class QDockWidget;
+class QAction;
+class QMenu;
 
 namespace AdExpSim {
 
-class NeuronSimulationWidget;
-class IncrementalExploration;
-class Exploration;
-class ExplorationWidget;
 class Parameters;
 class SpikeTrain;
+class ParametersWidget;
+class ExplorationWindow;
+class SimulationWindow;
 
+/**
+ * The MainWindow class is the main controller object, distributing the 
+ * experimental setup and results between all components of the application.
+ */
 class MainWindow: public QMainWindow {
 	Q_OBJECT
 
 private:
-	bool fitExploration;
+	/* Actions */
+	QAction *actNewExplorationWnd;
+	QAction *actNewSimulationWnd;
+	QAction *actOpenExploration;
+	QAction *actSaveExploration;
+	QAction *actExit;
+
+	/* Experiment parameters */
 	std::shared_ptr<Parameters> params;
 	std::shared_ptr<SpikeTrain> train;
 
-	IncrementalExploration *exploration;
-	QDockWidget *explorationDockWidget;
-	ExplorationWidget *explorationWidget;
+	/* Result windows */
+	std::vector<QPointer<ExplorationWindow>> explorations;
+	std::vector<QPointer<SimulationWindow>> simulations;
 
-	QDockWidget *simulationDockWidget;
-	NeuronSimulationWidget *simulationWidget;
+	/* Parameter widgets */
+	ParametersWidget *parametersWidget;
+
+	void createActions();
+	void createMenus();
+	void createWidgets();
 
 private slots:
-	void data(const Exploration &exploration);
-
-	void updateSimulation();
-	void explorationWidgetUpdateParameters();
-	void parametersWidgetUpdateParameters();
+	void newExploration();
+	void newSimulation();
+	void handleUpdateParameters(std::set<size_t> dims);
 
 public:
 	MainWindow();

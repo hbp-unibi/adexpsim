@@ -66,6 +66,7 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	edtMin = new QLineEdit(cntRange);
 	edtMax = new QLineEdit(cntRange);
 	sliderValue = new QSlider(Qt::Horizontal, cntValue);
+	sliderValue->setMinimumWidth(100);
 	sliderValue->setMinimum(0);
 	sliderValue->setMaximum(SLIDER_MAX);
 
