@@ -157,18 +157,22 @@ void SpikeWidget::mouseMoveEvent(QMouseEvent *event)
 void SpikeWidget::mousePressEvent(QMouseEvent *event)
 {
 	int cx = event->pos().x();
-	if (inPixelRange(cx) && event->button() == Qt::LeftButton) {
-		if (!dragging) {
-			dragStartX = cx;
-			dragStartRangeStart = rangeStart;
+	if (event->button() == Qt::LeftButton) {
+		dragStartX = cx;
+		dragStartRangeStart = rangeStart;
+		if (inPixelRange(cx)) {
+			dragging = true;
 		}
-		dragging = true;
 	}
 	mouseMoveEvent(event);
 }
 
 void SpikeWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+	int cx = event->pos().x();
+	if (event->button() == Qt::LeftButton && dragStartX == cx) {
+		updateRange(pixelToTime(cx) - (rangeEnd - rangeStart) * 0.5);
+	}
 	dragging = false;
 	mouseMoveEvent(event);
 }
