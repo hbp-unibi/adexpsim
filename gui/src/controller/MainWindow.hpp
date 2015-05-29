@@ -81,6 +81,9 @@ private slots:
 	void newSimulation();
 	void handleUpdateParameters(std::set<size_t> dims);
 
+protected:
+	void closeEvent(QCloseEvent *event) override;
+
 public:
 	MainWindow();
 	~MainWindow();

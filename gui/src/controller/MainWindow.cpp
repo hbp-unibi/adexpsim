@@ -142,7 +142,7 @@ void MainWindow::createWidgets()
 
 void MainWindow::newExploration()
 {
-	ExplorationWindow *wnd = new ExplorationWindow(params, train, this);
+	ExplorationWindow *wnd = new ExplorationWindow(params, train);
 	connect(wnd, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	explorations.push_back(wnd);
@@ -168,5 +168,19 @@ void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 		}
 	}*/
 }
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+	for (auto wnd : explorations) {
+		if (wnd != nullptr) {
+			wnd->close();
+		}
+	}
+/*	for (auto wnd : simulations) {
+		if (wnd != nullptr) {
+			wnd->close();
+		}
+	}*/
+}
+
 }
 
