@@ -18,9 +18,12 @@
 
 #include <iostream>
 
+#include <QToolBox>
+#include <QScrollArea>
 #include <QDockWidget>
 #include <QTimer>
 #include <QLabel>
+#include <QVBoxLayout>
 
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
@@ -31,6 +34,7 @@
 #include "ExplorationWidget.hpp"
 #include "MainWindow.hpp"
 #include "NeuronSimulationWidget.hpp"
+#include "ParametersWidget.hpp"
 
 namespace AdExpSim {
 
@@ -49,9 +53,11 @@ MainWindow::MainWindow()
       params(std::make_shared<Parameters>()),
       train(std::make_shared<SpikeTrain>(
           SpikeTrain({
-               {4, 1, 1e-3, 1.0, 0.2},
-               {3, 0, 1e-3, 1.0, 0.2},
-         }, 2, true, 0.033_s)))
+                      {4, 1, 1e-3, 1.0, 0.1},
+                      //               {4, 1, 0, 1e-3, 1.0, -1.0, 0.1},
+                      {3, 0, 1e-3, 1.0, 0.1},
+                     },
+                     2, true, 0.033_s)))
 {
 	// Create the incremental exploration object
 	exploration = new IncrementalExploration(this, params, train);
@@ -80,9 +86,14 @@ MainWindow::MainWindow()
 	simulationWidget->setMinimumWidth(300);
 	simulationDockWidget->setWidget(simulationWidget);
 
+	QToolBox *tools = new QToolBox(this);
+	ParametersWidget *parametersWidget = new ParametersWidget(this, params);
+	connect(parametersWidget, SIGNAL(updateParameters()), this,
+	        SLOT(parametersWidgetUpdateParameters()));
+	tools->addItem(parametersWidget, "Parameters");
 
 	// We have no central widget
-	setCentralWidget(nullptr);
+	setCentralWidget(tools);
 
 	resize(1024, 768);
 
@@ -99,6 +110,12 @@ void MainWindow::data(const Exploration &exploration)
 }
 
 void MainWindow::explorationWidgetUpdateParameters() { updateSimulation(); }
+
+void MainWindow::parametersWidgetUpdateParameters()
+{
+	exploration->update();
+	updateSimulation();
+}
 
 void MainWindow::updateSimulation()
 {

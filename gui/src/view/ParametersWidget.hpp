@@ -17,57 +17,38 @@
  */
 
 /**
- * @file MainWindow.hpp
+ * @file ParameterWidget.hpp
  *
- * Contains the declaration of the MainWindow class, which contains the
- * complete GUI application.
+ * Widget used to controll and view all parameters of a Parameter instance.
+ *
+ * @author Andreas Stöckel
  */
-
-#ifndef _ADEXPSIM_MAIN_WINDOW_HPP_
-#define _ADEXPSIM_MAIN_WINDOW_HPP_
 
 #include <memory>
 
-#include <QMainWindow>
-
-class QDockWidget;
+#include <QWidget>
 
 namespace AdExpSim {
 
-class NeuronSimulationWidget;
-class IncrementalExploration;
-class Exploration;
-class ExplorationWidget;
 class Parameters;
-class SpikeTrain;
+class ParameterWidget;
 
-class MainWindow: public QMainWindow {
+class ParametersWidget : public QWidget {
 	Q_OBJECT
-
 private:
-	bool fitExploration;
 	std::shared_ptr<Parameters> params;
-	std::shared_ptr<SpikeTrain> train;
-
-	IncrementalExploration *exploration;
-	QDockWidget *explorationDockWidget;
-	ExplorationWidget *explorationWidget;
-
-	QDockWidget *simulationDockWidget;
-	NeuronSimulationWidget *simulationWidget;
+	ParameterWidget *paramCM;
+	ParameterWidget *paramEL;
+	ParameterWidget *workingParams[13];
 
 private slots:
-	void data(const Exploration &exploration);
-
-	void updateSimulation();
-	void explorationWidgetUpdateParameters();
-	void parametersWidgetUpdateParameters();
+	void handleParameterUpdate(Val value, const QVariant &data);
 
 public:
-	MainWindow();
-	~MainWindow();
-};
+	ParametersWidget(QWidget *parent, std::shared_ptr<Parameters> params);
 
+signals:
+	void updateParameters();
+};
 }
 
-#endif /* _ADEXPSIM_MAIN_WINDOW_HPP_ */

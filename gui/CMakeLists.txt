@@ -61,6 +61,8 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/ExplorationWidgetCrosshair
 	src/view/MainWindow
 	src/view/NeuronSimulationWidget
+	src/view/ParameterWidget
+	src/view/ParametersWidget
 	src/view/SpikeWidget
 	src/main
 )
