@@ -300,6 +300,11 @@ public:
 	Vector iSum;
 
 	/**
+	 * Vector used to store the time points of the output spikes.
+	 */
+	Vector outputSpikeTimes;
+
+	/**
 	 * Minimum recorded time.
 	 */
 	Val minTime;
@@ -484,6 +489,7 @@ public:
 		iI.clear();
 		iTh.clear();
 		iSum.clear();
+		outputSpikeTimes.clear();
 
 		// Reset the min/max values
 		minTime = std::numeric_limits<Val>::max();
@@ -591,6 +597,18 @@ public:
 	{
 		Base::reset();
 		data.reset();
+	}
+
+	/**
+	 * Called whenever an output spike is produced by the model.
+	 *
+	 * @param t is the time at which the output spike has been produced.
+	 * @param s is the neuron state after the spike has been issued (the neuron
+	 * has already been reset).
+	 */
+	void outputSpike(Time t, const State &)
+	{
+		data.outputSpikeTimes.push_back(trafo.transformTime(t.sec()));
 	}
 
 	/**

@@ -17,77 +17,71 @@
  */
 
 /**
- * @file ExplorationWindow.hpp
+ * @file AbstractViewerWindow.hpp
  *
- * Contains the ExplorationWindow class, which is used to control a single
- * parameter space exploration in two dimensions.
+ * Contains a base class for both the SimulationWindow and ExplorationWindow
+ * classes -- the AbstractViewerWindow provides access to the parameters and
+ * signals for parameter updates.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_EXPLORATION_WINDOW_HPP_
-#define _ADEXPSIM_EXPLORATION_WINDOW_HPP_
+#ifndef _ADEXPSIM_ABSTRACT_VIEWER_WINDOW_HPP_
+#define _ADEXPSIM_ABSTRACT_VIEWER_WINDOW_HPP_
 
-#include <exploration/Exploration.hpp>
+#include <memory>
+#include <set>
 
-#include "AbstractViewerWindow.hpp"
+#include <QMainWindow>
 
 namespace AdExpSim {
 
-class ExplorationWidget;
-class IncrementalExploration;
+class Parameters;
+class SpikeTrain;
 
 /**
  * The ExplorationWindow class is a controller object, containing an exploration
  * model and the corresponding view widget. The ExplorationWindow is responsible
  * for exchanging events between these classes.
  */
-class ExplorationWindow : public AbstractViewerWindow {
+class AbstractViewerWindow : public QMainWindow {
 	Q_OBJECT
 
-private:
+protected:
 	/**
-	 * Set to true if the view of the exploration widget should be fitted the
-	 * next time data is received from the incremental exploration.
+	 * Current parameters.
 	 */
-	bool fitView;
-
-	/* Actions */
-
-	/* Widgets and model */
-	std::shared_ptr<Exploration> exploration;
-	IncrementalExploration *incrementalExploration;
-	ExplorationWidget *explorationWidget;
-
-	void createModel();
-	void createWidgets();
-
-private slots:
-	/**
-	 * Called whenever new Exploration data is available from the
-	 * IncrementalExploration.
-	 *
-	 * @param data is the available exploration data.
-	 */
-	void handleExplorationData(Exploration data);
+	std::shared_ptr<Parameters> params;
 
 	/**
-	 * Called whenever the exploration widget has updated itself.
+	 * Current spike train.
 	 */
-	void handleInternalUpdateParameters(std::set<size_t> dims);
+	std::shared_ptr<SpikeTrain> train;
+
+signals:
+	/**
+	 * Emitted whenever the user updates the parameters in the view.
+	 */
+	void updateParameters(std::set<size_t> dims);
 
 public:
 	/**
-	 * Constructor of the ExplorationWindow class.
+	 * Constructor of the AbstractViewerWindow class.
+	 *
+	 * @param params is a shared instance containing the current neuron
+	 * parameters.
+	 * @param train is a shared instance containing spike train being used for
+	 * the experimental runs.
+	 * @param is the parent object.
 	 */
-	ExplorationWindow(std::shared_ptr<Parameters> params,
+	AbstractViewerWindow(std::shared_ptr<Parameters> params,
 	                  std::shared_ptr<SpikeTrain> train,
 	                  QWidget *parent = nullptr);
 
 	/**
-	 * Destructor of the ExplorationWindow class.
+	 * Destructor of the AbstractViewerWindow class.
 	 */
-	~ExplorationWindow();
+	~AbstractViewerWindow();
 
 	/**
 	 * Should be called whenever the neuron parameters or the spike train
@@ -96,8 +90,9 @@ public:
 	 * @param dims contains the indices of the dimensions that have been
 	 * updated. If empty, this indicates that "everything" has changed.
 	 */
-	void handleUpdateParameters(std::set<size_t> dims) override;
+	virtual void handleUpdateParameters(std::set<size_t> dims) = 0;
 };
 }
 
-#endif /* _ADEXPSIM_EXPLORATION_WINDOW_HPP_ */
+#endif /* _ADEXPSIM_ABSTRACT_VIEWER_WINDOW_HPP_ */
+

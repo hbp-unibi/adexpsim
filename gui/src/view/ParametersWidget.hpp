@@ -53,6 +53,8 @@ private slots:
 public:
 	ParametersWidget(QWidget *parent, std::shared_ptr<Parameters> params);
 
+	void handleUpdateParameters(std::set<size_t> dims);
+
 signals:
 	void updateParameters(std::set<size_t> dims);
 };

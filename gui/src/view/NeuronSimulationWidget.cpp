@@ -42,7 +42,8 @@ NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
 
 	// Create the spike widget and the update delay timer
 	spikeWidget = new SpikeWidget(this);
-	updateDelay = new QTimer(this);
+	updateTimer = new QTimer(this);
+	updateTimer->setSingleShot(true);
 
 	// Create the plot widgets and layers for each modality
 	pltVolt = new QCustomPlot(this);
@@ -77,7 +78,7 @@ NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
 
 	// Connect the spikeWidget rangeChange event to the update event
 	connect(spikeWidget, SIGNAL(rangeChange()), this, SLOT(rangeChange()));
-	connect(updateDelay, SIGNAL(timeout()), this, SLOT(updatePlot()));
+	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updatePlot()));
 }
 
 static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes, Val minT,
@@ -110,7 +111,7 @@ static void addHorzLine(QCustomPlot *plot, Val y)
 	line->setPen(QPen(Qt::black, 1, Qt::DotLine));
 }
 
-void NeuronSimulationWidget::rangeChange() { updateDelay->start(100); }
+void NeuronSimulationWidget::rangeChange() { updateTimer->start(100); }
 
 void NeuronSimulationWidget::updatePlot()
 {
@@ -132,70 +133,74 @@ void NeuronSimulationWidget::updatePlot()
 	const VectorRecorderData<QVector<double>> &oData = sim.getData();
 	const VectorRecorderData<QVector<double>> &data = oData.slice(minT, maxT);
 
-	// Create the voltage graph
-	pltVolt->setCurrentLayer("v");
-	pltVolt->addGraph();
-	pltVolt->graph()->setData(data.ts, data.v);
-	pltVolt->graph()->setPen(QPen(COLOR_V, LINE_W));
+	// Abort if the simulation is not valid
+	if (sim.valid()) {
+		// Create the voltage graph
+		pltVolt->setCurrentLayer("v");
+		pltVolt->addGraph();
+		pltVolt->graph()->setData(data.ts, data.v);
+		pltVolt->graph()->setPen(QPen(COLOR_V, LINE_W));
 
-	pltVolt->setCurrentLayer("limits");
-	const Parameters &p = sim.getParameters();
-	WorkingParameters wp(p);
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eE));
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eI));
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(
-	                         wp.eSpikeEff() + p.eL));
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eTh));
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eL));
-	addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eReset));
+		pltVolt->setCurrentLayer("limits");
+		const Parameters &p = sim.getParameters();
+		WorkingParameters wp(p);
+		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eE));
+		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eI));
+		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(
+		                         wp.eSpikeEff() + p.eL));
+		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eTh));
+		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eL));
+		addHorzLine(pltVolt,
+		            SIPrefixTransformation::transformVoltage(p.eReset));
 
-	addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
+		addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
 
-	// Create the conductance graph
-	pltCond->setCurrentLayer("gE");
-	pltCond->addGraph();
-	pltCond->graph()->setData(data.ts, data.gE);
-	pltCond->graph()->setPen(QPen(COLOR_GE, LINE_W));
+		// Create the conductance graph
+		pltCond->setCurrentLayer("gE");
+		pltCond->addGraph();
+		pltCond->graph()->setData(data.ts, data.gE);
+		pltCond->graph()->setPen(QPen(COLOR_GE, LINE_W));
 
-	pltCond->setCurrentLayer("gI");
-	pltCond->addGraph();
-	pltCond->graph()->setData(data.ts, data.gI);
-	pltCond->graph()->setPen(QPen(COLOR_GI, LINE_W));
+		pltCond->setCurrentLayer("gI");
+		pltCond->addGraph();
+		pltCond->graph()->setData(data.ts, data.gI);
+		pltCond->graph()->setPen(QPen(COLOR_GI, LINE_W));
 
-	addSpikes(pltCond, sim.getInputSpikes(), minT, maxT);
+		addSpikes(pltCond, sim.getInputSpikes(), minT, maxT);
 
-	// Create the current graph
-	pltCurr->setCurrentLayer("w");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.w);
-	pltCurr->graph()->setPen(QPen(COLOR_W, LINE_W));
+		// Create the current graph
+		pltCurr->setCurrentLayer("w");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.w);
+		pltCurr->graph()->setPen(QPen(COLOR_W, LINE_W));
 
-	pltCurr->setCurrentLayer("iL");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.iL);
-	pltCurr->graph()->setPen(QPen(COLOR_IL, LINE_W));
+		pltCurr->setCurrentLayer("iL");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.iL);
+		pltCurr->graph()->setPen(QPen(COLOR_IL, LINE_W));
 
-	pltCurr->setCurrentLayer("iE");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.iE);
-	pltCurr->graph()->setPen(QPen(COLOR_IE, LINE_W));
+		pltCurr->setCurrentLayer("iE");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.iE);
+		pltCurr->graph()->setPen(QPen(COLOR_IE, LINE_W));
 
-	pltCurr->setCurrentLayer("iI");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.iI);
-	pltCurr->graph()->setPen(QPen(COLOR_II, LINE_W));
+		pltCurr->setCurrentLayer("iI");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.iI);
+		pltCurr->graph()->setPen(QPen(COLOR_II, LINE_W));
 
-	pltCurr->setCurrentLayer("iTh");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.iTh);
-	pltCurr->graph()->setPen(QPen(COLOR_ITH, LINE_W));
+		pltCurr->setCurrentLayer("iTh");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.iTh);
+		pltCurr->graph()->setPen(QPen(COLOR_ITH, LINE_W));
 
-	pltCurr->setCurrentLayer("iSum");
-	pltCurr->addGraph();
-	pltCurr->graph()->setData(data.ts, data.iSum);
-	pltCurr->graph()->setPen(QPen(COLOR_ISUM, LINE_W, Qt::DashLine));
+		pltCurr->setCurrentLayer("iSum");
+		pltCurr->addGraph();
+		pltCurr->graph()->setData(data.ts, data.iSum);
+		pltCurr->graph()->setPen(QPen(COLOR_ISUM, LINE_W, Qt::DashLine));
 
-	addSpikes(pltCurr, sim.getInputSpikes(), minT, maxT);
+		addSpikes(pltCurr, sim.getInputSpikes(), minT, maxT);
+	}
 
 	// Set titles and ranges
 	pltVolt->xAxis->setLabel("Time [ms]");

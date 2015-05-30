@@ -302,6 +302,41 @@ public:
 };
 
 /**
+ * Controller class used to limit the number of output spikes to a reasonable
+ * count.
+ */
+template <typename CountFun>
+class MaxOutputSpikeCountController {
+private:
+	CountFun countFun;
+	size_t maxCount;
+
+public:
+	MaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
+	    : countFun(countFun), maxCount(maxCount)
+	{
+	}
+
+	ControllerResult control(Time, const State &, const AuxiliaryState &,
+	                         const WorkingParameters &) const
+	{
+		return tripped() ? ControllerResult::ABORT : ControllerResult::CONTINUE;
+	}
+
+	bool tripped() const { return countFun() > maxCount; }
+};
+
+/**
+ * Constructor method for the MaxOutputSpikeCountController.
+ */
+template <typename CountFun>
+static MaxOutputSpikeCountController<CountFun>
+createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
+{
+	return MaxOutputSpikeCountController<CountFun>(countFun, maxCount);
+}
+
+/**
  * The Model class contains the static function "simulate" which performs the
  * actual simulation of the AdExp model.
  */

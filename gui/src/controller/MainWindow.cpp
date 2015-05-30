@@ -74,7 +74,7 @@ MainWindow::MainWindow()
                       {4, 1, 1e-3, 1.0, 0.1},
                       {3, 0, 1e-3, 1.0, 0.1},
                      },
-                     2, true, 0.033_s)))
+                     50, false, 0.033_s)))
 {
 	// Create all actions and menus
 	createActions();
@@ -85,8 +85,8 @@ MainWindow::MainWindow()
 	resize(400, 600);
 
 	// Open a new exploration and simulation window
-	newExploration();
-	newSimulation();
+//	newExploration();
+//	newSimulation();
 }
 
 MainWindow::~MainWindow() {}
@@ -98,7 +98,7 @@ void MainWindow::createActions()
 	        SLOT(newExploration()));
 
 	actNewSimulationWnd = new QAction(tr("New Simulation Window..."), this);
-	connect(actNewExplorationWnd, SIGNAL(triggered()), this,
+	connect(actNewSimulationWnd, SIGNAL(triggered()), this,
 	        SLOT(newSimulation()));
 
 	actOpenExploration = new QAction(QIcon::fromTheme("document-open"),
@@ -131,7 +131,7 @@ void MainWindow::createWidgets()
 	QToolBox *tools = new QToolBox(this);
 
 	// Create the parameters panel and add it to the tool box
-	ParametersWidget *parametersWidget = new ParametersWidget(this, params);
+	parametersWidget = new ParametersWidget(this, params);
 	connect(parametersWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(parametersWidget, "Parameters");
@@ -145,41 +145,38 @@ void MainWindow::newExploration()
 	ExplorationWindow *wnd = new ExplorationWindow(params, train);
 	connect(wnd, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
-	explorations.push_back(wnd);
+	windows.push_back(wnd);
 	wnd->show();
 }
 
 void MainWindow::newSimulation()
 {
-//	simulations.push_back(new SimulationWindow(params, train));
+	SimulationWindow *wnd = new SimulationWindow(params, train);
+	connect(wnd, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	windows.push_back(wnd);
+	wnd->show();
 }
 
 void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 {
+	// Forward the event to the ParametersWidget instance
+	parametersWidget->handleUpdateParameters(dims);
+
 	// Forward the event to all exploration and simulation windows
-	for (auto wnd : explorations) {
-		if (wnd != nullptr) {
-			wnd->handleUpdateParameters(dims);
+	for (auto window : windows) {
+		if (window != nullptr) {
+			window->handleUpdateParameters(dims);
 		}
 	}
-/*	for (auto wnd : simulations) {
-		if (wnd != nullptr) {
-			wnd->handleUpdateParameters(dims);
-		}
-	}*/
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-	for (auto wnd : explorations) {
-		if (wnd != nullptr) {
-			wnd->close();
+	for (auto window : windows) {
+		if (window != nullptr) {
+			window->close();
 		}
 	}
-/*	for (auto wnd : simulations) {
-		if (wnd != nullptr) {
-			wnd->close();
-		}
-	}*/
 }
 
 }

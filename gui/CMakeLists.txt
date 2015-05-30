@@ -52,8 +52,10 @@ TARGET_LINK_LIBRARIES(qcustomplot
 
 # Tell CMake to create the helloworld executable
 ADD_EXECUTABLE(AdExpSimGui
+	src/controller/AbstractViewerWindow
 	src/controller/MainWindow
 	src/controller/ExplorationWindow
+	src/controller/SimulationWindow
 	src/model/NeuronSimulation
 	src/model/IncrementalExploration
 	src/view/Colors

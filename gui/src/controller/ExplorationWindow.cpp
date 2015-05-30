@@ -22,7 +22,6 @@
 #include <QWidget>
 
 #include <view/ExplorationWidget.hpp>
-#include <exploration/Exploration.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <model/IncrementalExploration.hpp>
@@ -34,11 +33,9 @@ namespace AdExpSim {
 ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
                                      std::shared_ptr<SpikeTrain> train,
                                      QWidget *parent)
-    : QMainWindow(parent),
+    : AbstractViewerWindow(params, train, parent),
       fitView(true),
-      params(params),
-      train(train),
-      exploration(new Exploration())
+      exploration(std::make_shared<Exploration>())
 {
 	// Create all elements
 	createModel();
@@ -50,7 +47,7 @@ ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
 
 ExplorationWindow::~ExplorationWindow()
 {
-	// Only needed for shared_ptr and unique_ptr instances
+	// Only needed for the shared_ptr
 }
 
 void ExplorationWindow::createModel()
@@ -111,7 +108,7 @@ void ExplorationWindow::handleInternalUpdateParameters(std::set<size_t> dims)
 void ExplorationWindow::handleUpdateParameters(std::set<size_t> dims)
 {
 	// Determine whether a recalculation is needed. This is the case if dims
-	// is empty (then everything should be updated) or one of the changed 
+	// is empty (then everything should be updated) or one of the changed
 	// dimensions is not currently being displayed
 	bool needRecalc = dims.empty();
 	dims.erase(explorationWidget->getDimX());

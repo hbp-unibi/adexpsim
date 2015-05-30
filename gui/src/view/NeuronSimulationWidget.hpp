@@ -52,7 +52,7 @@ private:
 	QCustomPlot *pltVolt;
 	QCustomPlot *pltCond;
 	QCustomPlot *pltCurr;
-	QTimer *updateDelay;
+	QTimer *updateTimer;
 	NeuronSimulation sim;
 
 private slots:

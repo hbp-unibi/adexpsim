@@ -22,28 +22,45 @@
 
 namespace AdExpSim {
 
-void NeuronSimulation::prepare(const Parameters &parameters,
+void NeuronSimulation::prepare(const Parameters &params,
                                const SpikeTrain &train)
 {
-	this->parameters = parameters;
+	this->params = params;
 	this->evaluation = SpikeTrainEvaluation(train);
 }
 
 void NeuronSimulation::run()
 {
-	// Reset the recorder and first run the simulation
+	// Reset all output
+	mValid = false;
 	recorder.reset();
-	NullController controller;
+	outputSpikes.clear();
+	outputGroups.clear();
+
+	// Abort if the current parameters are not valid
+	WorkingParameters wp(params);
+	if (!wp.valid()) {
+		return;
+	}
+
+	// Create a new controller -- make sure to abort after a certain count of
+	// output spikes is superceeded.
+	auto controller = createMaxOutputSpikeCountController(
+	    [this]() -> size_t { return recorder.getData().outputSpikeTimes.size(); },
+	    getTrain().getExpectedOutputSpikeCount() * 5);
+
+	// Use a DormandPrinceIntegrator with default parameters
 	DormandPrinceIntegrator integrator;
 
 	// Run the actual simulation until the end of the time
 	Model::simulate(getTrain().getSpikes(), recorder, controller, integrator,
-	                parameters, Time(-1), getTrain().getMaxT());
+	                wp, Time(-1), getTrain().getMaxT());
 
 	// Run the evaluation to fetch the output spikes and the output groups
-	outputSpikes.clear();
-	outputGroups.clear();
-	evaluation.evaluate(parameters, outputSpikes, outputGroups);
+	evaluation.evaluate(wp, outputSpikes, outputGroups);
+
+	// The result is not valid, if the controller has triggered
+	mValid = !controller.tripped();
 }
 }
 

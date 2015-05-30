@@ -51,9 +51,14 @@ public:
 
 private:
 	/**
+	 * Flag indicating whether a valid simulation result is present.
+	 */
+	bool mValid;
+
+	/**
 	 * Parameters the experiment ran with.
 	 */
-	Parameters parameters;
+	Parameters params;
 
 	/**
 	 * Evaluation used for storing the spike train containing the input
@@ -81,12 +86,12 @@ public:
 	 * Creates a new NeuronSimulation instance.
 	 */
 	NeuronSimulation(Time interval = Time(0))
-	    : recorder(parameters, interval){};
+	    : mValid(false), recorder(params, interval){};
 
 	/**
 	 * Sets the parameters and input spikes.
 	 */
-	void prepare(const Parameters &parameters, const SpikeTrain &train);
+	void prepare(const Parameters &params, const SpikeTrain &train);
 
 	/**
 	 * Runs the simulation with the parameters given in the prepare method.
@@ -96,7 +101,7 @@ public:
 	/**
 	 * Returns the parameters.
 	 */
-	const Parameters &getParameters() const { return parameters; }
+	const Parameters &getParameters() const { return params; }
 
 	/**
 	 * Returns the input spikes.
@@ -130,6 +135,11 @@ public:
 	{
 		return recorder.getData();
 	}
+
+	/**
+	 * Returns true if a valid result is present.
+	 */
+	const bool valid() const { return mValid; }
 };
 
 using NeuronSimulationResultVec = QVector<NeuronSimulation>;

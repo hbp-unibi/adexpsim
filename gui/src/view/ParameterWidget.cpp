@@ -81,7 +81,8 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	connect(edtValue, SIGNAL(editingFinished()), this, SLOT(handleEdit()));
 	connect(edtMin, SIGNAL(editingFinished()), this, SLOT(handleEdit()));
 	connect(edtMax, SIGNAL(editingFinished()), this, SLOT(handleEdit()));
-	connect(sliderValue, SIGNAL(valueChanged(int)), this, SLOT(handleSlide(int)));
+	connect(sliderValue, SIGNAL(valueChanged(int)), this,
+	        SLOT(handleSlide(int)));
 	connect(btnRange, SIGNAL(clicked()), this, SLOT(toggleRange()));
 
 	// Combine all widgets in the layout
@@ -119,6 +120,22 @@ void ParameterWidget::toggleRange()
 		btnRange->setText("▾");
 	}
 	updateGeometry();
+}
+
+void ParameterWidget::setValue(Val value)
+{
+	this->value = value;
+	refresh();
+}
+void ParameterWidget::setMin(Val min)
+{
+	this->min = min;
+	refresh();
+}
+void ParameterWidget::setMax(Val max)
+{
+	this->max = max;
+	refresh();
 }
 
 static void parseDouble(const QString &str, double &value, bool &valid)
@@ -164,6 +181,7 @@ void ParameterWidget::handleSlide(int x)
 	value = double(x) * (max - min) / double(SLIDER_MAX) + min;
 	valueValid = true;
 	edtValue->setText(QString::number(value));
+	oldValueStr = edtValue->text();
 	edtValue->setStyleSheet(EDIT_DEFAULT_STYLE);
 	validate();
 	emit update(value, data);
@@ -224,6 +242,5 @@ void ParameterWidget::refreshSlider()
 		sliderValue->blockSignals(false);
 	}
 }
-
 }
 

@@ -119,6 +119,11 @@ ParametersWidget::ParametersWidget(QWidget *parent,
 
 void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 {
+	// Abort if signals are blocked for this widget
+	if (signalsBlocked()) {
+		return;
+	}
+
 	if (data.type() == QVariant::String) {
 		QString p = data.toString();
 		updatedDims.clear();
@@ -142,10 +147,31 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 	updateTimer->start(100);
 }
 
+void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
+{
+	blockSignals(true);
+	if (dims.empty()) {
+		paramCM->setValue(params->cM);
+		paramEL->setValue(params->eL);
+		for (size_t i = 0; i < 13; i++) {
+			dims.emplace(i);
+		}
+	}
+	for (size_t d: dims) {
+		Val value = WorkingParameters::fetchParameter(d, *params);
+		if (!WorkingParameters::linear[d]) {
+			value = WorkingParameters::fromParameter(value, d, *params);
+		}
+		workingParams[d]->setValue(value);
+	}
+	blockSignals(false);
+}
+
 void ParametersWidget::triggerUpdateParameters()
 {
 	emit updateParameters(updatedDims);
 	updatedDims.clear();
 }
+
 }
 

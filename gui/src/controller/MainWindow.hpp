@@ -43,8 +43,7 @@ namespace AdExpSim {
 class Parameters;
 class SpikeTrain;
 class ParametersWidget;
-class ExplorationWindow;
-class SimulationWindow;
+class AbstractViewerWindow;
 
 /**
  * The MainWindow class is the main controller object, distributing the 
@@ -65,9 +64,8 @@ private:
 	std::shared_ptr<Parameters> params;
 	std::shared_ptr<SpikeTrain> train;
 
-	/* Result windows */
-	std::vector<QPointer<ExplorationWindow>> explorations;
-	std::vector<QPointer<SimulationWindow>> simulations;
+	/* Viewer windows */
+	std::vector<QPointer<AbstractViewerWindow>> windows;
 
 	/* Parameter widgets */
 	ParametersWidget *parametersWidget;

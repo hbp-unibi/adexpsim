@@ -157,34 +157,6 @@ public:
 	}
 };
 
-/**
- * Controller class used to limit the number of output spikes to a reasonable
- * count.
- */
-class MaxOutputSpikeCountController {
-private:
-	const SpikeRecorder &recorder;
-	size_t maxCount;
-
-public:
-	MaxOutputSpikeCountController(const SpikeRecorder &recorder,
-	                              size_t maxCount)
-	    : recorder(recorder), maxCount(maxCount)
-	{
-	}
-
-	ControllerResult control(Time, const State &, const AuxiliaryState &,
-	                         const WorkingParameters &) const
-	{
-		return tripped() ? ControllerResult::ABORT : ControllerResult::CONTINUE;
-	}
-
-	bool tripped() const
-	{
-		return recorder.getOutputSpikes().size() > maxCount;
-	}
-};
-
 SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train)
     : train(train)
 {
@@ -258,8 +230,9 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	// collect all spikes
 	const Time T = train.getMaxT();
 	SpikeRecorder recorder(train.getRangeStartSpikes());
-	MaxOutputSpikeCountController controller(
-	    recorder, train.getExpectedOutputSpikeCount() * 5);
+	auto controller = createMaxOutputSpikeCountController(
+	    [&recorder]() { return recorder.getOutputSpikes().size(); },
+	    train.getExpectedOutputSpikeCount() * 5);
 	DormandPrinceIntegrator integrator(eTar);
 	Model::simulate<Model::FAST_EXP>(train.getSpikes(), recorder, controller,
 	                                 integrator, params, Time(-1), T);
