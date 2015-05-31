@@ -302,7 +302,7 @@ public:
 	bool valid() const
 	{
 		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && deltaTh() > 0 &&
-		       lA() > 0 && lB() >= 0 && eE() > eI() && eE() > eTh() &&
+		       lA() >= 0 && lB() >= 0 && eE() > eI() && eE() > eTh() &&
 		       eE() > 0 && eSpike() > eReset();
 	}
 
