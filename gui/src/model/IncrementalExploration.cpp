@@ -64,9 +64,10 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
  */
 
 IncrementalExploration::IncrementalExploration(
-    std::shared_ptr<Parameters> params,
-    std::shared_ptr<SpikeTrain> train, QObject *parent)
+    std::shared_ptr<Parameters> params, std::shared_ptr<SpikeTrain> train,
+    QObject *parent)
     : QObject(parent),
+      maxLevel(MAX_LEVEL_INITIAL),
       dimX(0),
       dimY(1),
       minX(1),
@@ -97,6 +98,30 @@ IncrementalExploration::~IncrementalExploration()
 	if (currentRunner != nullptr) {
 		currentRunner->abort();
 		QThreadPool::globalInstance()->waitForDone();
+	}
+}
+
+bool IncrementalExploration::isActive() const
+{
+	return (currentRunner != nullptr) || (level <= maxLevel);
+}
+
+void IncrementalExploration::setMaxLevel(int maxLevel)
+{
+	// Make sure the given level is in the valid range between MIN_LEVEL and
+	// MAX_LEVEL
+	this->maxLevel = std::min(MAX_LEVEL, std::max(MIN_LEVEL, maxLevel));
+
+	// If the given level is larger than the current level and we're idling,
+	// get to work!
+	if (level <= this->maxLevel && currentRunner == nullptr) {
+		start();
+	}
+
+	// If the current level is larger than the new maximum level and we're
+	// working => abort!
+	if (level > maxLevel && currentRunner != nullptr) {
+		currentRunner->abort();
 	}
 }
 
@@ -163,7 +188,7 @@ void IncrementalExploration::runnerProgress(float p)
 	}
 
 	// Calculate the normalization value (sum over 2^i for i=0..(MAX-MIN))
-	const int norm = (1 << (MAX_LEVEL - MIN_LEVEL + 1)) - 1;
+	const int norm = (1 << (maxLevel - MIN_LEVEL + 1)) - 1;
 
 	// Calculate the previous progress (sum over 2^i for i = 0..L-1))
 	const int previous = (1 << L) - 1;
@@ -177,10 +202,6 @@ void IncrementalExploration::runnerDone(bool ok)
 {
 	// If the result is ok, emit the data
 	if (ok) {
-		// If the last level is reached, emit a last progress event
-		if (level > MAX_LEVEL) {
-			emit progress(1.0, false);
-		}
 		inEmitData = true;
 		emit data(*currentExploration);
 		inEmitData = false;
@@ -194,8 +215,13 @@ void IncrementalExploration::runnerDone(bool ok)
 	currentRunner = nullptr;
 	currentExploration = nullptr;
 
+	// If the last level is reached, emit a last progress event
+	if (level > maxLevel) {
+		emit progress(1.0, false);
+	}
+
 	// Start the next iteration
-	if ((level <= MAX_LEVEL && ok) || restart) {
+	if ((level <= maxLevel && ok) || restart) {
 		start();
 	}
 }

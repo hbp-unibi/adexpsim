@@ -32,6 +32,10 @@
 
 #include "AbstractViewerWindow.hpp"
 
+class QAction;
+class QToolbar;
+class QComboBox;
+
 namespace AdExpSim {
 
 class ExplorationWidget;
@@ -52,11 +56,21 @@ private:
 	 */
 	bool fitView;
 
+	/**
+	 * Set to true if the view is locked and there has been an update.
+	 */
+	bool hadUpdate;
+
 	/* Actions */
+	QAction *actLockView;
+	QAction *actSavePDF;
+	QAction *actSaveExploration;
 
 	/* Widgets and model */
 	std::shared_ptr<Exploration> exploration;
 	IncrementalExploration *incrementalExploration;
+	QToolBar *toolbar;
+	QComboBox *resolutionComboBox;
 	ExplorationWidget *explorationWidget;
 
 	void createModel();
@@ -75,6 +89,31 @@ private slots:
 	 * Called whenever the exploration widget has updated itself.
 	 */
 	void handleInternalUpdateParameters(std::set<size_t> dims);
+
+	/**
+	 * Called whenever the exploration widget has changed its range.
+	 */
+	void handleUpdateRange(size_t dimX, size_t dimY, Val minX, Val maxX,
+	                               Val minY, Val maxY);
+
+	/**
+	 * Called whenever the "lock view" action is triggered.
+	 */
+	void handleLockView(bool checked);
+
+	/**
+	 * Called whenever the incrementalExploration reports some progress.
+	 */
+	void handleProgress(float p, bool show);
+
+	/**
+	 * Called whenever the resolution combobox is updated-
+	 */
+	void handleUpdateResolution(int index);
+
+public slots:
+	void lock();
+	void unlock();
 
 public:
 	/**
@@ -97,6 +136,11 @@ public:
 	 * updated. If empty, this indicates that "everything" has changed.
 	 */
 	void handleUpdateParameters(std::set<size_t> dims) override;
+
+	/**
+	 * Returns true if this window is currently locked.
+	 */
+	bool isLocked();
 };
 }
 

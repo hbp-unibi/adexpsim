@@ -114,9 +114,14 @@ private:
 	static constexpr int MIN_LEVEL = 4;  // 16x16
 
 	/**
-	 * Minimum resolution level as power of two.
+	 * Maximum resolution level as power of two.
 	 */
-	static constexpr int MAX_LEVEL = 8;  // 256x256
+	static constexpr int MAX_LEVEL = 11;  // 2048x2048
+
+	/**
+	 * Initial maximum resolution level as power of two.
+	 */
+	static constexpr int MAX_LEVEL_INITIAL = 8;  // 256x256
 
 	/**
 	 * Memories for the resolution levels.
@@ -128,6 +133,11 @@ private:
 	 * Timer used to defer the calls to "update".
 	 */
 	QTimer *updateTimer;
+
+	/**
+	 * Current maximum resolution level.
+	 */
+	int maxLevel;
 
 	/**
 	 * Dimensions x and y for the exploration.
@@ -214,6 +224,23 @@ public:
 	                       QObject *parent = nullptr);
 
 	~IncrementalExploration() override;
+
+	/**
+	 * Returns true if the IncrementalExploration is currently calculating
+	 * something or preparing to do so, false if it currently idles.
+	 */
+	bool isActive() const;
+
+	/**
+	 * Used to set the current maximum resolution as exponent to the base of
+	 * two.
+	 */
+	void setMaxLevel(int maxLevel);
+
+	/**
+	 * Returns the current maximum resolution level.
+	 */
+	int getMaxLevel() { return maxLevel; }
 
 public slots:
 	/**

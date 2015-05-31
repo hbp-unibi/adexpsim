@@ -18,7 +18,10 @@
 
 #include <iostream>
 
-#include <QHBoxLayout>
+#include <QAction>
+#include <QComboBox>
+#include <QVBoxLayout>
+#include <QToolBar>
 #include <QWidget>
 
 #include <view/ExplorationWidget.hpp>
@@ -35,6 +38,7 @@ ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
                                      QWidget *parent)
     : AbstractViewerWindow(params, train, parent),
       fitView(true),
+      hadUpdate(false),
       exploration(std::make_shared<Exploration>())
 {
 	// Create all elements
@@ -61,16 +65,54 @@ void ExplorationWindow::createModel()
 
 void ExplorationWindow::createWidgets()
 {
+	// Create the toolbar and the associated actions
+	actLockView =
+	    new QAction(QIcon::fromTheme("system-lock-screen"), "Lock View", this);
+	actLockView->setCheckable(true);
+	actLockView->setChecked(false);
+	actLockView->setToolTip(
+	    "Do not recalculate when zooming/panning or on changed parameters");
+	actSavePDF =
+	    new QAction(QIcon::fromTheme("document-print"), "Save PDF", this);
+	actSaveExploration = new QAction(QIcon::fromTheme("document-save-as"),
+	                                 "Save Exploration", this);
+
+	// Create the resolution chooser
+	resolutionComboBox = new QComboBox(this);
+	resolutionComboBox->addItem("64x64", QVariant(6));
+	resolutionComboBox->addItem("128x128", QVariant(7));
+	resolutionComboBox->addItem("256x256", QVariant(8));
+	resolutionComboBox->addItem("512x512", QVariant(9));
+	resolutionComboBox->addItem("1024x1024", QVariant(10));
+	resolutionComboBox->addItem("2048x2048", QVariant(11));
+	resolutionComboBox->setCurrentIndex(
+	    std::max(0, incrementalExploration->getMaxLevel() - 6));
+	connect(resolutionComboBox, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(handleUpdateResolution(int)));
+
+	// Create the toolbar
+	toolbar = new QToolBar(this);
+	toolbar->addAction(actLockView);
+	toolbar->addAction(actSavePDF);
+	toolbar->addAction(actSaveExploration);
+	toolbar->addSeparator();
+	toolbar->addWidget(resolutionComboBox);
+	toolbar->addSeparator();
+
 	// Create the exploration widget and connect its signals/slots
-	explorationWidget = new ExplorationWidget(params, exploration, this);
+	explorationWidget =
+	    new ExplorationWidget(params, exploration, toolbar, this);
 	connect(explorationWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleInternalUpdateParameters(std::set<size_t>)));
 	connect(explorationWidget,
-	        SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)),
-	        incrementalExploration,
-	        SLOT(updateRange(size_t, size_t, Val, Val, Val, Val)));
-	connect(incrementalExploration, SIGNAL(progress(float, bool)),
-	        explorationWidget, SLOT(progress(float, bool)));
+	        SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)), this,
+	        SLOT(handleUpdateRange(size_t, size_t, Val, Val, Val, Val)));
+	connect(incrementalExploration, SIGNAL(progress(float, bool)), this,
+	        SLOT(handleProgress(float, bool)));
+
+	// Connect the actions
+	connect(actLockView, SIGNAL(triggered(bool)), this,
+	        SLOT(handleLockView(bool)));
 
 	// Center the view of the ExplorationWidget to trigger an initial
 	// exploration
@@ -78,7 +120,8 @@ void ExplorationWindow::createWidgets()
 
 	// Create a layout and a container widget, add the created widgets
 	QWidget *container = new QWidget(this);
-	QHBoxLayout *layout = new QHBoxLayout(container);
+	QVBoxLayout *layout = new QVBoxLayout(container);
+	layout->addWidget(toolbar);
 	layout->addWidget(explorationWidget);
 	layout->setSpacing(0);
 	layout->setMargin(0);
@@ -105,8 +148,27 @@ void ExplorationWindow::handleInternalUpdateParameters(std::set<size_t> dims)
 	emit updateParameters(dims);
 }
 
+void ExplorationWindow::handleUpdateRange(size_t dimX, size_t dimY, Val minX,
+                                          Val maxX, Val minY, Val maxY)
+{
+	// Do not update the view if the "lock view" button is checked
+	if (actLockView->isChecked()) {
+		hadUpdate = true;
+		return;
+	}
+
+	// Forward the call to the "incrementalExploration"
+	incrementalExploration->updateRange(dimX, dimY, minX, maxX, minY, maxY);
+}
+
 void ExplorationWindow::handleUpdateParameters(std::set<size_t> dims)
 {
+	// Do not update parameters if the "lock view" button is checked
+	if (actLockView->isChecked()) {
+		hadUpdate = true;
+		return;
+	}
+
 	// Determine whether a recalculation is needed. This is the case if dims
 	// is empty (then everything should be updated) or one of the changed
 	// dimensions is not currently being displayed
@@ -124,5 +186,42 @@ void ExplorationWindow::handleUpdateParameters(std::set<size_t> dims)
 		explorationWidget->refresh();
 	}
 }
+
+void ExplorationWindow::handleLockView(bool checked)
+{
+	if (!checked) {
+		unlock();
+	}
+}
+
+void ExplorationWindow::handleProgress(float p, bool show)
+{
+	// Forward the progress to the exploration widget
+	explorationWidget->progress(p, show);
+
+	// Reset the "hadUpdate" flag
+	if (!isLocked() && !incrementalExploration->isActive()) {
+		hadUpdate = false;
+	}
+}
+
+void ExplorationWindow::handleUpdateResolution(int index)
+{
+	QVariant data = resolutionComboBox->itemData(index);
+	incrementalExploration->setMaxLevel(data.toInt());
+}
+
+void ExplorationWindow::lock() { actLockView->setChecked(true); }
+
+void ExplorationWindow::unlock()
+{
+	actLockView->setChecked(false);
+	if (hadUpdate) {
+		explorationWidget->rangeChanged();
+		handleUpdateParameters(std::set<size_t>{});
+	}
+}
+
+bool ExplorationWindow::isLocked() { return actLockView->isChecked(); }
 }
 

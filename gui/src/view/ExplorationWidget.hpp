@@ -26,6 +26,7 @@
 
 #include <utils/Types.hpp>
 
+class QAction;
 class QComboBox;
 class QLabel;
 class QProgressBar;
@@ -49,7 +50,10 @@ class ExplorationWidget : public QWidget {
 	Q_OBJECT
 
 private:
-	QToolBar *toolbar;
+	QAction *actZoomFit;
+	QAction *actZoomCenter;
+	QAction *actLockXAxis;
+	QAction *actLockYAxis;
 	QComboBox *comboDimX;
 	QComboBox *comboDimY;
 	QComboBox *comboFunction;
@@ -78,7 +82,6 @@ private:
 	QString axisName(size_t dim, bool unit = false);
 
 private slots:
-	void rangeChanged();
 	void dimensionChanged(QCPAxis *axis, size_t dim);
 	void dimensionXChanged();
 	void dimensionYChanged();
@@ -86,6 +89,7 @@ private slots:
 	void updateCrosshair();
 	void updateInvalidRegionsOverlay();
 	void plotDoubleClick(QMouseEvent *event);
+	void handleRestrictZoom();
 
 public:
 	/**
@@ -93,6 +97,7 @@ public:
 	 */
 	ExplorationWidget(std::shared_ptr<Parameters> params,
 	                  std::shared_ptr<Exploration> exploration,
+	                  QToolBar *toolbar,
 	                  QWidget *parent = nullptr);
 
 	/**
@@ -131,6 +136,11 @@ public slots:
 	 * Fits the view according to the current exploration.
 	 */
 	void fitView();
+
+	/**
+	 * Called whenever the axis range changed, emits the updateRange event.
+	 */
+	void rangeChanged();
 
 signals:
 	void updateRange(size_t dimX, size_t dimY, Val minX, Val maxX, Val minY,

@@ -63,23 +63,20 @@ static void fillDimensionCombobox(QComboBox *box)
 
 ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
                                      std::shared_ptr<Exploration> exploration,
-                                     QWidget *parent)
+                                     QToolBar *toolbar, QWidget *parent)
     : params(params), exploration(exploration)
 {
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
 
 	// Create the toolbar widget and its children
-	toolbar = new QToolBar(this);
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Soft Success Probability", "pSoft");
-	comboFunction->addItem("Binary False Positive Probability",
-	                       "pFalsePositive");
-	comboFunction->addItem("Binary False Negative Probability",
-	                       "pFalseNegative");
-	comboFunction->addItem("Binary Success Probability", "pBinary");
+	comboFunction->addItem("Soft Success", "pSoft");
+	comboFunction->addItem("Binary Success", "pBinary");
+	comboFunction->addItem("Binary False Positive", "pFalsePositive");
+	comboFunction->addItem("Binary False Negative", "pFalseNegative");
 
 	fillDimensionCombobox(comboDimX);
 	comboDimX->setCurrentIndex(0);
@@ -94,18 +91,42 @@ ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
 	connect(comboDimY, SIGNAL(currentIndexChanged(int)), this,
 	        SLOT(dimensionYChanged()));
 
-	QAction *centerViewAct = new QAction(QIcon::fromTheme("zoom-fit-best"),
-	                                     tr("&Center View"), this);
-	connect(centerViewAct, SIGNAL(triggered()), this, SLOT(centerView()));
+	// Create the actions
+	actZoomFit =
+	    new QAction(QIcon::fromTheme("zoom-original"), "Fit View", this);
+	actZoomFit->setToolTip(
+	    "Fits the view to the range of the current exploration");
+	actZoomCenter =
+	    new QAction(QIcon::fromTheme("zoom-fit-best"), "Center View", this);
+	actZoomCenter->setToolTip(
+	    "Centers the view according to the current parameters");
+	actLockXAxis =
+	    new QAction(QIcon::fromTheme("object-flip-horizontal"), "Zoom X", this);
+	actLockXAxis->setCheckable(true);
+	actLockXAxis->setChecked(true);
+	actLockXAxis->setToolTip("Allow zoom in X direction");
+	actLockYAxis =
+	    new QAction(QIcon::fromTheme("object-flip-vertical"), "Zoom Y", this);
+	actLockYAxis->setCheckable(true);
+	actLockYAxis->setChecked(true);
+	actLockYAxis->setToolTip("Allow zoom in Y direction");
 
-	toolbar->addAction(centerViewAct);
+	// Connect the action events to the corresponding slots
+	connect(actZoomFit, SIGNAL(triggered()), this, SLOT(fitView()));
+	connect(actZoomCenter, SIGNAL(triggered()), this, SLOT(centerView()));
+	connect(actLockXAxis, SIGNAL(triggered()), this, SLOT(handleRestrictZoom()));
+	connect(actLockYAxis, SIGNAL(triggered()), this, SLOT(handleRestrictZoom()));
+
+	toolbar->addAction(actZoomFit);
+	toolbar->addAction(actZoomCenter);
+	toolbar->addAction(actLockXAxis);
+	toolbar->addAction(actLockYAxis);
 	toolbar->addSeparator();
 	toolbar->addWidget(new QLabel("X: "));
 	toolbar->addWidget(comboDimX);
 	toolbar->addWidget(new QLabel(" Y: "));
 	toolbar->addWidget(comboDimY);
 	toolbar->addSeparator();
-	toolbar->addWidget(new QLabel("Function: "));
 	toolbar->addWidget(comboFunction);
 
 	// Add the plot widget
@@ -176,7 +197,6 @@ ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
 	// Combine the widgets in the layout
 	layout->setSpacing(0);
 	layout->setMargin(0);
-	layout->addWidget(toolbar);
 	layout->addWidget(pltExploration);
 	layout->addWidget(statusWidget);
 
@@ -393,6 +413,14 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 		updateCrosshair();
 		pltExploration->replot();
 	}
+}
+
+void ExplorationWidget::handleRestrictZoom()
+{
+	pltExploration->axisRect()->setRangeZoomFactor(
+		actLockXAxis->isChecked() ? 0.85 : 0.0,
+		actLockYAxis->isChecked() ? 0.85 : 0.0
+	);
 }
 
 void ExplorationWidget::centerView()
