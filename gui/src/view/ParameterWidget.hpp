@@ -56,10 +56,13 @@ private:
 	bool valueValid, minValid, maxValid;
 	QString oldValueStr;
 	QVariant data;
+	bool intOnly;
 
 	void validate();
 	void refresh();
 	void refreshSlider();
+
+	QString toStr(Val v) const;
 
 private slots:
 	void toggleRange();
@@ -77,6 +80,8 @@ public:
 	void setValue(Val value);
 	void setMin(Val min);
 	void setMax(Val max);
+	void setIntOnly(bool intOnly);
+	void setMinMaxEnabled(bool enabled);
 
 signals:
 	void update(Val value, const QVariant &data);

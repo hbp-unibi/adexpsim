@@ -40,7 +40,8 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
       valueValid(true),
       minValid(true),
       maxValid(true),
-      data(data)
+      data(data),
+      intOnly(false)
 {
 	// Create the two container widgets and their layouts
 	cntValue = new QWidget(this);
@@ -59,8 +60,8 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	lblUnit = new QLabel(cntValue);
 	if (!unit.isEmpty()) {
 		lblUnit->setText("[" + unit + "]");
-		lblUnit->setFixedWidth(50);
 	}
+	lblUnit->setFixedWidth(50);
 	edtValue = new QLineEdit(cntValue);
 	edtValue->setFixedWidth(100);
 	edtMin = new QLineEdit(cntRange);
@@ -110,6 +111,15 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	refresh();
 }
 
+QString ParameterWidget::toStr(Val v) const
+{
+	if (intOnly) {
+		return QString::number(long(round(v)));
+	} else {
+		return QString::number(v);
+	}
+}
+
 void ParameterWidget::toggleRange()
 {
 	if (cntRange->isVisible()) {
@@ -124,23 +134,67 @@ void ParameterWidget::toggleRange()
 
 void ParameterWidget::setValue(Val value)
 {
+	blockSignals(true);
 	this->value = value;
 	refresh();
+	blockSignals(false);
 }
+
 void ParameterWidget::setMin(Val min)
 {
+	blockSignals(true);
 	this->min = min;
 	refresh();
+	blockSignals(false);
 }
+
 void ParameterWidget::setMax(Val max)
 {
+	blockSignals(true);
 	this->max = max;
 	refresh();
+	blockSignals(false);
+}
+
+void ParameterWidget::setIntOnly(bool intOnly)
+{
+	blockSignals(true);
+	this->intOnly = intOnly;
+	if (intOnly) {
+		sliderValue->setMinimum(min);
+		sliderValue->setMaximum(max);
+	} else {
+		sliderValue->setMinimum(0);
+		sliderValue->setMaximum(SLIDER_MAX);
+	}
+	refresh();
+	blockSignals(false);
+}
+
+void ParameterWidget::setMinMaxEnabled(bool enabled)
+{
+	blockSignals(true);
+	cntRange->hide();
+	btnRange->setEnabled(enabled);
+	if (!enabled) {
+		btnRange->setText("");
+	} else {
+		btnRange->setText("▸");
+	}
+	blockSignals(false);
 }
 
 static void parseDouble(const QString &str, double &value, bool &valid)
 {
 	Val newValue = str.toDouble(&valid);
+	if (valid) {
+		value = newValue;
+	}
+}
+
+static void parseLong(const QString &str, double &value, bool &valid)
+{
+	Val newValue = str.toLong(&valid);
 	if (valid) {
 		value = newValue;
 	}
@@ -162,12 +216,28 @@ static void parseDoubleInLineEdit(QLineEdit *edit, double &value, bool &valid)
 	}
 }
 
+static void parseLongInLineEdit(QLineEdit *edit, double &value, bool &valid)
+{
+	parseLong(edit->text(), value, valid);
+	if (valid) {
+		edit->setStyleSheet(EDIT_DEFAULT_STYLE);
+	} else {
+		edit->setStyleSheet(EDIT_INVALID_STYLE);
+	}
+}
+
 void ParameterWidget::handleEdit()
 {
 	// Parse the numbers and update the lineedit style
-	parseDoubleInLineEdit(edtValue, value, valueValid);
-	parseDoubleInLineEdit(edtMin, min, minValid);
-	parseDoubleInLineEdit(edtMax, max, maxValid);
+	if (intOnly) {
+		parseLongInLineEdit(edtValue, value, valueValid);
+		parseLongInLineEdit(edtMin, min, minValid);
+		parseLongInLineEdit(edtMax, max, maxValid);
+	} else {
+		parseDoubleInLineEdit(edtValue, value, valueValid);
+		parseDoubleInLineEdit(edtMin, min, minValid);
+		parseDoubleInLineEdit(edtMax, max, maxValid);
+	}
 	validate();
 	refreshSlider();
 	if (valueValid && edtValue->text() != oldValueStr) {
@@ -178,9 +248,13 @@ void ParameterWidget::handleEdit()
 
 void ParameterWidget::handleSlide(int x)
 {
-	value = double(x) * (max - min) / double(SLIDER_MAX) + min;
+	if (intOnly) {
+		value = x;
+	} else {
+		value = double(x) * (max - min) / double(SLIDER_MAX) + min;
+	}
 	valueValid = true;
-	edtValue->setText(QString::number(value));
+	edtValue->setText(toStr(value));
 	oldValueStr = edtValue->text();
 	edtValue->setStyleSheet(EDIT_DEFAULT_STYLE);
 	validate();
@@ -217,14 +291,14 @@ void ParameterWidget::validate()
 void ParameterWidget::refresh()
 {
 	// Update the edit fields
-	edtValue->setText(QString::number(value));
+	edtValue->setText(toStr(value));
 	oldValueStr = edtValue->text();
 	valueValid = true;
 
-	edtMin->setText(QString::number(min));
+	edtMin->setText(toStr(min));
 	minValid = true;
 
-	edtMax->setText(QString::number(max));
+	edtMax->setText(toStr(max));
 	maxValid = true;
 
 	// Inform about the validity of the values
@@ -238,7 +312,11 @@ void ParameterWidget::refreshSlider()
 	// function
 	if (valueValid) {
 		sliderValue->blockSignals(true);
-		sliderValue->setValue((value - min) / (max - min) * SLIDER_MAX);
+		if (intOnly) {
+			sliderValue->setValue(value);
+		} else {
+			sliderValue->setValue((value - min) / (max - min) * SLIDER_MAX);
+		}
 		sliderValue->blockSignals(false);
 	}
 }
