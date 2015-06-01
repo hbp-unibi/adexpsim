@@ -41,11 +41,32 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 
 SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
                        bool sorted, Time T, Val sigmaT)
+    : descrs(descrs), n(n), sorted(sorted), T(T), sigmaT(sigmaT)
 {
+	rebuild();
+}
+
+void SpikeTrain::rebuild(bool randomSeed)
+{
+	// Clear all internal lists
+	spikes.clear();
+	ranges.clear();
+	rangeStartSpikes.clear();
+
 	// Use the number of descriptors if n is zero
 	const size_t nDescrs = descrs.size();
+	if (nDescrs == 0) {
+		return;
+	}
 	if (n == 0) {
 		n = nDescrs;
+	}
+
+	// Random number generator
+	std::default_random_engine gen;
+	if (randomSeed) {
+		static int seed = 22294529;
+		gen.seed(seed++);
 	}
 
 	// Distribution used to fetch the descriptors
@@ -55,7 +76,6 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 	Time t;
 	Time minT = MAX_TIME;
 	size_t idx = 0;
-	std::default_random_engine gen;
 	for (size_t i = 0; i < n; i++) {
 		// Fetch a descriptor
 		const size_t descrIdx = sorted ? i % nDescrs : distDescr(gen);
@@ -94,7 +114,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 		spikes.insert(spikes.end(), spikeGroup.begin(), spikeGroup.end());
 
 		// Go to the next timestamp and increment the total spike index
-		t += Time::sec(std::normal_distribution<>(T.sec(), sigmaT)(gen));
+		t += Time::sec(fabs(std::normal_distribution<>(T.sec(), sigmaT)(gen)));
 		idx += spikeGroup.size();
 	}
 
@@ -113,7 +133,7 @@ SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
 size_t SpikeTrain::getExpectedOutputSpikeCount() const
 {
 	size_t res = 0;
-	for (const auto &range: ranges) {
+	for (const auto &range : ranges) {
 		res += range.nSpikes;
 	}
 	return res;

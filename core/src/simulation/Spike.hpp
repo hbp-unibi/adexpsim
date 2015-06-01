@@ -159,7 +159,7 @@ public:
 		    : nE(chooseNE(nE)),
 		      nI(0),
 		      wE(chooseWE(wE, nE)),
-		      wI(1.0),
+		      wI(-1.0),
 		      sigmaT(sigmaT),
 		      sigmaW(sigmaW),
 		      nOut(nOut)
@@ -238,11 +238,36 @@ private:
 	 */
 	std::vector<size_t> rangeStartSpikes;
 
+	/**
+	 * Descriptors given in the constructor.
+	 */
+	std::vector<Descriptor> descrs;
+
+	/**
+	 * Number of spike train groups as given in the constructor.
+	 */
+	size_t n;
+
+	/**
+	 * Set to true, if the spike train groups were drawn sorted.
+	 */
+	bool sorted;
+
+	/**
+	 * Time between the occurance of two spike train groups.
+	 */
+	Time T;
+
+	/**
+	 * Standard deviation of the T parameter.
+	 */
+	Val sigmaT;
+
 public:
 	/**
 	 * Default constructor. Creates an empty spike train.
 	 */
-	SpikeTrain() {}
+	SpikeTrain() : SpikeTrain(std::vector<Descriptor>{}) {}
 
 	/**
 	 * Constructor of the SpikeTrain class -- calculates a new set of input
@@ -252,7 +277,7 @@ public:
 	 * (randomly) choose.
 	 * @param n is the number of spike train groups the should be created. If
 	 * set to zero, the number of groups is set to the number of descriptors.
-	 * @param sorted if set to true,  the descriptors are not chosen randomly,
+	 * @param sorted if set to true, the descriptors are not chosen randomly,
 	 * but repeated in the order in which they were given in the descriptor
 	 * list.
 	 * @param T is the time between two spike train groups.
@@ -263,10 +288,68 @@ public:
 	           bool sorted = true, Time T = 0.0334_s, Val sigmaT = 0.0);
 
 	/**
+	 * Builds a new spike train using the parameters given in the constructor.
+	 */
+	void rebuild(bool randomSeed = false);
+
+	/**
+	 * Returns the spike train group descriptors.
+	 */
+	const std::vector<Descriptor> &getDescrs() const { return descrs; }
+
+	/**
+	 * Returns the number of spike train groups.
+	 */
+	size_t getN() const { return n; }
+
+	/**
+	 * Returns whether the spike train was sorted.
+	 */
+	bool isSorted() const { return sorted; }
+
+	/**
+	 * Returns the time between the occurance of two spike train groups.
+	 */
+	Time getT() const { return T; }
+
+	/**
+	 * Returns the standard deviation of the T parameter.
+	 */
+	Val getSigmaT() const { return sigmaT; }
+
+	/**
+	 * Sets the spike train group descriptors.
+	 */
+	void setDescrs(const std::vector<Descriptor> &descrs)
+	{
+		this->descrs = descrs;
+	}
+
+	/**
+	 * Returns the number of spike train groups.
+	 */
+	void setN(size_t n) { this->n = n; }
+
+	/**
+	 * Returns whether the spike train was sorted.
+	 */
+	void setSorted(bool sorted) { this->sorted = sorted; }
+
+	/**
+	 * Returns the time between the occurance of two spike train groups.
+	 */
+	void setT(Time T) { this->T = T; }
+
+	/**
+	 * Returns the standard deviation of the T parameter.
+	 */
+	void setSigmaT(Val sigmaT) { this->sigmaT = sigmaT; }
+
+	/**
 	 * Returns the simulation end time, which is set to the end of the last
 	 * spike train group (approximately n * T, depending on sigmaT).
 	 */
-	const Time getMaxT() const
+	Time getMaxT() const
 	{
 		return ranges.empty() ? Time(0) : ranges.back().start;
 	}
