@@ -32,49 +32,20 @@
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <view/ParametersWidget.hpp>
+#include <view/SpikeTrainWidget.hpp>
 
 #include "MainWindow.hpp"
 #include "ExplorationWindow.hpp"
 #include "SimulationWindow.hpp"
 
 namespace AdExpSim {
-
-// Create the incremental exploration object
-/*	exploration = new IncrementalExploration(this, params, train);
-
-    // Create a new ExplorationWidget and add it as one dock widget
-    explorationDockWidget = createDockWidget("Exploration", this);
-    explorationWidget = new ExplorationWidget(explorationDockWidget, params);
-    explorationDockWidget->setWidget(explorationWidget);
-
-    // Connect the exploration events with the exploration widget and vice versa
-    connect(exploration, SIGNAL(progress(float, bool)), explorationWidget,
-            SLOT(progress(float, bool)));
-    connect(exploration, SIGNAL(data(const Exploration &)), this,
-            SLOT(data(const Exploration &)));
-    connect(explorationWidget,
-            SIGNAL(updateRange(size_t, size_t, Val, Val, Val, Val)),
-            exploration, SLOT(updateRange(size_t, size_t, Val, Val, Val, Val)));
-    connect(explorationWidget, SIGNAL(updateParameters()), this,
-            SLOT(explorationWidgetUpdateParameters()));
-
-    explorationWidget->centerView();
-
-    // Create a new NeuronSimulationWidget and add it as one dock widget
-    simulationDockWidget = createDockWidget("Simulation", this);
-    simulationWidget = new NeuronSimulationWidget(simulationDockWidget);
-    simulationWidget->setMinimumWidth(300);
-    simulationDockWidget->setWidget(simulationWidget);*/
-
 MainWindow::MainWindow()
-    : /*fitExploration(true),*/
-      params(std::make_shared<Parameters>()),
+    : params(std::make_shared<Parameters>()),
       train(std::make_shared<SpikeTrain>(
           SpikeTrain({
-                      {4, 1, 1e-3, 1.0, 0.1},
-                      {3, 0, 1e-3, 1.0, 0.1},
+                      {3, 1, 1e-3}, {2, 0, 1e-3},
                      },
-                     50, false, 0.033_s)))
+                     2, true, 0.033_s)))
 {
 	// Create all actions and menus
 	createActions();
@@ -85,8 +56,8 @@ MainWindow::MainWindow()
 	resize(400, 600);
 
 	// Open a new exploration and simulation window
-//	newExploration();
-//	newSimulation();
+	newExploration();
+	newSimulation();
 }
 
 MainWindow::~MainWindow() {}
@@ -130,8 +101,14 @@ void MainWindow::createWidgets()
 	// Create the tool box
 	QToolBox *tools = new QToolBox(this);
 
+	// Create the spike train panel and add it to the tool box
+	spikeTrainWidget = new SpikeTrainWidget(train, this);
+	connect(spikeTrainWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(spikeTrainWidget, "Spike Train");
+
 	// Create the parameters panel and add it to the tool box
-	parametersWidget = new ParametersWidget(this, params);
+	parametersWidget = new ParametersWidget(params, this);
 	connect(parametersWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(parametersWidget, "Parameters");
@@ -171,13 +148,13 @@ void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 	}
 }
 
-void MainWindow::closeEvent(QCloseEvent *event) {
+void MainWindow::closeEvent(QCloseEvent *event)
+{
 	for (auto window : windows) {
 		if (window != nullptr) {
 			window->close();
 		}
 	}
 }
-
 }
 

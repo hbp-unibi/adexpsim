@@ -67,6 +67,7 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/ParameterWidget
 	src/view/ParametersWidget
 	src/view/SpikeWidget
+	src/view/SpikeTrainWidget
 	src/main
 )
 

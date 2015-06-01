@@ -43,6 +43,7 @@ namespace AdExpSim {
 class Parameters;
 class SpikeTrain;
 class ParametersWidget;
+class SpikeTrainWidget;
 class AbstractViewerWindow;
 
 /**
@@ -68,6 +69,7 @@ private:
 	std::vector<QPointer<AbstractViewerWindow>> windows;
 
 	/* Parameter widgets */
+	SpikeTrainWidget *spikeTrainWidget;
 	ParametersWidget *parametersWidget;
 
 	void createActions();

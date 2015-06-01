@@ -47,14 +47,15 @@ static constexpr Val MAX_A = 1e-9;
 static constexpr Val MIN_V = -0.5;
 static constexpr Val MAX_V = 0.5;
 
-ParametersWidget::ParametersWidget(QWidget *parent,
-                                   std::shared_ptr<Parameters> params)
+ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
+                                   QWidget *parent)
     : QWidget(parent), params(params)
 {
 	// Create the update timer
 	updateTimer = new QTimer(this);
 	updateTimer->setSingleShot(true);
-	connect(updateTimer, SIGNAL(timeout()), this, SLOT(triggerUpdateParameters()));
+	connect(updateTimer, SIGNAL(timeout()), this,
+	        SLOT(triggerUpdateParameters()));
 
 	// Create the widgets for the parameters which are not in the working set
 	paramCM = new ParameterWidget(this, "cM", params->cM, params->cM * 0.1,
@@ -157,7 +158,7 @@ void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 			dims.emplace(i);
 		}
 	}
-	for (size_t d: dims) {
+	for (size_t d : dims) {
 		Val value = WorkingParameters::fetchParameter(d, *params);
 		if (!WorkingParameters::linear[d]) {
 			value = WorkingParameters::fromParameter(value, d, *params);
@@ -172,6 +173,5 @@ void ParametersWidget::triggerUpdateParameters()
 	emit updateParameters(updatedDims);
 	updatedDims.clear();
 }
-
 }
 
