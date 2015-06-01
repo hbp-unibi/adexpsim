@@ -62,9 +62,11 @@ void SpikeWidget::paintEvent(QPaintEvent *event)
 		const int x = spike.t.sec() * fx;
 
 		// Draw the "ok/not ok" background
-		const QColor c = (spike.w > 0) ? COLOR_IE : COLOR_II;
-		painter.setPen(QPen(c, 1));
-		painter.drawLine(x, inY0, x, inY1);
+		if (spike.w != 0.0) {
+			const QColor c = (spike.w > 0) ? COLOR_IE : COLOR_II;
+			painter.setPen(QPen(c, 1));
+			painter.drawLine(x, inY0, x, inY1);
+		}
 	}
 
 	// Draw the output spikes
