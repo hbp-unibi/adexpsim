@@ -47,7 +47,8 @@ ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
 
 	// Resize the window to a proper size and set the window title
 	resize(800, 600);
-	setWindowTitle("AdExpSim ‒ Exploration");
+	setWindowIcon(QIcon("data/icon_exploration.svg"));
+	setWindowTitle("Exploration ‒ AdExpSim");
 }
 
 ExplorationWindow::~ExplorationWindow()

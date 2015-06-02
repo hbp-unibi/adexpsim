@@ -60,8 +60,8 @@ MainWindow::MainWindow()
 	newSimulation();
 
 	// Set the window title and the icon
-	setWindowIcon(QIcon("data/icon.svg"));
-	setWindowTitle("AdExpSim ‒ Control Panel");
+	setWindowIcon(QIcon("data/icon_main.svg"));
+	setWindowTitle("Control Panel ‒ AdExpSim");
 }
 
 MainWindow::~MainWindow() {}

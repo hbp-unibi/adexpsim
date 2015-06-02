@@ -29,7 +29,6 @@ AbstractViewerWindow::AbstractViewerWindow(std::shared_ptr<Parameters> params,
     : QMainWindow(parent), params(params), train(train)
 {
 	setAttribute(Qt::WA_DeleteOnClose, true);
-	setWindowIcon(QIcon("data/icon.svg"));
 }
 
 AbstractViewerWindow::~AbstractViewerWindow()

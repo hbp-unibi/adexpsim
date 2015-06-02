@@ -33,7 +33,8 @@ SimulationWindow::SimulationWindow(std::shared_ptr<Parameters> params,
 
 	// Set the window size and title
 	resize(800, 900);
-	setWindowTitle("AdExpSim ‒ Neuron Simulation");
+	setWindowIcon(QIcon("data/icon_simulation.svg"));
+	setWindowTitle("Neuron Simulation ‒ AdExpSim");
 
 	// Show the plotted data
 	handleUpdateParameters(std::set<size_t>{});
