@@ -51,7 +51,7 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<SpikeTrain> train,
 	actAddGroup->setToolTip("Add a new spike train group");
 	actDeleteGroup =
 	    new QAction(QIcon::fromTheme("list-remove"), "Delete Groups", this);
-	actDeleteGroup->setToolTip("Delete the selected train groups");
+	actDeleteGroup->setToolTip("Delete the selected spike train groups");
 	actRebuild = new QAction(QIcon::fromTheme("view-refresh"), "Rebuild", this);
 	actRebuild->setToolTip("Builds a new random spike train");
 
