@@ -45,8 +45,9 @@ ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
 	createModel();
 	createWidgets();
 
-	// Resize the window to a proper size
+	// Resize the window to a proper size and set the window title
 	resize(800, 600);
+	setWindowTitle("AdExpSim ‒ Exploration");
 }
 
 ExplorationWindow::~ExplorationWindow()

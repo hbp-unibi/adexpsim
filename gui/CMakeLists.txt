@@ -77,3 +77,6 @@ TARGET_LINK_LIBRARIES(AdExpSimGui
 	qcustomplot
 	Qt5::Widgets
 )
+
+# Copy the data directory to the bin directory
+FILE(COPY data/ DESTINATION ${CMAKE_BINARY_DIR}/data/)

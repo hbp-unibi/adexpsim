@@ -58,6 +58,10 @@ MainWindow::MainWindow()
 	// Open a new exploration and simulation window
 	newExploration();
 	newSimulation();
+
+	// Set the window title and the icon
+	setWindowIcon(QIcon("data/icon.svg"));
+	setWindowTitle("AdExpSim ‒ Control Panel");
 }
 
 MainWindow::~MainWindow() {}

@@ -31,8 +31,9 @@ SimulationWindow::SimulationWindow(std::shared_ptr<Parameters> params,
 	// Create the underlying Simulation class and assemble the view
 	createWidgets();
 
-	// Set the window size
+	// Set the window size and title
 	resize(800, 900);
+	setWindowTitle("AdExpSim ‒ Neuron Simulation");
 
 	// Show the plotted data
 	handleUpdateParameters(std::set<size_t>{});
