@@ -37,7 +37,8 @@ const QCPColorGradient &ExplorationWidgetGradients::blue()
 		                    {0.625, QColor(116, 169, 207)},
 		                    {0.75, QColor(54, 144, 192)},
 		                    {0.875, QColor(5, 112, 176)},
-		                    {1.0, QColor(3, 78, 123)}});
+		                    {0.90, QColor(3, 78, 123)},
+		                    {1.0, QColor(1, 39, 61)}});
 		initialized = true;
 	}
 	return blue;
@@ -56,7 +57,8 @@ const QCPColorGradient &ExplorationWidgetGradients::green()
 		                     {0.625, QColor(116, 196, 118)},
 		                     {0.75, QColor(65, 171, 93)},
 		                     {0.875, QColor(35, 139, 69)},
-		                     {1.0, QColor(0, 90, 50)}});
+		                     {0.90, QColor(0, 90, 50)},
+		                     {1.0, QColor(0, 45, 25)}});
 		initialized = true;
 	}
 	return green;
@@ -75,7 +77,8 @@ const QCPColorGradient &ExplorationWidgetGradients::orange()
 		                      {0.625, QColor(253, 141, 60)},
 		                      {0.75, QColor(241, 105, 19)},
 		                      {0.875, QColor(217, 72, 1)},
-		                      {1.0, QColor(140, 45, 4)}});
+		                      {0.90, QColor(140, 45, 4)},
+		                      {1.0, QColor(70, 22, 2)}});
 		initialized = true;
 	}
 	return orange;
