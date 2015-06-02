@@ -204,10 +204,16 @@ SpikeTrainEvaluation::trackMaxPotential(const WorkingParameters &params,
 	NullRecorder recorder;
 	MaxValueController controller;
 	DormandPrinceIntegrator integrator(eTar);
-	Model::simulate<Model::FAST_EXP | Model::CLAMP_ITH |
-	                Model::DISABLE_SPIKING>(inputSpikes, recorder, controller,
-	                                        integrator, params, Time(-1), tLen,
-	                                        s0.state);
+	if (useIfCondExp) {
+		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
+		    inputSpikes, recorder, controller, integrator, params, Time(-1),
+		    tLen, s0.state);
+	} else {
+		Model::simulate<Model::FAST_EXP | Model::CLAMP_ITH |
+		                Model::DISABLE_SPIKING>(inputSpikes, recorder,
+		                                        controller, integrator, params,
+		                                        Time(-1), tLen, s0.state);
+	}
 
 	// Return the tracked maximum membrane potential
 	return MaxPotentialResult(
@@ -235,8 +241,15 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	    [&recorder]() { return recorder.getOutputSpikes().size(); },
 	    train.getExpectedOutputSpikeCount() * 5);
 	DormandPrinceIntegrator integrator(eTar);
-	Model::simulate<Model::FAST_EXP>(train.getSpikes(), recorder, controller,
-	                                 integrator, params, Time(-1), T);
+	if (useIfCondExp) {
+		Model::simulate<Model::IF_COND_EXP>(train.getSpikes(), recorder,
+		                                    controller, integrator, params,
+		                                    Time(-1), T);
+	} else {
+		Model::simulate<Model::FAST_EXP>(train.getSpikes(), recorder,
+		                                 controller, integrator, params,
+		                                 Time(-1), T);
+	}
 
 	// Abort if the maximum spike count controller has tripped.
 	if (controller.tripped()) {

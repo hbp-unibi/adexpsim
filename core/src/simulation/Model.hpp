@@ -73,9 +73,16 @@ public:
 	/**
 	 * Set this flag if a fast approximation of the exponential function should
 	 * be used. This approximation is less accurate, however is significantly
-	 * faster.
+	 * faster. An exponential function is only used if ITH is not disabled.
 	 */
 	static constexpr uint8_t FAST_EXP = (1 << 3);
+
+	/**
+	 * Downgrades the model to the simpler IF_COND_EXP model. This flag includes
+	 * DISABLE_ITH and causes the spiking potential to be set to eTh instead of
+	 * eSpike.
+	 */
+	static constexpr uint8_t IF_COND_EXP = (1 << 4);
 
 private:
 	/**
@@ -92,21 +99,23 @@ private:
 	template <uint8_t Flags>
 	static AuxiliaryState aux(const State &s, const WorkingParameters &p)
 	{
-		// Calculate the exponent that should be used inside the formula for
-		// iTh. Clamp the value to "maxIThExponent" to prevent uneccessary
-		// overflows.
-		const Val dvThExponent =
-		    (Flags & CLAMP_ITH)
-		        ? (std::min(p.eSpikeEffRed(), s.v()) - p.eTh()) * p.invDeltaTh()
-		        : std::min(p.maxIThExponent(),
-		                   (s.v() - p.eTh()) * p.invDeltaTh());
-
-		// Calculate dvTh depending on the flags
-		const Val dvTh = (Flags & DISABLE_ITH)
-		                     ? 0.0f
-		                     : -p.lL() * p.deltaTh() *
-		                           (Flags & FAST_EXP ? fast::exp(dvThExponent)
-		                                             : exp(dvThExponent));
+		// Calculate dvTh, but only if iTh is not disabled, either be the
+		// DISABLE_ITH or the IF_COND_EXP flag
+		Val dvTh = 0.0;
+		if (!((Flags & DISABLE_ITH) || (Flags & IF_COND_EXP))) {
+			// Calculate the exponent that should be used inside the formula for
+			// iTh. Clamp the value to "maxIThExponent" to prevent uneccessary
+			// overflows.
+			const Val dvThExponent =
+			    (Flags & CLAMP_ITH)
+			        ? (std::min(p.eSpikeEffRed(), s.v()) - p.eTh()) *
+			              p.invDeltaTh()
+			        : std::min(p.maxIThExponent(),
+			                   (s.v() - p.eTh()) * p.invDeltaTh());
+			dvTh = -p.lL() * p.deltaTh() * (Flags & FAST_EXP
+			                                    ? fast::exp(dvThExponent)
+			                                    : exp(dvThExponent));
+		}
 
 		return AuxiliaryState(p.lL() * s.v(),             // dvL  [V/s]
 		                      s.lE() * (s.v() - p.eE()),  // dvE  [V/s]
@@ -124,6 +133,7 @@ private:
 	 * @param p is a reference at the parameter vector.
 	 * @return a new state variable containing the derivatives.
 	 */
+	template <uint8_t Flags>
 	static State df(const State &s, const AuxiliaryState &as,
 	                const WorkingParameters &p)
 	{
@@ -131,7 +141,8 @@ private:
 		    -(as.dvL() + as.dvE() + as.dvI() + as.dvTh() + s.dvW()),  // [V/s]
 		    -s.lE() * p.lE(),                                         // [1/s^2]
 		    -s.lI() * p.lI(),                                         // [1/s^2]
-		    -(s.dvW() - p.lA() * s.v()) * p.lW()                      // [V/s^2]
+		    (Flags & IF_COND_EXP) ? 0.0 : -(s.dvW() - p.lA() * s.v()) *
+		                                      p.lW()  // [V/s^2]
 		    );
 	}
 
@@ -194,9 +205,11 @@ public:
 			const Time tDeltaMax = nextSpikeTime - t;
 
 			// Perform the actual integration
-			std::pair<State, Time> res = integrator.integrate(
-			    std::min(tDelta, tDeltaMax), tDeltaMax, s,
-			    [&p](const State &s) { return df(s, aux<Flags>(s, p), p); });
+			std::pair<State, Time> res =
+			    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax, s,
+			                         [&p](const State &s) {
+				    return df<Flags>(s, aux<Flags>(s, p), p);
+				});
 
 			// Copy the result and advance the time by the performed timestep
 			s = res.first;
@@ -207,7 +220,7 @@ public:
 
 			// Reset the neuron if the spike potential is reached
 			if (!(Flags & DISABLE_SPIKING)) {
-				if (s.v() > p.eSpike()) {
+				if (s.v() > ((Flags & IF_COND_EXP) ? p.eTh() : p.eSpike())) {
 					// Record the spike event
 					s.v() = p.eSpike();
 					as = aux<Flags>(s, p);
@@ -215,7 +228,9 @@ public:
 
 					// Reset the voltage and increase the adaptation current
 					s.v() = p.eReset();
-					s.dvW() += p.lB();
+					if (!(Flags & IF_COND_EXP)) {
+						s.dvW() += p.lB();
+					}
 					as = aux<Flags>(s, p);
 					recorder.outputSpike(t, s);
 					recorder.record(t, s, as, true);

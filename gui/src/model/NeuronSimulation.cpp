@@ -53,7 +53,7 @@ void NeuronSimulation::run()
 	DormandPrinceIntegrator integrator;
 
 	// Run the actual simulation until the end of the time
-	Model::simulate(getTrain().getSpikes(), recorder, controller, integrator,
+	Model::simulate<Model::IF_COND_EXP>(getTrain().getSpikes(), recorder, controller, integrator,
 	                wp, Time(-1), getTrain().getMaxT());
 
 	// Run the evaluation to fetch the output spikes and the output groups

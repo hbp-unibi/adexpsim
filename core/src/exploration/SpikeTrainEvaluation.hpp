@@ -113,6 +113,11 @@ private:
 	};
 
 	/**
+	 * Flag used to indicate whether to use the reduced IF_COND_EXP model.
+	 */
+	bool useIfCondExp;
+
+	/**
 	 * SpikeTrain instance on which the evaluation is tested.
 	 */
 	SpikeTrain train;
@@ -221,14 +226,14 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SpikeTrainEvaluation() {}
+	SpikeTrainEvaluation(bool useIfCondExp = true) : useIfCondExp(useIfCondExp) {}
 
 	/**
 	 * Constructor of the evaluation class.
 	 *
 	 * @param train is the spike train that should be used for the evaluation.
 	 */
-	SpikeTrainEvaluation(const SpikeTrain &train);
+	SpikeTrainEvaluation(const SpikeTrain &train, bool useIfCondExp = true);
 
 	/**
 	 * Evaluates the given parameter set.
