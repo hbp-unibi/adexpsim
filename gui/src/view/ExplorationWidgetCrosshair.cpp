@@ -42,6 +42,9 @@ double ExplorationWidgetCrosshair::selectTest(const QPointF &pos,
 void ExplorationWidgetCrosshair::draw(QCPPainter *painter)
 {
 	QPointF c = center->pixelPoint();
+	painter->setPen(QPen(Qt::white, mPen.widthF() + 2.0));
+	painter->drawLine(QPointF(c.x() - 6, c.y()), QPointF(c.x() + 6, c.y()));
+	painter->drawLine(QPointF(c.x(), c.y() - 6), QPointF(c.x(), c.y() + 6));
 	painter->setPen(mPen);
 	painter->drawLine(QPointF(c.x() - 5, c.y()), QPointF(c.x() + 5, c.y()));
 	painter->drawLine(QPointF(c.x(), c.y() - 5), QPointF(c.x(), c.y() + 5));
