@@ -31,7 +31,7 @@
 #include <cstdint>
 #include <vector>
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 #include "Parameters.hpp"
 

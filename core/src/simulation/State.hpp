@@ -27,8 +27,8 @@
 #ifndef _ADEXPSIM_STATE_HPP_
 #define _ADEXPSIM_STATE_HPP_
 
-#include <utils/Types.hpp>
-#include <utils/Vector.hpp>
+#include <common/Types.hpp>
+#include <common/Vector.hpp>
 
 #include "Parameters.hpp"
 

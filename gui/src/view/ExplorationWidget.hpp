@@ -24,7 +24,7 @@
 
 #include <QWidget>
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 class QAction;
 class QComboBox;

@@ -34,7 +34,7 @@
 #include <limits>
 #include <vector>
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 namespace AdExpSim {
 

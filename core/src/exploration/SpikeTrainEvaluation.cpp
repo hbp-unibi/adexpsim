@@ -157,8 +157,9 @@ public:
 	}
 };
 
-SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train)
-    : train(train)
+SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train,
+                                           bool useIfCondExp)
+    : useIfCondExp(useIfCondExp), train(train)
 {
 }
 

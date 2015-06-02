@@ -25,7 +25,7 @@
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
 #include <exploration/Exploration.hpp>
-#include <utils/Terminal.hpp>
+#include <common/Terminal.hpp>
 
 using namespace AdExpSim;
 

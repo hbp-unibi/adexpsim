@@ -33,8 +33,8 @@
 #include <string>
 #include <vector>
 
-#include <utils/Types.hpp>
-#include <utils/Vector.hpp>
+#include <common/Types.hpp>
+#include <common/Vector.hpp>
 
 namespace AdExpSim {
 

@@ -20,7 +20,7 @@
 #include <simulation/Recorder.hpp>
 #include <exploration/Evaluation.hpp>
 #include <exploration/Simplex.hpp>
-#include <utils/Terminal.hpp>
+#include <common/Terminal.hpp>
 
 #include <csignal>
 #include <limits>

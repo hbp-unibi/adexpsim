@@ -19,7 +19,7 @@
 #include <simulation/DormandPrinceIntegrator.hpp>
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
-#include <utils/Timer.hpp>
+#include <common/Timer.hpp>
 
 #include <iostream>
 

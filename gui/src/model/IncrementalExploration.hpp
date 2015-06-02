@@ -33,7 +33,7 @@
 #include <vector>
 
 #include <exploration/Exploration.hpp>
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 #include <QRunnable>
 #include <QObject>

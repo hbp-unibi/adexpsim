@@ -22,8 +22,8 @@
 #include <QImage>
 #include <qcustomplot.h>
 
-#include <utils/Types.hpp>
-#include <utils/Matrix.hpp>
+#include <common/Types.hpp>
+#include <common/Matrix.hpp>
 
 namespace AdExpSim {
 /**

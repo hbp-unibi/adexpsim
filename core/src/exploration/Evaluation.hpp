@@ -34,7 +34,7 @@
 
 #include <simulation/Model.hpp>
 #include <simulation/Spike.hpp>
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 namespace AdExpSim {
 

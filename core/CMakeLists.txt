@@ -54,11 +54,11 @@ SET(ADEXPSIM_CORE_SRC
 	src/exploration/Exploration
 	src/exploration/Simplex
 	src/exploration/SpikeTrainEvaluation
-	src/utils/Matrix
-	src/utils/Terminal
-	src/utils/Timer
-	src/utils/Types
-	src/utils/Vector
+	src/common/Matrix
+	src/common/Terminal
+	src/common/Timer
+	src/common/Types
+	src/common/Vector
 )
 
 # Conditionally add the OpenCL source code

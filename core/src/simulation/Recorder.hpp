@@ -32,7 +32,7 @@
 #include <limits>
 #include <ostream>
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 #include "Parameters.hpp"
 #include "State.hpp"

@@ -34,7 +34,7 @@ class QLineEdit;
 class QSlider;
 class QWidget;
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 namespace AdExpSim {
 

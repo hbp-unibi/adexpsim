@@ -32,8 +32,8 @@
 #include <memory>
 
 #include <simulation/Parameters.hpp>
-#include <utils/Matrix.hpp>
-#include <utils/Types.hpp>
+#include <common/Matrix.hpp>
+#include <common/Types.hpp>
 
 #include "SpikeTrainEvaluation.hpp"
 

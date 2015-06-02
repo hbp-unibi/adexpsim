@@ -35,7 +35,7 @@
 #include <cstdint>
 #include <iostream>
 
-#include <utils/FastMath.hpp>
+#include <common/FastMath.hpp>
 
 #include "Controller.hpp"
 #include "Integrator.hpp"

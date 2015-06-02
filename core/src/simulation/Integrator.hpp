@@ -28,7 +28,7 @@
 #ifndef _ADEXPSIM_INTEGRATOR_HPP_
 #define _ADEXPSIM_INTEGRATOR_HPP_
 
-#include <utils/Types.hpp>
+#include <common/Types.hpp>
 
 #include "Parameters.hpp"
 #include "State.hpp"

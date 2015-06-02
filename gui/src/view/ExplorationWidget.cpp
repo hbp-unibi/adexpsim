@@ -31,7 +31,7 @@
 
 #include <exploration/Exploration.hpp>
 #include <simulation/Parameters.hpp>
-#include <utils/Matrix.hpp>
+#include <common/Matrix.hpp>
 
 #include "ExplorationWidget.hpp"
 #include "ExplorationWidgetCrosshair.hpp"
