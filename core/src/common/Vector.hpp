@@ -34,10 +34,11 @@
 namespace AdExpSim {
 
 /**
- * Class containing a one dimensional, fixed size numerical vector.
+ * Class containing a one dimensional, fixed size numerical vector. The alignas
+ * specifier is important to allow the compiler to use SSE instructions.
  */
 template <typename Impl, size_t N>
-class Vector {
+class alignas(16) Vector {
 protected:
 	/**
 	 * Internal array containing the data.
@@ -50,6 +51,7 @@ public:
 	 */
 	using T = Vector<Impl, N>;
 	using Arr = std::array<Val, N>;
+	static constexpr size_t Size = N;
 
 	Vector(const Arr &arr) : arr(arr) {}
 
@@ -142,82 +144,9 @@ public:
 };
 
 /**
- * Remove this define if you are using a compiler that does not allow the
- * definition of a 4-element vector type as specified below.
- */
-#define USE_GCC_VEC4
-
-#ifdef USE_GCC_VEC4
-
-/**
- * Vector data type which is used as a special optimization of the Vec4 class.
- */
-typedef Val vec4_t __attribute__((vector_size(sizeof(Val) * 4)));
-
-/**
  * The Vec4 class represents a vector with four Val entries. Defines a set of
  * operators that should use the SIMD extensions of the targeted processor
  * architecture.
- */
-template <typename Impl>
-class Vec4 {
-protected:
-	/**
-	 * Type containing the actual data. Use the vec4_t type which if possible
-	 * uses the processor vector extensions.
-	 */
-	vec4_t arr;
-
-public:
-	using T = Vec4<Impl>;
-
-	Vec4(Val v0, Val v1, Val v2, Val v3) : arr(vec4_t{v0, v1, v2, v3}) {}
-
-	Vec4(vec4_t arr) : arr(arr) {}
-
-	Val &operator[](size_t idx) { return arr[idx]; }
-
-	Val operator[](size_t idx) const { return arr[idx]; }
-
-	friend void operator+=(T &v1, const T &v2) { v1.arr += v2.arr; }
-
-	friend void operator-=(T &v1, const T &v2) { v1.arr -= v2.arr; }
-
-	friend void operator*=(T &v1, const T &v2) { v1.arr *= v2.arr; }
-
-	friend void operator/=(T &v1, const T &v2) { v1.arr /= v2.arr; }
-
-	friend Impl operator+(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr + v2.arr);
-	}
-
-	friend Impl operator-(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr - v2.arr);
-	}
-
-	friend Impl operator*(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr * v2.arr);
-	}
-
-	friend Impl operator/(const T &v1, const T &v2)
-	{
-		return Impl(v1.arr / v2.arr);
-	}
-
-	friend Impl operator*(Val s, const T &v) { return Impl(s * v.arr); }
-
-	friend Impl operator*(const T &v, Val s) { return Impl(v.arr * s); }
-
-	friend Impl operator/(const T &v, Val s) { return Impl(v.arr / s); }
-};
-
-#else
-
-/**
- * Stub implementation of an unoptimized Vec4.
  */
 template <typename Impl>
 class Vec4 : public Vector<Impl, 4> {
@@ -229,8 +158,6 @@ public:
 	{
 	}
 };
-
-#endif
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX) \
 	void NAME(Val x) { arr[IDX] = x; }  \
