@@ -268,6 +268,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	size_t groupDescrIdx = ranges.front().descrIdx;
 	size_t groupExpected = 0;
 	size_t groupReceived = 0;
+	bool groupOk = true;
 	Time groupStart;
 	size_t nGroups = 1;
 	for (size_t rangeIdx = 0; rangeIdx < ranges.size() - 1; rangeIdx++) {
@@ -301,11 +302,11 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		// binaryExpectationRatio
 		if (group != rangeGroup) {
 			// Record the current output group
-			recordOutputGroup(OutputGroup(groupStart, rangeStart, groupDescrIdx,
-			                              groupReceived == groupExpected));
+			recordOutputGroup(
+			    OutputGroup(groupStart, rangeStart, groupDescrIdx, groupOk));
 
 			// Update the output
-			res.pBinary += (groupReceived == groupExpected) ? 1.0 : 0.0;
+			res.pBinary += groupOk ? 1.0 : 0.0;
 			res.pFalsePositive += (groupReceived > groupExpected) ? 1.0 : 0.0;
 			res.pFalseNegative += (groupReceived < groupExpected) ? 1.0 : 0.0;
 
@@ -313,14 +314,16 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 			nGroups++;
 
 			// Reset the current group
-			groupStart = rangeStart;
 			group = rangeGroup;
 			groupDescrIdx = rangeDescrIdx;
 			groupExpected = 0;
 			groupReceived = 0;
+			groupOk = true;
+			groupStart = rangeStart;
 		}
 
 		// Update the number of expected and received spikes
+		groupOk = groupOk && (nSpikesReceived == nSpikesExpected);
 		groupExpected += nSpikesExpected;
 		groupReceived += nSpikesReceived;
 
@@ -358,25 +361,22 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		const auto simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
 		res.pSoft += sigma(simRes.vMax, params, nSpikesExpected == 0) *
-		             simRes.tLen.sec() /* * simRes.tMaxRel()*/;
+		             simRes.tLen.sec();
 	}
 
 	// Record the last output group
-	recordOutputGroup(OutputGroup(groupStart, ranges.back().start,
-	                              groupDescrIdx,
-	                              groupExpected == groupReceived));
+	recordOutputGroup(
+	    OutputGroup(groupStart, ranges.back().start, groupDescrIdx, groupOk));
 
 	// Normalize the result by the total simulation time in seconds
-	res.pBinary =
-	    (res.pBinary + ((groupExpected == groupReceived) ? 1.0 : 0.0)) /
-	    Val(nGroups);
+	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
 	res.pFalsePositive =
 	    (res.pFalsePositive + ((groupReceived > groupExpected) ? 1.0 : 0.0)) /
 	    Val(nGroups);
 	res.pFalseNegative =
 	    (res.pFalseNegative + ((groupReceived < groupExpected) ? 1.0 : 0.0)) /
 	    Val(nGroups);
-	res.pSoft = /*res.pBinary **/ res.pSoft / T.sec();
+	res.pSoft = res.pSoft / T.sec();
 
 	return res;
 }
