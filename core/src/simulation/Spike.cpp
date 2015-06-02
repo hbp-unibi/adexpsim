@@ -85,11 +85,11 @@ void SpikeTrain::rebuild(bool randomSeed)
 		std::vector<Spike> spikeGroup;
 		std::normal_distribution<> distT(t.sec(), descr.sigmaT);
 		std::normal_distribution<> distW(0, descr.sigmaW);
-		for (size_t i = 0; i < descr.nE; i++) {
+		for (size_t j = 0; j < descr.nE; j++) {
 			spikeGroup.emplace_back(Time::sec(distT(gen)),
 			                        descr.wE + distW(gen));
 		}
-		for (size_t i = 0; i < descr.nI; i++) {
+		for (size_t j = 0; j < descr.nI; j++) {
 			spikeGroup.emplace_back(Time::sec(distT(gen)),
 			                        descr.wI + distW(gen));
 		}
