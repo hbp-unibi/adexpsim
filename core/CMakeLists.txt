@@ -42,7 +42,9 @@ CONFIGURE_FILE(
 )
 
 SET(ADEXPSIM_CORE_SRC
+	src/simulation/Controller
 	src/simulation/DormandPrinceIntegrator
+	src/simulation/Integrator
 	src/simulation/Model
 	src/simulation/Parameters
 	src/simulation/Recorder

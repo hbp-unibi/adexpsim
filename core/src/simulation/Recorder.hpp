@@ -38,6 +38,44 @@
 #include "State.hpp"
 
 namespace AdExpSim {
+/**
+ * The NullRecorder class can be used to discard all incomming data for maximum
+ * efficiency (in the case the data does not need to be recorded).
+ */
+class NullRecorder {
+public:
+	/**
+	 * Actually called by the simulation to record the internal state, however
+	 * this class just acts as a null sink for this data.
+	 */
+	void record(Time, const State &, const AuxiliaryState &, bool)
+	{
+		// Discard everything
+	}
+
+	/**
+	 * Called whenever an input spike is consumed by the model
+	 *
+	 * @param t is the time at which the input spike has been consumed.
+	 * @param s is the state after the input spike has been consumed.
+	 */
+	void inputSpike(Time, const State &)
+	{
+		// Discard everything
+	}
+
+	/**
+	 * Called whenever an output spike is produced by the model.
+	 *
+	 * @param t is the time at which the output spike has been produced.
+	 * @param s is the neuron state after the spike has been issued (the neuron
+	 * has already been reset).
+	 */
+	void outputSpike(Time t, const State &)
+	{
+		// Discard everything
+	}
+};
 
 /**
  * Recorder is a common base class for all Recorder implementations. Uses the
