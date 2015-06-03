@@ -65,8 +65,9 @@ void SpikeTrain::rebuild(bool randomSeed)
 	// Random number generator
 	std::default_random_engine gen;
 	if (randomSeed) {
-		static int seed = 22294529;
-		gen.seed(seed++);
+		static int seed = 22294529; // Initial seed
+		gen.seed(seed);
+		seed += 4781536; // Advance the seed by some number
 	}
 
 	// Distribution used to fetch the descriptors
