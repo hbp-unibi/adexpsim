@@ -29,9 +29,9 @@
 #include <limits>
 #include <sstream>
 
-#include <exploration/Exploration.hpp>
-#include <simulation/Parameters.hpp>
 #include <common/Matrix.hpp>
+#include <exploration/Exploration.hpp>
+#include <utils/ParameterCollection.hpp>
 
 #include "ExplorationWidget.hpp"
 #include "ExplorationWidgetCrosshair.hpp"
@@ -61,9 +61,10 @@ static void fillDimensionCombobox(QComboBox *box)
 	}
 }
 
-ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
-                                     std::shared_ptr<Exploration> exploration,
-                                     QToolBar *toolbar, QWidget *parent)
+ExplorationWidget::ExplorationWidget(
+    std::shared_ptr<ParameterCollection> params,
+    std::shared_ptr<Exploration> exploration, QToolBar *toolbar,
+    QWidget *parent)
     : params(params), exploration(exploration)
 {
 	// Create the layout widget
@@ -114,8 +115,10 @@ ExplorationWidget::ExplorationWidget(std::shared_ptr<Parameters> params,
 	// Connect the action events to the corresponding slots
 	connect(actZoomFit, SIGNAL(triggered()), this, SLOT(fitView()));
 	connect(actZoomCenter, SIGNAL(triggered()), this, SLOT(centerView()));
-	connect(actLockXAxis, SIGNAL(triggered()), this, SLOT(handleRestrictZoom()));
-	connect(actLockYAxis, SIGNAL(triggered()), this, SLOT(handleRestrictZoom()));
+	connect(actLockXAxis, SIGNAL(triggered()), this,
+	        SLOT(handleRestrictZoom()));
+	connect(actLockYAxis, SIGNAL(triggered()), this,
+	        SLOT(handleRestrictZoom()));
 
 	toolbar->addAction(actZoomFit);
 	toolbar->addAction(actZoomCenter);
@@ -229,12 +232,12 @@ QPointF ExplorationWidget::workingParametersToPlot(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::toParameter(x, dimX, *params);
+		x = WorkingParameters::toParameter(x, dimX, params->params);
 	}
 
 	size_t dimY = getDimY();
 	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::toParameter(y, dimY, *params);
+		y = WorkingParameters::toParameter(y, dimY, params->params);
 	}
 
 	return QPointF(x, y);
@@ -244,12 +247,12 @@ QPointF ExplorationWidget::parametersToPlot(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (!WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, *params);
+		x = WorkingParameters::fromParameter(x, dimX, params->params);
 	}
 
 	size_t dimY = getDimY();
 	if (!WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, *params);
+		y = WorkingParameters::fromParameter(y, dimY, params->params);
 	}
 
 	return QPointF(x, y);
@@ -259,12 +262,12 @@ QPointF ExplorationWidget::plotToWorkingParameters(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, *params);
+		x = WorkingParameters::fromParameter(x, dimX, params->params);
 	}
 
 	size_t dimY = getDimY();
 	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, *params);
+		y = WorkingParameters::fromParameter(y, dimY, params->params);
 	}
 
 	return QPointF(x, y);
@@ -274,12 +277,12 @@ QPointF ExplorationWidget::plotToParameters(Val x, Val y)
 {
 	size_t dimX = getDimX();
 	if (!WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::toParameter(x, dimX, *params);
+		x = WorkingParameters::toParameter(x, dimX, params->params);
 	}
 
 	size_t dimY = getDimY();
 	if (!WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::toParameter(y, dimY, *params);
+		y = WorkingParameters::toParameter(y, dimY, params->params);
 	}
 
 	return QPointF(x, y);
@@ -313,9 +316,9 @@ void ExplorationWidget::rangeChanged()
 void ExplorationWidget::dimensionChanged(QCPAxis *axis, size_t dim)
 {
 	// Center the axis around the value
-	Val v = WorkingParameters::fetchParameter(dim, *params);
+	Val v = WorkingParameters::fetchParameter(dim, params->params);
 	if (!WorkingParameters::linear[dim]) {
-		v = WorkingParameters::fromParameter(v, dim, *params);
+		v = WorkingParameters::fromParameter(v, dim, params->params);
 	}
 	if (v == 0) {
 		axis->setRange(QCPRange(-0.1, 0.1));
@@ -395,7 +398,7 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 	QPointF p = plotToWorkingParameters(x, y);
 
 	// Create working parameters from the current parameters
-	WorkingParameters wp(*params);
+	WorkingParameters wp(params->params);
 
 	// Update the corrsponding dimensions and check whether the working
 	// parameters are still valid -- if yes, update the parameters and emit the
@@ -405,8 +408,8 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 	if (wp.valid()) {
 		// Update the parameters and emit the corrsponding event
 		QPointF wpp = plotToParameters(x, y);
-		WorkingParameters::fetchParameter(getDimX(), *params) = wpp.x();
-		WorkingParameters::fetchParameter(getDimY(), *params) = wpp.y();
+		WorkingParameters::fetchParameter(getDimX(), params->params) = wpp.x();
+		WorkingParameters::fetchParameter(getDimY(), params->params) = wpp.y();
 		emit updateParameters({getDimX(), getDimY()});
 
 		// Move the parameter crosshair to a new position and replot
@@ -418,16 +421,15 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 void ExplorationWidget::handleRestrictZoom()
 {
 	pltExploration->axisRect()->setRangeZoomFactor(
-		actLockXAxis->isChecked() ? 0.85 : 0.0,
-		actLockYAxis->isChecked() ? 0.85 : 0.0
-	);
+	    actLockXAxis->isChecked() ? 0.85 : 0.0,
+	    actLockYAxis->isChecked() ? 0.85 : 0.0);
 }
 
 void ExplorationWidget::centerView()
 {
-	QPointF p =
-	    parametersToPlot(WorkingParameters::fetchParameter(getDimX(), *params),
-	                     WorkingParameters::fetchParameter(getDimY(), *params));
+	QPointF p = parametersToPlot(
+	    WorkingParameters::fetchParameter(getDimX(), params->params),
+	    WorkingParameters::fetchParameter(getDimY(), params->params));
 	pltExploration->xAxis->setRange(QCPRange(p.x() * 0.5, p.x() * 1.5));
 	pltExploration->yAxis->setRange(QCPRange(p.y() * 0.5, p.y() * 1.5));
 	pltExploration->replot();
@@ -470,8 +472,8 @@ void ExplorationWidget::updateCrosshair()
 {
 	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
 	crosshair->positions()[0]->setCoords(parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), *params),
-	    WorkingParameters::fetchParameter(getDimY(), *params)));
+	    WorkingParameters::fetchParameter(getDimX(), params->params),
+	    WorkingParameters::fetchParameter(getDimY(), params->params)));
 }
 
 void ExplorationWidget::updateInvalidRegionsOverlay()
@@ -487,7 +489,7 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 		const Range rEY(rY.min, rY.max, RES);
 		const size_t dimX = getDimX();
 		const size_t dimY = getDimY();
-		WorkingParameters wp(*params);
+		WorkingParameters wp(params->params);
 		for (size_t x = 0; x < RES; x++) {
 			for (size_t y = 0; y < RES; y++) {
 				wp[dimX] = rEX.value(x);

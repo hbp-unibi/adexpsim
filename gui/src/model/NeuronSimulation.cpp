@@ -22,15 +22,13 @@
 
 namespace AdExpSim {
 
-void NeuronSimulation::prepare(const Parameters &params,
-                               const SpikeTrain &train)
+void NeuronSimulation::run(std::shared_ptr<ParameterCollection> sharedParams)
 {
-	this->params = params;
-	this->evaluation = SpikeTrainEvaluation(train);
-}
+	// Copy the parameters from the global parameters instance
+	params = *sharedParams;
+	evaluation = SpikeTrainEvaluation(
+	    params.train, params.model == ModelType::IF_COND_EXP);
 
-void NeuronSimulation::run()
-{
 	// Reset all output
 	mValid = false;
 	recorder.reset();
@@ -38,7 +36,7 @@ void NeuronSimulation::run()
 	outputGroups.clear();
 
 	// Abort if the current parameters are not valid
-	WorkingParameters wp(params);
+	WorkingParameters wp(params.params);
 	if (!wp.valid()) {
 		return;
 	}
@@ -46,15 +44,24 @@ void NeuronSimulation::run()
 	// Create a new controller -- make sure to abort after a certain count of
 	// output spikes is superceeded.
 	auto controller = createMaxOutputSpikeCountController(
-	    [this]() -> size_t { return recorder.getData().outputSpikeTimes.size(); },
+	    [this]() -> size_t {
+		    return recorder.getData().outputSpikeTimes.size();
+		},
 	    getTrain().getExpectedOutputSpikeCount() * 5);
 
 	// Use a DormandPrinceIntegrator with default parameters
 	DormandPrinceIntegrator integrator;
 
 	// Run the actual simulation until the end of the time
-	Model::simulate<Model::IF_COND_EXP>(getTrain().getSpikes(), recorder, controller, integrator,
-	                wp, Time(-1), getTrain().getMaxT());
+	if (params.model == ModelType::IF_COND_EXP) {
+		Model::simulate<Model::IF_COND_EXP>(getTrain().getSpikes(), recorder,
+		                                    controller, integrator, wp,
+		                                    Time(-1), getTrain().getMaxT());
+	} else {
+		Model::simulate<Model::FAST_EXP>(getTrain().getSpikes(), recorder,
+		                                 controller, integrator, wp, Time(-1),
+		                                 getTrain().getMaxT());
+	}
 
 	// Run the evaluation to fetch the output spikes and the output groups
 	evaluation.evaluate(wp, outputSpikes, outputGroups);

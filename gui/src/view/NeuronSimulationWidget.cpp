@@ -86,7 +86,7 @@ static void addSpikes(QCustomPlot *plot, const SpikeVec &spikes, Val minT,
 {
 	plot->setCurrentLayer("spikes");
 	for (const auto &spike : spikes) {
-		Val t = SIPrefixTransformation::transformTime(spike.t.sec());
+		Val t = SIPrefixTrafo::transformTime(spike.t.sec());
 		if (t >= minT && t <= maxT) {
 			QCPItemStraightLine *line = new QCPItemStraightLine(plot);
 			plot->addItem(line);
@@ -126,10 +126,10 @@ void NeuronSimulationWidget::updatePlot()
 	pltCurr->clearItems();
 
 	// Fetch the current data slice
-	double minT = SIPrefixTransformation::transformTime(
-	    spikeWidget->getRangeStart().sec());
+	double minT =
+	    SIPrefixTrafo::transformTime(spikeWidget->getRangeStart().sec());
 	double maxT =
-	    SIPrefixTransformation::transformTime(spikeWidget->getRangeEnd().sec());
+	    SIPrefixTrafo::transformTime(spikeWidget->getRangeEnd().sec());
 	const VectorRecorderData<QVector<double>> &oData = sim.getData();
 	const VectorRecorderData<QVector<double>> &data = oData.slice(minT, maxT);
 
@@ -142,16 +142,17 @@ void NeuronSimulationWidget::updatePlot()
 		pltVolt->graph()->setPen(QPen(COLOR_V, LINE_W));
 
 		pltVolt->setCurrentLayer("limits");
-		const Parameters &p = sim.getParameters();
-		WorkingParameters wp(p);
-		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eE));
-		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eI));
-		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(
-		                         wp.eSpikeEff() + p.eL));
-		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eTh));
-		addHorzLine(pltVolt, SIPrefixTransformation::transformVoltage(p.eL));
-		addHorzLine(pltVolt,
-		            SIPrefixTransformation::transformVoltage(p.eReset));
+		const ParameterCollection &p = sim.getParameters();
+		WorkingParameters wp(p.params);
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eE));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eI));
+		if (p.model == ModelType::AD_IF_COND_EXP) {
+			addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(
+			                         wp.eSpikeEff() + p.params.eL));
+		}
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eTh));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eL));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eReset));
 
 		addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
 

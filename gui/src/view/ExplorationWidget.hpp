@@ -38,7 +38,7 @@ class QVBoxLayout;
 
 namespace AdExpSim {
 
-class Parameters;
+class ParameterCollection;
 class Exploration;
 class ExplorationWidgetCrosshair;
 class ExplorationWidgetInvalidOverlay;
@@ -69,7 +69,7 @@ private:
 	QCustomPlot *pltExploration;
 	ExplorationWidgetCrosshair *crosshair;
 	ExplorationWidgetInvalidOverlay *overlay;
-	std::shared_ptr<Parameters> params;
+	std::shared_ptr<ParameterCollection> params;
 	std::shared_ptr<Exploration> exploration;
 
 	void dimensionChanged();
@@ -95,7 +95,7 @@ public:
 	/**
 	 * Constructor of the ExplorationWidget class.
 	 */
-	ExplorationWidget(std::shared_ptr<Parameters> params,
+	ExplorationWidget(std::shared_ptr<ParameterCollection> params,
 	                  std::shared_ptr<Exploration> exploration,
 	                  QToolBar *toolbar,
 	                  QWidget *parent = nullptr);

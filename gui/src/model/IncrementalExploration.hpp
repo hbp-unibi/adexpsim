@@ -42,8 +42,7 @@ class QTimer;
 
 namespace AdExpSim {
 
-class SpikeTrain;
-class Parameters;
+class ParameterCollection;
 
 /**
  * The IncrementalExplorationRunner runs a single exploration process in the
@@ -152,12 +151,7 @@ private:
 	/**
 	 * Current neuron parameters.
 	 */
-	std::shared_ptr<Parameters> params;
-
-	/**
-	 * Spike train used for the exploration.
-	 */
-	std::shared_ptr<SpikeTrain> train;
+	std::shared_ptr<ParameterCollection> params;
 
 	/**
 	 * Contains the resolution level (as power of two) of the currently running
@@ -219,8 +213,7 @@ public:
 	 *
 	 * @param parent is the owner of this object.
 	 */
-	IncrementalExploration(std::shared_ptr<Parameters> params,
-	                       std::shared_ptr<SpikeTrain> train,
+	IncrementalExploration(std::shared_ptr<ParameterCollection> params,
 	                       QObject *parent = nullptr);
 
 	~IncrementalExploration() override;

@@ -23,7 +23,7 @@
 #include <QVBoxLayout>
 #include <QFrame>
 
-#include <simulation/Parameters.hpp>
+#include <utils/ParameterCollection.hpp>
 
 #include "ParametersWidget.hpp"
 #include "ParameterWidget.hpp"
@@ -39,7 +39,7 @@ static constexpr Val MAX_A = 1e-9;
 static constexpr Val MIN_V = -0.5;
 static constexpr Val MAX_V = 0.5;
 
-ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
+ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
                                    QWidget *parent)
     : QWidget(parent), params(params)
 {
@@ -50,10 +50,10 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 	        SLOT(triggerUpdateParameters()));
 
 	// Create the widgets for the parameters which are not in the working set
-	paramCM = new ParameterWidget(this, "cM", params->cM, params->cM * 0.1,
-	                              params->cM * 10, "F", "cM");
-	paramEL =
-	    new ParameterWidget(this, "eL", params->eL, MIN_V, MAX_V, "V", "eL");
+	Parameters &p = params->params;
+	paramCM =
+	    new ParameterWidget(this, "cM", p.cM, p.cM * 0.1, p.cM * 10, "F", "cM");
+	paramEL = new ParameterWidget(this, "eL", p.eL, MIN_V, MAX_V, "V", "eL");
 	connect(paramCM, SIGNAL(update(Val, const QVariant &)), this,
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramEL, SIGNAL(update(Val, const QVariant &)), this,
@@ -70,7 +70,7 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 	for (size_t i = 0; i < 13; i++) {
 		std::string name = WorkingParameters::names[i];
 		std::string unit = WorkingParameters::units[i];
-		Val value = WorkingParameters::fetchParameter(i, *params);
+		Val value = WorkingParameters::fetchParameter(i, p);
 		Val min = value * 0.1;
 		Val max = value * 10;
 		if (max < min) {
@@ -80,7 +80,7 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 			name = WorkingParameters::originalNames[i];
 			unit = WorkingParameters::originalUnits[i];
 		} else {
-			value = WorkingParameters::fromParameter(value, i, *params);
+			value = WorkingParameters::fromParameter(value, i, p);
 		}
 
 		if (unit == "Hz") {
@@ -105,6 +105,9 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 
 		layout->addWidget(workingParams[i]);
 	}
+
+	// Update the parameters
+	handleUpdateParameters(std::set<size_t>{});
 }
 
 void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
@@ -114,22 +117,23 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 		return;
 	}
 
+	Parameters &p = params->params;
 	if (data.type() == QVariant::String) {
-		QString p = data.toString();
+		QString s = data.toString();
 		updatedDims.clear();
-		if (p == "cM") {
-			params->cM = value;
-		} else if (p == "eL") {
-			params->eL = value;
+		if (s == "cM") {
+			p.cM = value;
+		} else if (s == "eL") {
+			p.eL = value;
 		}
 	} else if (data.type() == QVariant::UInt) {
 		size_t i = data.toUInt();
 		updatedDims.emplace(i);
 		if (WorkingParameters::linear[i]) {
-			WorkingParameters::fetchParameter(i, *params) = value;
+			WorkingParameters::fetchParameter(i, p) = value;
 		} else {
-			WorkingParameters::fetchParameter(i, *params) =
-			    WorkingParameters::toParameter(value, i, *params);
+			WorkingParameters::fetchParameter(i, p) =
+			    WorkingParameters::toParameter(value, i, p);
 		}
 	}
 
@@ -140,20 +144,25 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 {
 	blockSignals(true);
+	Parameters &p = params->params;
 	if (dims.empty()) {
-		paramCM->setValue(params->cM);
-		paramEL->setValue(params->eL);
-		for (size_t i = 0; i < 13; i++) {
-			dims.emplace(i);
+		paramCM->setValue(p.cM);
+		paramEL->setValue(p.eL);
+		for (size_t d = 0; d < WorkingParameters::Size; d++) {
+			workingParams[d]->setVisible(params->model ==
+			                                 ModelType::AD_IF_COND_EXP ||
+			                             WorkingParameters::inIfCondExp[d]);
+			dims.emplace(d);
 		}
 	}
 	for (size_t d : dims) {
-		Val value = WorkingParameters::fetchParameter(d, *params);
+		Val value = WorkingParameters::fetchParameter(d, p);
 		if (!WorkingParameters::linear[d]) {
-			value = WorkingParameters::fromParameter(value, d, *params);
+			value = WorkingParameters::fromParameter(value, d, p);
 		}
 		workingParams[d]->setValue(value);
 	}
+
 	blockSignals(false);
 }
 

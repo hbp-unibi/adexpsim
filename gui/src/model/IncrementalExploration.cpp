@@ -22,8 +22,7 @@
 #include <QThreadPool>
 
 #include <exploration/Exploration.hpp>
-#include <simulation/Spike.hpp>
-#include <simulation/Parameters.hpp>
+#include <utils/ParameterCollection.hpp>
 
 #include "IncrementalExploration.hpp"
 
@@ -64,8 +63,7 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
  */
 
 IncrementalExploration::IncrementalExploration(
-    std::shared_ptr<Parameters> params, std::shared_ptr<SpikeTrain> train,
-    QObject *parent)
+    std::shared_ptr<ParameterCollection> params, QObject *parent)
     : QObject(parent),
       maxLevel(MAX_LEVEL_INITIAL),
       dimX(0),
@@ -75,7 +73,6 @@ IncrementalExploration::IncrementalExploration(
       minY(1),
       maxY(100),
       params(params),
-      train(train),
       level(MIN_LEVEL),
       restart(false),
       inEmitData(false),
@@ -133,9 +130,9 @@ void IncrementalExploration::start()
 	}
 
 	// Create a new Exploration instance
-	currentExploration =
-	    new Exploration(mem[level - MIN_LEVEL], *params, *train, dimX, minX,
-	                    maxX, dimY, minY, maxY);
+	currentExploration = new Exploration(
+	    mem[level - MIN_LEVEL], params->params, params->train, dimX, minX, maxX,
+	    dimY, minY, maxY, params->model == ModelType::IF_COND_EXP);
 
 	// Create a new IncrementExplorationRunner and connect all signals
 	currentRunner = new IncrementalExplorationRunner(*currentExploration);

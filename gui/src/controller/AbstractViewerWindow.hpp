@@ -36,8 +36,7 @@
 
 namespace AdExpSim {
 
-class Parameters;
-class SpikeTrain;
+class ParameterCollection;
 
 /**
  * The ExplorationWindow class is a controller object, containing an exploration
@@ -51,12 +50,7 @@ protected:
 	/**
 	 * Current parameters.
 	 */
-	std::shared_ptr<Parameters> params;
-
-	/**
-	 * Current spike train.
-	 */
-	std::shared_ptr<SpikeTrain> train;
+	std::shared_ptr<ParameterCollection> params;
 
 signals:
 	/**
@@ -68,14 +62,11 @@ public:
 	/**
 	 * Constructor of the AbstractViewerWindow class.
 	 *
-	 * @param params is a shared instance containing the current neuron
-	 * parameters.
-	 * @param train is a shared instance containing spike train being used for
-	 * the experimental runs.
+	 * @param params is a shared instance of the ParameterCollection class
+	 * containing all parameters for both the simulation and the exploration.
 	 * @param is the parent object.
 	 */
-	AbstractViewerWindow(std::shared_ptr<Parameters> params,
-	                  std::shared_ptr<SpikeTrain> train,
+	AbstractViewerWindow(std::shared_ptr<ParameterCollection> params,
 	                  QWidget *parent = nullptr);
 
 	/**

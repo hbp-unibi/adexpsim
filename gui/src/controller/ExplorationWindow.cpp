@@ -25,18 +25,16 @@
 #include <QWidget>
 
 #include <view/ExplorationWidget.hpp>
-#include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
+#include <utils/ParameterCollection.hpp>
 #include <model/IncrementalExploration.hpp>
 
 #include "ExplorationWindow.hpp"
 
 namespace AdExpSim {
 
-ExplorationWindow::ExplorationWindow(std::shared_ptr<Parameters> params,
-                                     std::shared_ptr<SpikeTrain> train,
+ExplorationWindow::ExplorationWindow(std::shared_ptr<ParameterCollection> params,
                                      QWidget *parent)
-    : AbstractViewerWindow(params, train, parent),
+    : AbstractViewerWindow(params, parent),
       fitView(true),
       hadUpdate(false),
       exploration(std::make_shared<Exploration>())
@@ -60,7 +58,7 @@ void ExplorationWindow::createModel()
 {
 	// Create the incrementalExploration model and connect its data singal to
 	// the local handleExplorationData
-	incrementalExploration = new IncrementalExploration(params, train, this);
+	incrementalExploration = new IncrementalExploration(params, this);
 	connect(incrementalExploration, SIGNAL(data(Exploration)), this,
 	        SLOT(handleExplorationData(Exploration)));
 }

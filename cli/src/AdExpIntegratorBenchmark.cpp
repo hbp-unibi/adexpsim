@@ -29,7 +29,7 @@
 #include <vector>
 
 using namespace AdExpSim;
-using Recorder = VectorRecorder<std::vector<Val>, SIPrefixTransformation>;
+using Recorder = VectorRecorder<std::vector<Val>, SIPrefixTrafo>;
 using RecorderData = VectorRecorderData<std::vector<Val>>;
 
 constexpr size_t SimulationFlags = Model::FAST_EXP;

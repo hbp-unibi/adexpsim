@@ -51,8 +51,7 @@ public:
 	/**
 	 * Constructor of the SimulationWindow class.
 	 */
-	SimulationWindow(std::shared_ptr<Parameters> params,
-	                 std::shared_ptr<SpikeTrain> train,
+	SimulationWindow(std::shared_ptr<ParameterCollection> params,
 	                 QWidget *parent = nullptr);
 
 	/**

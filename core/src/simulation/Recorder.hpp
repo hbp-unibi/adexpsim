@@ -463,7 +463,8 @@ public:
 
 		// Calculate the interpolation factor f and perform linear interpolation
 		const Val f = (t - *it1) / (*it2 - *it1);
-		VectorRecorderDataSample res = (*this)[i1] * (1.0f - f) + (*this)[i2] * f;
+		VectorRecorderDataSample res =
+		    (*this)[i1] * (1.0f - f) + (*this)[i2] * f;
 		res.ts = t;
 		return res;
 	}
@@ -542,10 +543,10 @@ public:
 };
 
 /**
- * The DefaultRecorderTransformation class is used by the vector recorder to
+ * The DefaultRecorderTrafo class is used by the vector recorder to
  * provide a default transformation that does not change the data.
  */
-struct DefaultRecorderTransformation {
+struct DefaultRecorderTrafo {
 	static double transformTime(double t) { return t; }
 	static Val transformVoltage(Val v) { return v; }
 	static Val transformConductance(Val g) { return g; }
@@ -557,7 +558,7 @@ struct DefaultRecorderTransformation {
  * to millivolt, siemens is scaled to millisiemens and ampere is scaled to
  * nanoampere, seconds turn to milliseconds.
  */
-struct SIPrefixTransformation {
+struct SIPrefixTrafo {
 	static constexpr Val TIME_SCALE = 1000.0;
 	static constexpr Val VOLTAGE_SCALE = 1000.0;
 	static constexpr Val CONDUCTANCE_SCALE = 1000.0 * 1000.0;
@@ -574,19 +575,17 @@ struct SIPrefixTransformation {
  * specified vector type for this operation. Additionally, it tracks the minimum
  * and maximum values for each recorded modality.
  */
-template <typename Vector,
-          typename Transformation = DefaultRecorderTransformation>
-class VectorRecorder
-    : public RecorderBase<VectorRecorder<Vector, Transformation>> {
+template <typename Vector, typename Trafo = DefaultRecorderTrafo>
+class VectorRecorder : public RecorderBase<VectorRecorder<Vector, Trafo>> {
 public:
-	using Base = RecorderBase<VectorRecorder<Vector, Transformation>>;
+	using Base = RecorderBase<VectorRecorder<Vector, Trafo>>;
 	friend Base;
 
 private:
 	/**
-	 * Transformation instance used by this class.
+	 * Trafo instance used by this class.
 	 */
-	Transformation trafo;
+	Trafo trafo;
 
 	/**
 	 * Data container used for storing the incomming data.
@@ -657,7 +656,7 @@ public:
 	/**
 	 * Returns a reference at the transformation instance.
 	 */
-	const Transformation &getTrafo() const { return trafo; }
+	const Trafo &getTrafo() const { return trafo; }
 };
 }
 

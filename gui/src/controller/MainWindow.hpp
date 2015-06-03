@@ -36,12 +36,13 @@
 #include <QMainWindow>
 
 class QAction;
+class QComboBox;
+class QToolBar;
 class QMenu;
 
 namespace AdExpSim {
 
-class Parameters;
-class SpikeTrain;
+class ParameterCollection;
 class ParametersWidget;
 class SpikeTrainWidget;
 class AbstractViewerWindow;
@@ -62,8 +63,7 @@ private:
 	QAction *actExit;
 
 	/* Experiment parameters */
-	std::shared_ptr<Parameters> params;
-	std::shared_ptr<SpikeTrain> train;
+	std::shared_ptr<ParameterCollection> params;
 
 	/* Viewer windows */
 	std::vector<QPointer<AbstractViewerWindow>> windows;
@@ -71,6 +71,8 @@ private:
 	/* Parameter widgets */
 	SpikeTrainWidget *spikeTrainWidget;
 	ParametersWidget *parametersWidget;
+	QToolBar *toolbar;
+	QComboBox *modelComboBox;
 
 	void createActions();
 	void createMenus();
@@ -80,6 +82,7 @@ private slots:
 	void newExploration();
 	void newSimulation();
 	void handleUpdateParameters(std::set<size_t> dims);
+	void handleModelUpdate(int);
 
 protected:
 	void closeEvent(QCloseEvent *event) override;

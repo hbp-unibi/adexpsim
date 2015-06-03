@@ -119,8 +119,7 @@ public:
 	/**
 	 * Constructor of the ExplorationWindow class.
 	 */
-	ExplorationWindow(std::shared_ptr<Parameters> params,
-	                  std::shared_ptr<SpikeTrain> train,
+	ExplorationWindow(std::shared_ptr<ParameterCollection> params,
 	                  QWidget *parent = nullptr);
 
 	/**

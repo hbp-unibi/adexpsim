@@ -29,11 +29,12 @@
 #ifndef _ADEXPSIM_NEURON_SIMULATION_HPP_
 #define _ADEXPSIM_NEURON_SIMULATION_HPP_
 
+#include <memory>
+
 #include <exploration/SpikeTrainEvaluation.hpp>
-#include <simulation/Parameters.hpp>
 #include <simulation/Recorder.hpp>
-#include <simulation/Spike.hpp>
 #include <simulation/Model.hpp>
+#include <utils/ParameterCollection.hpp>
 
 #include <QVector>
 
@@ -58,7 +59,7 @@ private:
 	/**
 	 * Parameters the experiment ran with.
 	 */
-	Parameters params;
+	ParameterCollection params;
 
 	/**
 	 * Evaluation used for storing the spike train containing the input
@@ -79,29 +80,27 @@ private:
 	/**
 	 * Recorder used to record and hold the data from the neuron simulation.
 	 */
-	VectorRecorder<QVector<double>, SIPrefixTransformation> recorder;
+	VectorRecorder<QVector<double>, SIPrefixTrafo> recorder;
 
 public:
 	/**
 	 * Creates a new NeuronSimulation instance.
 	 */
 	NeuronSimulation(Time interval = Time(0))
-	    : mValid(false), recorder(params, interval){};
-
-	/**
-	 * Sets the parameters and input spikes.
-	 */
-	void prepare(const Parameters &params, const SpikeTrain &train);
+	    : mValid(false), recorder(params.params, interval){};
 
 	/**
 	 * Runs the simulation with the parameters given in the prepare method.
+	 *
+	 * @params sharedParams is a reference at the shared ParameterCollection
+	 * instance.
 	 */
-	void run();
+	void run(std::shared_ptr<ParameterCollection> sharedParams);
 
 	/**
 	 * Returns the parameters.
 	 */
-	const Parameters &getParameters() const { return params; }
+	const ParameterCollection &getParameters() const { return params; }
 
 	/**
 	 * Returns the input spikes.

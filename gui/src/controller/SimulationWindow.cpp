@@ -23,10 +23,9 @@
 
 namespace AdExpSim {
 
-SimulationWindow::SimulationWindow(std::shared_ptr<Parameters> params,
-                                   std::shared_ptr<SpikeTrain> train,
+SimulationWindow::SimulationWindow(std::shared_ptr<ParameterCollection> params,
                                    QWidget *parent)
-    : AbstractViewerWindow(params, train, parent)
+    : AbstractViewerWindow(params, parent)
 {
 	// Create the underlying Simulation class and assemble the view
 	createWidgets();
@@ -54,8 +53,7 @@ void SimulationWindow::createWidgets()
 void SimulationWindow::handleUpdateParameters(std::set<size_t>)
 {
 	NeuronSimulation sim(0.1e-3_s);
-	sim.prepare(*params, *train);
-	sim.run();
+	sim.run(params);
 	simulationWidget->show(sim);
 }
 }

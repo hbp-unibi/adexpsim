@@ -18,15 +18,13 @@
 
 #include "AbstractViewerWindow.hpp"
 
-#include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
+#include <utils/ParameterCollection.hpp>
 
 namespace AdExpSim {
 
-AbstractViewerWindow::AbstractViewerWindow(std::shared_ptr<Parameters> params,
-                                           std::shared_ptr<SpikeTrain> train,
-                                           QWidget *parent)
-    : QMainWindow(parent), params(params), train(train)
+AbstractViewerWindow::AbstractViewerWindow(
+    std::shared_ptr<ParameterCollection> params, QWidget *parent)
+    : QMainWindow(parent), params(params)
 {
 	setAttribute(Qt::WA_DeleteOnClose, true);
 }

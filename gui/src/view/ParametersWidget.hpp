@@ -33,14 +33,14 @@ class QTimer;
 
 namespace AdExpSim {
 
-class Parameters;
+class ParameterCollection;
 class ParameterWidget;
 
 class ParametersWidget : public QWidget {
 	Q_OBJECT
 private:
 	std::set<size_t> updatedDims;
-	std::shared_ptr<Parameters> params;
+	std::shared_ptr<ParameterCollection> params;
 	QTimer *updateTimer;
 	ParameterWidget *paramCM;
 	ParameterWidget *paramEL;
@@ -51,7 +51,7 @@ private slots:
 	void handleParameterUpdate(Val value, const QVariant &data);
 
 public:
-	ParametersWidget(std::shared_ptr<Parameters> params,
+	ParametersWidget(std::shared_ptr<ParameterCollection> params,
 	                 QWidget *parent = nullptr);
 
 	void handleUpdateParameters(std::set<size_t> dims);

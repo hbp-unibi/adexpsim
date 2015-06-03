@@ -36,8 +36,7 @@ class QTimer;
 
 namespace AdExpSim {
 
-class ParameterWidget;
-class SpikeTrain;
+class ParameterCollection;
 
 /**
  * The SpikeTrainWidget allows to edit all properties of the SpikeTrain class
@@ -48,10 +47,10 @@ class SpikeTrainWidget : public QWidget {
 	Q_OBJECT
 private:
 	/**
-	 * Reference at the SpikeTrain instance bearing the setup of the current
-	 * SpikeTrain.
+	 * Reference at ParameterCollection instance shared throughout the
+	 * application.
 	 */
-	std::shared_ptr<SpikeTrain> train;
+	std::shared_ptr<ParameterCollection> params;
 
 	/* Actions */
 	QAction *actAddGroup;
@@ -84,7 +83,8 @@ public:
 	/**
 	 * Costructor of the SpikeTrainWidget class.
 	 */
-	SpikeTrainWidget(std::shared_ptr<SpikeTrain> train, QWidget *parent = nullptr);
+	SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
+	                 QWidget *parent = nullptr);
 
 	/**
 	 * Destructor of the SpikeTrainWidget class.

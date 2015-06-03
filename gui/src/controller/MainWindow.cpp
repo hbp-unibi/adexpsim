@@ -19,6 +19,7 @@
 #include <iostream>
 
 #include <QAction>
+#include <QComboBox>
 #include <QMenu>
 #include <QMenuBar>
 #include <QToolBox>
@@ -31,6 +32,7 @@
 
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
+#include <utils/ParameterCollection.hpp>
 #include <view/ParametersWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
 
@@ -39,13 +41,7 @@
 #include "SimulationWindow.hpp"
 
 namespace AdExpSim {
-MainWindow::MainWindow()
-    : params(std::make_shared<Parameters>()),
-      train(std::make_shared<SpikeTrain>(
-          SpikeTrain({
-                      {3, 1, 1e-3}, {2, 0, 1e-3},
-                     },
-                     2, true, 0.033_s)))
+MainWindow::MainWindow() : params(std::make_shared<ParameterCollection>())
 {
 	// Create all actions and menus
 	createActions();
@@ -68,11 +64,13 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::createActions()
 {
-	actNewExplorationWnd = new QAction(tr("New Exploration Window..."), this);
+	actNewExplorationWnd = new QAction(QIcon::fromTheme("window-new"),
+	                                   tr("New Exploration Window..."), this);
 	connect(actNewExplorationWnd, SIGNAL(triggered()), this,
 	        SLOT(newExploration()));
 
-	actNewSimulationWnd = new QAction(tr("New Simulation Window..."), this);
+	actNewSimulationWnd = new QAction(QIcon::fromTheme("document-new"),
+	                                  tr("New Simulation Window..."), this);
 	connect(actNewSimulationWnd, SIGNAL(triggered()), this,
 	        SLOT(newSimulation()));
 
@@ -102,11 +100,29 @@ void MainWindow::createMenus()
 
 void MainWindow::createWidgets()
 {
+	// Create the toolbar
+	toolbar = new QToolBar(this);
+
+	// Create the model widget
+	modelComboBox = new QComboBox(this);
+	for (size_t i = 0; i < ParameterCollection::modelNames.size(); i++) {
+		modelComboBox->addItem(
+		    QString::fromStdString(ParameterCollection::modelNames[i]),
+		    QVariant(int(i)));
+	}
+	connect(modelComboBox, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(handleModelUpdate(int)));
+	toolbar->addAction(actNewExplorationWnd);
+	toolbar->addAction(actNewSimulationWnd);
+	toolbar->addSeparator();
+	toolbar->addWidget(new QLabel("Model: "));
+	toolbar->addWidget(modelComboBox);
+
 	// Create the tool box
 	QToolBox *tools = new QToolBox(this);
 
 	// Create the spike train panel and add it to the tool box
-	spikeTrainWidget = new SpikeTrainWidget(train, this);
+	spikeTrainWidget = new SpikeTrainWidget(params, this);
 	connect(spikeTrainWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(spikeTrainWidget, "Spike Train");
@@ -119,11 +135,12 @@ void MainWindow::createWidgets()
 
 	// Set the tool box as central widget
 	setCentralWidget(tools);
+	addToolBar(Qt::TopToolBarArea, toolbar);
 }
 
 void MainWindow::newExploration()
 {
-	ExplorationWindow *wnd = new ExplorationWindow(params, train);
+	ExplorationWindow *wnd = new ExplorationWindow(params);
 	connect(wnd, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	windows.push_back(wnd);
@@ -132,7 +149,7 @@ void MainWindow::newExploration()
 
 void MainWindow::newSimulation()
 {
-	SimulationWindow *wnd = new SimulationWindow(params, train);
+	SimulationWindow *wnd = new SimulationWindow(params);
 	connect(wnd, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	windows.push_back(wnd);
@@ -159,6 +176,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 			window->close();
 		}
 	}
+}
+
+void MainWindow::handleModelUpdate(int idx)
+{
+	params->model = ModelType(idx);
+	handleUpdateParameters(std::set<size_t>{});
 }
 }
 
