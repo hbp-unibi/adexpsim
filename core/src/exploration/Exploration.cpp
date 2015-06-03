@@ -36,14 +36,15 @@ namespace AdExpSim {
 Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
                          const WorkingParameters &params,
                          const SpikeTrain &train, size_t dimX, Val minX,
-                         Val maxX, size_t dimY, Val minY, Val maxY)
+                         Val maxX, size_t dimY, Val minY, Val maxY,
+                         bool useIfCondExp)
     : mem(mem),
       params(params),
       rangeX(minX, maxX, mem->resX),
       rangeY(minY, maxY, mem->resY),
       dimX(dimX),
       dimY(dimY),
-      evaluation(train)
+      evaluation(train, useIfCondExp)
 {
 }
 

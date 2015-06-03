@@ -174,11 +174,12 @@ public:
 	 * in y-direction.
 	 * @param minY is the minimum parameter value in y-direction.
 	 * @param maxY is the maximum parameter value in y-direction.
+	 * @param useIfCondExp degrades the model to the simpler IfCondExp if set.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
 	            const WorkingParameters &params, const SpikeTrain &train,
 	            size_t dimX, Val minX, Val maxX, size_t dimY, Val minY,
-	            Val maxY);
+	            Val maxY, bool useIfCondExp = false);
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed
