@@ -170,9 +170,10 @@ static constexpr double TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
 static constexpr double TAU = log(1.0 / TAU_RANGE_VAL - 1.0) / TAU_RANGE;
 
 Val SpikeTrainEvaluation::sigma(Val x, const WorkingParameters &params,
-                                bool invert)
+                                bool invert) const
 {
-	const double res = 1.0 / (1.0 + exp(-TAU * (x - params.eSpikeEff())));
+	const Val th = useIfCondExp ? params.eTh() : params.eSpikeEff();
+	const double res = 1.0 / (1.0 + exp(-TAU * (x - th)));
 	return invert ? 1.0 - res : res;
 }
 

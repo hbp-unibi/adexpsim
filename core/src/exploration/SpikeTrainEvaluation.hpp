@@ -126,8 +126,8 @@ private:
 	 * Sigmoid function translating a membrane potential to a
 	 * pseudo-probability.
 	 */
-	static Val sigma(Val x, const WorkingParameters &params,
-	                 bool invert = false);
+	Val sigma(Val x, const WorkingParameters &params,
+	          bool invert = false) const;
 
 	/**
 	 * Measures the theoretically reached, maximum mebrance potential for the
@@ -226,14 +226,16 @@ public:
 	/**
 	 * Default constructor.
 	 */
-	SpikeTrainEvaluation(bool useIfCondExp = true) : useIfCondExp(useIfCondExp) {}
+	SpikeTrainEvaluation(bool useIfCondExp = false) : useIfCondExp(useIfCondExp)
+	{
+	}
 
 	/**
 	 * Constructor of the evaluation class.
 	 *
 	 * @param train is the spike train that should be used for the evaluation.
 	 */
-	SpikeTrainEvaluation(const SpikeTrain &train, bool useIfCondExp = true);
+	SpikeTrainEvaluation(const SpikeTrain &train, bool useIfCondExp = false);
 
 	/**
 	 * Evaluates the given parameter set.
