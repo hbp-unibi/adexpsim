@@ -30,6 +30,14 @@ namespace AdExpSim {
 
 static constexpr int SLIDER_MAX = 10000;
 
+static QFrame *createSeparator(QWidget *parent)
+{
+	QFrame *line = new QFrame(parent);
+	line->setFrameShape(QFrame::HLine);
+	line->setFrameShadow(QFrame::Sunken);
+	return line;
+}
+
 ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
                                  Val min, Val max, QString unit, QVariant data)
     : QWidget(parent),
@@ -105,6 +113,7 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	layRange->addWidget(edtMax);
 	layMain->addWidget(cntValue);
 	layMain->addWidget(cntRange);
+	layMain->addWidget(createSeparator(this));
 	setLayout(layMain);
 
 	// Write all values given in the constructor to the widgets

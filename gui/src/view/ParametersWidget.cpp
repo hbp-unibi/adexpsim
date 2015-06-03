@@ -30,14 +30,6 @@
 
 namespace AdExpSim {
 
-static QFrame *createSeparator(QWidget *parent)
-{
-	QFrame *line = new QFrame(parent);
-	line->setFrameShape(QFrame::HLine);
-	line->setFrameShadow(QFrame::Sunken);
-	return line;
-}
-
 static constexpr Val MIN_HZ = 1;
 static constexpr Val MAX_HZ = 1000;
 static constexpr Val MIN_S = 0;
@@ -72,9 +64,7 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 	layout->setSpacing(0);
 	layout->setMargin(0);
 	layout->addWidget(paramCM);
-	layout->addWidget(createSeparator(this));
 	layout->addWidget(paramEL);
-	layout->addWidget(createSeparator(this));
 
 	// Create the parameter widgets for all parameters in the working set
 	for (size_t i = 0; i < 13; i++) {
@@ -114,7 +104,6 @@ ParametersWidget::ParametersWidget(std::shared_ptr<Parameters> params,
 		        SLOT(handleParameterUpdate(Val, const QVariant &)));
 
 		layout->addWidget(workingParams[i]);
-		layout->addWidget(createSeparator(this));
 	}
 }
 
