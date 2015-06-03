@@ -59,6 +59,7 @@ SET(ADEXPSIM_CORE_SRC
 	src/common/Timer
 	src/common/Types
 	src/common/Vector
+	src/utils/ParameterCollection
 )
 
 # Conditionally add the OpenCL source code
