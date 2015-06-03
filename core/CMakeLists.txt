@@ -42,6 +42,15 @@ CONFIGURE_FILE(
 )
 
 SET(ADEXPSIM_CORE_SRC
+	src/common/Matrix
+	src/common/Terminal
+	src/common/Timer
+	src/common/Types
+	src/common/Vector
+	src/exploration/Evaluation
+	src/exploration/Exploration
+	src/exploration/Simplex
+	src/exploration/SpikeTrainEvaluation
 	src/simulation/Controller
 	src/simulation/DormandPrinceIntegrator
 	src/simulation/Integrator
@@ -50,15 +59,6 @@ SET(ADEXPSIM_CORE_SRC
 	src/simulation/Recorder
 	src/simulation/Spike
 	src/simulation/State
-	src/exploration/Evaluation
-	src/exploration/Exploration
-	src/exploration/Simplex
-	src/exploration/SpikeTrainEvaluation
-	src/common/Matrix
-	src/common/Terminal
-	src/common/Timer
-	src/common/Types
-	src/common/Vector
 	src/utils/ParameterCollection
 )
 
