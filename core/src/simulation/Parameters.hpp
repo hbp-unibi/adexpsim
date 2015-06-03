@@ -177,6 +177,12 @@ public:
 	static const std::vector<bool> linear;
 
 	/**
+	 * Vector specifying whether the given parameter is also present in the
+	 * IF_COND_EXP model.
+	 */
+	static const std::vector<bool> inIfCondExp;
+
+	/**
 	 * Names of the corresponding component in the original parameter set.
 	 */
 	static const std::vector<std::string> originalNames;

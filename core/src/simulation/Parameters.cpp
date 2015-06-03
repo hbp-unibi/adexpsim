@@ -42,6 +42,10 @@ const std::vector<bool> WorkingParameters::linear = {
     true, false, false, false, true, true, true,
     true, true,  true,  true,  true, true};
 
+const std::vector<bool> WorkingParameters::inIfCondExp = {
+    true, true, true,  false, true,  true, true,
+    true, true, false, false, false, true};
+
 const std::vector<std::string> WorkingParameters::originalNames = {
     "gL",     "τE",     "τI",  "τW", "eE", "eI", "eTh",
     "eSpike", "eReset", "ΔTh", "gA", "iB", "w"};
