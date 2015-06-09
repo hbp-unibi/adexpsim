@@ -54,6 +54,24 @@ enum class ModelType: int {
 };
 
 /**
+ * The EvaluationType enum defines the evaluation method which is going to be
+ * used in the simulation.
+ */
+enum class EvaluationType: int {
+	/**
+	 * Uses a spike train template for the evaluation -- determines how well the
+	 * actual simulation matches a predefined spike train.
+	 */
+	SPIKE_TRAIN = 0,
+
+	/**
+	 * Only uses a single spike gorup for the evaluation and checks it for 
+	 * fulfilling the binary threshold and reset condition.
+	 */
+	SINGLE_GROUP = 1
+};
+
+/**
  * ParameterCollection contains parameters which describe both the neuron model
  * parameters, the input spike train and information for explorations.
  */
@@ -65,9 +83,21 @@ struct ParameterCollection {
 	static std::vector<std::string> modelNames;
 
 	/**
+	 * String list containing the names of the available evaluation methods. The
+	 * indices in the list correspond to the integer values of the
+	 * EvaluationType enum.
+	 */
+	static std::vector<std::string> evaluationNames;
+
+	/**
 	 * Enum describing the currently used model.
 	 */
 	ModelType model;
+
+	/**
+	 * Enum describing the currently used evaluation model.
+	 */
+	EvaluationType evaluation;
 
 	/**
 	 * Holds the current SpikeTrain setup. The SpikeTrain defines the input

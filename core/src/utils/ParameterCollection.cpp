@@ -23,8 +23,12 @@ namespace AdExpSim {
 std::vector<std::string> ParameterCollection::modelNames = {"IfCondExp",
                                                             "AdIfCondExp"};
 
+std::vector<std::string> ParameterCollection::evaluationNames = {"Train",
+                                                                 "Single"};
+
 ParameterCollection::ParameterCollection()
     : model(ModelType::IF_COND_EXP),
+      evaluation(EvaluationType::SPIKE_TRAIN),
       train({
              {3, 1, 1e-3}, {2, 0, 1e-3}, {0, 0, 1e-3},
             },

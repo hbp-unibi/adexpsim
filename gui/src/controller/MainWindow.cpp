@@ -112,11 +112,25 @@ void MainWindow::createWidgets()
 	}
 	connect(modelComboBox, SIGNAL(currentIndexChanged(int)), this,
 	        SLOT(handleModelUpdate(int)));
+
+	// Create the evaluation widget
+	evaluationComboBox = new QComboBox(this);
+	for (size_t i = 0; i < ParameterCollection::evaluationNames.size(); i++) {
+		evaluationComboBox->addItem(
+		    QString::fromStdString(ParameterCollection::evaluationNames[i]),
+		    QVariant(int(i)));
+	}
+	connect(evaluationComboBox, SIGNAL(currentIndexChanged(int)), this,
+	        SLOT(handleEvaluationUpdate(int)));
+
+	// Fill the toolbar
 	toolbar->addAction(actNewExplorationWnd);
 	toolbar->addAction(actNewSimulationWnd);
 	toolbar->addSeparator();
 	toolbar->addWidget(new QLabel("Model: "));
 	toolbar->addWidget(modelComboBox);
+	toolbar->addWidget(new QLabel(" Eval: "));
+	toolbar->addWidget(evaluationComboBox);
 
 	// Create the tool box
 	QToolBox *tools = new QToolBox(this);
@@ -136,6 +150,9 @@ void MainWindow::createWidgets()
 	// Set the tool box as central widget
 	setCentralWidget(tools);
 	addToolBar(Qt::TopToolBarArea, toolbar);
+
+	// Refresh the view
+	handleUpdateParameters(std::set<size_t>{});
 }
 
 void MainWindow::newExploration()
@@ -158,7 +175,12 @@ void MainWindow::newSimulation()
 
 void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 {
-	// Forward the event to the ParametersWidget instance
+	// Set the model and the evaluation method
+	modelComboBox->setCurrentIndex(int(params->model));
+	evaluationComboBox->setCurrentIndex(int(params->evaluation));
+
+	// Forward the event to the SpikeTrain and ParametersWidget instance
+	spikeTrainWidget->refresh();
 	parametersWidget->handleUpdateParameters(dims);
 
 	// Forward the event to all exploration and simulation windows
@@ -183,5 +205,12 @@ void MainWindow::handleModelUpdate(int idx)
 	params->model = ModelType(idx);
 	handleUpdateParameters(std::set<size_t>{});
 }
+
+void MainWindow::handleEvaluationUpdate(int idx)
+{
+	params->evaluation = EvaluationType(idx);
+	handleUpdateParameters(std::set<size_t>{});
+}
+
 }
 

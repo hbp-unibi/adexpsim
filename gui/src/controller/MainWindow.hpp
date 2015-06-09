@@ -73,6 +73,7 @@ private:
 	ParametersWidget *parametersWidget;
 	QToolBar *toolbar;
 	QComboBox *modelComboBox;
+	QComboBox *evaluationComboBox;
 
 	void createActions();
 	void createMenus();
@@ -83,6 +84,7 @@ private slots:
 	void newSimulation();
 	void handleUpdateParameters(std::set<size_t> dims);
 	void handleModelUpdate(int);
+	void handleEvaluationUpdate(int);
 
 protected:
 	void closeEvent(QCloseEvent *event) override;
