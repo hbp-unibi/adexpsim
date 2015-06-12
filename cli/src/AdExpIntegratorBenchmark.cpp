@@ -171,9 +171,9 @@ public:
 		os << " & \\multicolumn{1}{c}{$\\frac{t}{N} \\, "
 		      "[\\si{\\micro\\second}]$}";
 		os << " & \\multicolumn{2}{c}{$v \\, [\\si{\\milli\\volt}]$ (\\%)}";
-		os << " & \\multicolumn{2}{c}{$\\Ge \\, [\\si{\\micro\\siemens}]$ "
+		os << " & \\multicolumn{2}{c}{$\\Ge \\, [\\si{\\nano\\siemens}]$ "
 		      "(\\%)}";
-		os << " & \\multicolumn{2}{c}{$\\Gi \\, [\\si{\\micro\\siemens}]$ "
+		os << " & \\multicolumn{2}{c}{$\\Gi \\, [\\si{\\nano\\siemens}]$ "
 		      "(\\%)}";
 		os << " & \\multicolumn{2}{c}{$w \\, [\\si{\\nano\\ampere}]$ (\\%)}";
 		os << " & Avg. \\% \\\\" << std::endl;
@@ -214,9 +214,9 @@ public:
 				os << "\t& " << printValue(row.t * 1000.0 / double(row.N));
 				os << "\t& " << printValue(row.v);
 				os << "\t& (" << printLPercentage(row.vp) << ")";
-				os << "\t& " << printValue(row.gE);
+				os << "\t& " << printValue(row.gE * 1000.0);
 				os << "\t& (" << printLPercentage(row.gEp) << ")";
-				os << "\t& " << printValue(row.gI);
+				os << "\t& " << printValue(row.gI * 1000.0);
 				os << "\t& (" << printLPercentage(row.gIp) << ")";
 				os << "\t& " << printValue(row.w);
 				os << "\t& (" << printLPercentage(row.wp) << ")";
