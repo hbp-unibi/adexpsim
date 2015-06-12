@@ -504,51 +504,61 @@ void benchmark()
 
 	// Print the reference data as stub
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
+	    "Euler", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
+	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "t=\\SI{10}{\\micro\\second}", 10e-6, p, train, ref, fmt);
+	    "Euler", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train, ref,
+	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "t=\\SI{100}{\\micro\\second}", 100e-6, p, train, ref, fmt);
+	    "Euler", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train, ref,
+	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
+	    "Euler", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
+	    fmt);
 
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
+	    "Midpoint", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
+	    fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "t=\\SI{10}{\\micro\\second}", 10e-6, p, train, ref, fmt);
+	    "Midpoint", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
+	    ref, fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "t=\\SI{100}{\\micro\\second}", 100e-6, p, train, ref, fmt);
+	    "Midpoint", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train,
+	    ref, fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
+	    "Midpoint", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
+	    fmt);
 
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta",
-	                                             "t=\\SI{10}{\\micro\\second}",
-	                                             10e-6, p, train, ref, fmt);
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta",
-	                                             "t=\\SI{100}{\\micro\\second}",
-	                                             100e-6, p, train, ref, fmt);
+	    "Runge-Kutta", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train,
+	    ref, fmt);
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
+	    "Runge-Kutta", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
+	    ref, fmt);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>(
+	    "Runge-Kutta", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p,
+	    train, ref, fmt);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>(
+	    "Runge-Kutta", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train,
+	    ref, fmt);
 
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{1}{\\micro\\nothing}", 1e-6, p, train, ref,
+	    "Dormand-Prince", "$e=\\SI{1}{\\micro\\nothing}$", 1e-6, p, train, ref,
 	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{10}{\\micro\\nothing}", 10e-6, p, train, ref,
+	    "Dormand-Prince", "$e=\\SI{10}{\\micro\\nothing}$", 10e-6, p, train, ref,
 	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{100}{\\micro\\nothing}", 100e-6, p, train,
+	    "Dormand-Prince", "$e=\\SI{100}{\\micro\\nothing}$", 100e-6, p, train,
 	    ref, fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{1}{\\milli\\nothing}", 1e-3, p, train, ref,
+	    "Dormand-Prince", "$e=\\SI{1}{\\milli\\nothing}$", 1e-3, p, train, ref,
 	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{10}{\\milli\\nothing}", 10e-3, p, train, ref,
+	    "Dormand-Prince", "$e=\\SI{10}{\\milli\\nothing}$", 10e-3, p, train, ref,
 	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince", "e=\\SI{100}{\\milli\\nothing}", 100e-3, p, train,
+	    "Dormand-Prince", "$e=\\SI{100}{\\milli\\nothing}$", 100e-3, p, train,
 	    ref, fmt);
 
 	fmt.printLaTeX(std::cout);
