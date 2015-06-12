@@ -504,42 +504,42 @@ void benchmark()
 
 	// Print the reference data as stub
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
+	    "Euler", "$\\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
 	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train, ref,
+	    "Euler", "$\\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train, ref,
 	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train, ref,
+	    "Euler", "$\\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train, ref,
 	    fmt);
 	benchmarkSimple<EulerIntegrator, Flags>(
-	    "Euler", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
+	    "Euler", "$\\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
 	    fmt);
 
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
+	    "Midpoint", "$\\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train, ref,
 	    fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
+	    "Midpoint", "$\\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
 	    ref, fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train,
+	    "Midpoint", "$\\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p, train,
 	    ref, fmt);
 	benchmarkSimple<MidpointIntegrator, Flags>(
-	    "Midpoint", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
+	    "Midpoint", "$\\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train, ref,
 	    fmt);
 
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "$\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train,
+	    "Runge-Kutta", "$\\Delta t=\\SI{1}{\\micro\\second}$", 1e-6, p, train,
 	    ref, fmt);
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "$\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
+	    "Runge-Kutta", "$\\Delta t=\\SI{10}{\\micro\\second}$", 10e-6, p, train,
 	    ref, fmt);
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "$\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p,
+	    "Runge-Kutta", "$\\Delta t=\\SI{100}{\\micro\\second}$", 100e-6, p,
 	    train, ref, fmt);
 	benchmarkSimple<RungeKuttaIntegrator, Flags>(
-	    "Runge-Kutta", "$\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train,
+	    "Runge-Kutta", "$\\Delta t=\\SI{1}{\\milli\\second}$", 1e-3, p, train,
 	    ref, fmt);
 
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
