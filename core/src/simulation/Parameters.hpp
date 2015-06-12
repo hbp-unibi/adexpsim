@@ -135,7 +135,7 @@ public:
 	          p.deltaTh,          // deltaTh (9)
 	          p.a / p.cM,         // lA (10)
 	          p.b / p.cM,         // lB (11)
-	          p.w / p.cM     // wSpike (12)
+	          p.w / p.cM          // wSpike (12)
 	      })
 	{
 		update();
@@ -202,7 +202,8 @@ public:
 	 * Requires a reference to a Parameters instance form which the superfluous
 	 * parameters (cM and eL) can be read.
 	 */
-	Parameters toParameters(const Parameters &params) const {
+	Parameters toParameters(const Parameters &params) const
+	{
 		return toParameters(params.cM, params.eL);
 	}
 
@@ -217,7 +218,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * WorkingParameters to the Parameters range.
 	 */
-	Val toParameter(size_t idx, const Parameters &params) const {
+	Val toParameter(size_t idx, const Parameters &params) const
+	{
 		return toParameter(arr[idx], idx, params);
 	}
 
@@ -225,7 +227,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * WorkingParameters to the Parameters range.
 	 */
-	Val toParameter(size_t idx, Val cM, Val eL) const {
+	Val toParameter(size_t idx, Val cM, Val eL) const
+	{
 		return toParameter(arr[idx], idx, cM, eL);
 	}
 
@@ -233,7 +236,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * WorkingParameters to the Parameters range.
 	 */
-	static Val toParameter(Val v, size_t idx, const Parameters &params) {
+	static Val toParameter(Val v, size_t idx, const Parameters &params)
+	{
 		return toParameter(v, idx, params.cM, params.eL);
 	}
 
@@ -247,7 +251,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * Parameters to the WorkingParameters range.
 	 */
-	Val fromParameter(size_t idx, const Parameters &params) const {
+	Val fromParameter(size_t idx, const Parameters &params) const
+	{
 		return fromParameter(arr[idx], idx, params);
 	}
 
@@ -255,7 +260,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * Parameters to the WorkingParameters range.
 	 */
-	Val fromParameter(size_t idx, Val cM, Val eL) const {
+	Val fromParameter(size_t idx, Val cM, Val eL) const
+	{
 		return fromParameter(arr[idx], idx, cM, eL);
 	}
 
@@ -263,7 +269,8 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * Parameters to the WorkingParameters range.
 	 */
-	static Val fromParameter(Val v, size_t idx, const Parameters &params) {
+	static Val fromParameter(Val v, size_t idx, const Parameters &params)
+	{
 		return fromParameter(v, idx, params.cM, params.eL);
 	}
 
@@ -281,7 +288,7 @@ public:
 	/**
 	 * Fetches a value from a Parameter set.
 	 */
-	static Val& fetchParameter(size_t idx, Parameters &params);
+	static Val &fetchParameter(size_t idx, Parameters &params);
 
 	/**
 	 * Function used to calculate the effective spike potential.
@@ -356,7 +363,10 @@ public:
 	 * value, call update() after any of the other parameters were changed to
 	 * recalculate this value.
 	 */
-	Val eSpikeEff() const { return mESpikeEff; }
+	Val eSpikeEff(bool useIfCondExp = false) const
+	{
+		return useIfCondExp ? eTh() : mESpikeEff;
+	}
 
 	/**
 	 * Returns a smaller version (0.1mV) of the effective spike potential.

@@ -25,6 +25,7 @@
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
 #include <exploration/Exploration.hpp>
+#include <exploration/SpikeTrainEvaluation.hpp>
 #include <common/Terminal.hpp>
 
 using namespace AdExpSim;
@@ -77,18 +78,17 @@ int main(int argc, char *argv[])
 
 	// Setup the exploration
 	auto mem = std::make_shared<ExplorationMemory>(512, 512);
-	Exploration exploration(mem, params, train,
-	                        0,    // dimX: lL
-	                        100,  // minX
-	                        300,  // maxX
-	                        1,    // dimY: lE
-	                        100,  // minY
-	                        300   // maxY
+	Exploration exploration(mem, params, 0,  // dimX: lL
+	                        100,             // minX
+	                        300,             // maxX
+	                        1,               // dimY: lE
+	                        100,             // minY
+	                        300              // maxY
 	                        );
 
 	// Run the exploration, write the result matrices to a file
 	std::cout << "Running exploration..." << std::endl;
-	if (exploration.run(showProgress)) {
+	if (exploration.run(SpikeTrainEvaluation(train, false), showProgress)) {
 		std::cout << std::endl;
 		std::cout << "Writing result to disk..." << std::endl;
 

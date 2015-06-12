@@ -66,8 +66,9 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/NeuronSimulationWidget
 	src/view/ParameterWidget
 	src/view/ParametersWidget
-	src/view/SpikeWidget
+	src/view/SingleGroupWidget
 	src/view/SpikeTrainWidget
+	src/view/SpikeWidget
 	src/main
 )
 

@@ -178,14 +178,7 @@ private:
 	 */
 	Val error(State errVec) const
 	{
-		errVec = errVec * invETar;
-		errVec = errVec * errVec * 0.25;
-		Val err = 0.0f;
-		for (size_t k = 0; k < 4; k++) {
-			err += errVec[k];
-		}
-		err = sqrtf(err);
-		return err;
+		return (errVec * invETar).L2Norm();
 	}
 
 public:

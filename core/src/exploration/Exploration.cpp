@@ -30,25 +30,26 @@
 #include <common/Timer.hpp>
 
 #include "Exploration.hpp"
+#include "SingleGroupEvaluation.hpp"
+#include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
 
 Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
-                         const WorkingParameters &params,
-                         const SpikeTrain &train, size_t dimX, Val minX,
-                         Val maxX, size_t dimY, Val minY, Val maxY,
-                         bool useIfCondExp)
+                         const WorkingParameters &params, size_t dimX, Val minX,
+                         Val maxX, size_t dimY, Val minY, Val maxY)
     : mem(mem),
       params(params),
       rangeX(minX, maxX, mem->resX),
       rangeY(minY, maxY, mem->resY),
       dimX(dimX),
-      dimY(dimY),
-      evaluation(train, useIfCondExp)
+      dimY(dimY)
 {
 }
 
-bool Exploration::run(const ProgressCallback &progress)
+template <typename Evaluation>
+bool Exploration::run(const Evaluation &evaluation,
+                      const ProgressCallback &progress)
 {
 	// Fetch the total number of evaluations and the number of cores
 	const size_t N = mem->resX * mem->resY;
@@ -72,7 +73,7 @@ bool Exploration::run(const ProgressCallback &progress)
 			p[dimY] = rangeY.value(y);
 
 			// Run the evaluation for these parameters
-			SpikeTrainEvaluationResult result = evaluation.evaluate(p);
+			EvaluationResult result = evaluation.evaluate(p);
 
 			// Store the evaluation result in the matrices
 			mem->pBinary(x, y) = result.pBinary;
@@ -145,5 +146,11 @@ Exploration Exploration::clone() const
 	res.mem = std::make_shared<ExplorationMemory>(*mem);
 	return res;
 }
+
+/* Specializations of the "run" method. */
+template bool Exploration::run<SpikeTrainEvaluation>(
+    const SpikeTrainEvaluation &evaluation, const ProgressCallback &progress);
+template bool Exploration::run<SingleGroupEvaluation>(
+    const SingleGroupEvaluation &evaluation, const ProgressCallback &progress);
 }
 

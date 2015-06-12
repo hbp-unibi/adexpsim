@@ -28,6 +28,7 @@
 #define _ADEXPSIM_VECTOR_HPP_
 
 #include <array>
+#include <cmath>
 
 #include "Types.hpp"
 
@@ -54,6 +55,18 @@ public:
 	static constexpr size_t Size = N;
 
 	Vector(const Arr &arr) : arr(arr) {}
+
+	Val sqrL2Norm() const {
+		Val res = 0;
+		for (size_t i = 0; i < N; i++) {
+			res += arr[i] * arr[i];
+		}
+		return res * Val(1.0 / double(N));
+	}
+
+	Val L2Norm() const {
+		return sqrtf(sqrL2Norm());
+	}
 
 	template <typename Func>
 	friend Impl map(const T &v1, const T &v2, Func f)

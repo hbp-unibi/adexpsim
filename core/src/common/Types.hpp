@@ -211,6 +211,11 @@ public:
 
 static constexpr Time operator"" _s(long double t) { return Time::sec(t); }
 
+static constexpr Time operator"" _s(unsigned long long int t)
+{
+	return Time::sec(t);
+}
+
 /**
  * Maximum representable time.
  */

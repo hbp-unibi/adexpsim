@@ -30,6 +30,7 @@
 #include <sstream>
 
 #include <common/Matrix.hpp>
+#include <exploration/EvaluationResult.hpp>
 #include <exploration/Exploration.hpp>
 #include <utils/ParameterCollection.hpp>
 
@@ -76,8 +77,8 @@ ExplorationWidget::ExplorationWidget(
 	comboFunction = new QComboBox(toolbar);
 	comboFunction->addItem("Soft Success", "pSoft");
 	comboFunction->addItem("Binary Success", "pBinary");
-	comboFunction->addItem("Binary False Positive", "pFalsePositive");
-	comboFunction->addItem("Binary False Negative", "pFalseNegative");
+	comboFunction->addItem("False Positive", "pFalsePositive");
+	comboFunction->addItem("False Negative", "pFalseNegative");
 
 	fillDimensionCombobox(comboDimX);
 	comboDimX->setCurrentIndex(0);
@@ -375,8 +376,7 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 			int iY = floor(rY.index(p.y()));
 			if (iX >= 0 && iX < (int)rX.steps && iY >= 0 &&
 			    iY < (int)rY.steps) {
-				SpikeTrainEvaluationResult res =
-				    exploration->getMemory()(iX, iY);
+				EvaluationResult res = exploration->getMemory()(iX, iY);
 				lblPBinary->setText("pBin: " +
 				                    QString::number(res.pBinary, 'f', 3));
 				lblPFalsePositive->setText(

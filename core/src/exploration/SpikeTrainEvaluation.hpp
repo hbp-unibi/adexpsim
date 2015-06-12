@@ -32,62 +32,11 @@
 #include <simulation/Spike.hpp>
 #include <common/Types.hpp>
 
+#include "EvaluationResult.hpp"
+
 namespace AdExpSim {
 // Forward declaration
 struct RecordedSpike;
-
-/**
- * Structure containing the result of a call to the "evaluate" method of the
- * Evaluation class.
- */
-struct SpikeTrainEvaluationResult {
-	/**
-	 * Percentage of spike train groups for which all conditions were fulfilled.
-	 * Ranges between 0.0 and 1.0.
-	 */
-	Val pBinary;
-
-	/**
-	 * Percentage of spike train groups where the number of output spikes was
-	 * larger than the expected number of output spikes.
-	 */
-	Val pFalsePositive;
-
-	/**
-	 * Percentage of spike train groups where the number of output spikes was
-	 * smaller than the expected number of output spikes.
-	 */
-	Val pFalseNegative;
-
-	/**
-	 * Soft expectation ratio -- same as the binary ratio, but takes the maximum
-	 * voltage that is theoretically reached in each range into account,
-	 * creating a smooth function. Ranges between 0.0 and 1.0.
-	 */
-	Val pSoft;
-
-	/**
-	 * Default constructor. Initializes the values with the worst possible
-	 * result.
-	 */
-	SpikeTrainEvaluationResult()
-	    : pBinary(0.0), pFalsePositive(1.0), pFalseNegative(1.0), pSoft(0.0)
-	{
-	}
-
-	/**
-	 * Constructor of the EvaluationResult class. Initializes all members with
-	 * the given values.
-	 */
-	SpikeTrainEvaluationResult(Val pBinary, Val pFalsePositive,
-	                           Val pFalseNegative, Val pSoft)
-	    : pBinary(pBinary),
-	      pFalsePositive(pFalsePositive),
-	      pFalseNegative(pFalseNegative),
-	      pSoft(pSoft)
-	{
-	}
-};
 
 /**
  * The evaluation class can be used for the evalutation of the behaviour of a
@@ -138,9 +87,9 @@ private:
 	                                     Val eTar) const;
 
 	template <typename F1, typename F2>
-	SpikeTrainEvaluationResult evaluateInternal(const WorkingParameters &params,
-	                                            Val eTar, F1 recordOutputSpike,
-	                                            F2 recordOutputGroup) const;
+	EvaluationResult evaluateInternal(const WorkingParameters &params, Val eTar,
+	                                  F1 recordOutputSpike,
+	                                  F2 recordOutputGroup) const;
 
 public:
 	/**
@@ -244,8 +193,8 @@ public:
 	 * evaluated. Automatically updates the derived values of the parameter set.
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
-	SpikeTrainEvaluationResult evaluate(const WorkingParameters &params,
-	                                    Val eTar = 1e-3) const;
+	EvaluationResult evaluate(const WorkingParameters &params,
+	                          Val eTar = 1e-3) const;
 
 	/**
 	 * Evaluates the given parameter set and writes information about the
@@ -259,10 +208,10 @@ public:
 	 * @param outputGroups is a list to which information about the groups
 	 * should be written.
 	 */
-	SpikeTrainEvaluationResult evaluate(const WorkingParameters &params,
-	                                    std::vector<OutputSpike> &outputSpikes,
-	                                    std::vector<OutputGroup> &outputGroups,
-	                                    Val eTar = 1e-3) const;
+	EvaluationResult evaluate(const WorkingParameters &params,
+	                          std::vector<OutputSpike> &outputSpikes,
+	                          std::vector<OutputGroup> &outputGroups,
+	                          Val eTar = 1e-3) const;
 
 	/**
 	 * Returns a reference at the internally used spike train instance.

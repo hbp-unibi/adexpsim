@@ -34,6 +34,7 @@
 #include <simulation/Spike.hpp>
 #include <utils/ParameterCollection.hpp>
 #include <view/ParametersWidget.hpp>
+#include <view/SingleGroupWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
 
 #include "MainWindow.hpp"
@@ -140,6 +141,12 @@ void MainWindow::createWidgets()
 	connect(spikeTrainWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(spikeTrainWidget, "Spike Train");
+
+	// Create the spike train panel and add it to the tool box
+	singleGroupWidget = new SingleGroupWidget(params, this);
+	connect(singleGroupWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(singleGroupWidget, "Single Group Parameters");
 
 	// Create the parameters panel and add it to the tool box
 	parametersWidget = new ParametersWidget(params, this);

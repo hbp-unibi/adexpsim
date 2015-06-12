@@ -56,19 +56,58 @@ struct Spike {
 	}
 };
 
+/**
+ * Vector of Spike instances.
+ */
 using SpikeVec = std::vector<Spike>;
 
 /**
- * Method used to build a set of N input spikes with uniform spacing.
+ * Method used to build a set of n input spikes with uniform spacing.
  *
- * @param N is the number of input spikes. If a fractional number is given, an
+ * @param n is the number of input spikes. If a fractional number is given, an
  * additional input spike is generated which is scaled by the fractional part
  * of the number.
- * @param T is the delay between the spikes.
+ * @param t is the delay between the spikes.
  * @param t0 is the time at which the first spike should be generated.
  * @param w is the weight factor with which the spike weights are multiplied.
  */
-SpikeVec buildInputSpikes(Val N, Time T, Time t0 = Time(0), Val w = 1);
+SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
+
+/**
+ * The SingleGroupSpikeData class represents the data needed for the
+ * SingleGroupEvaluation.
+ */
+struct SingleGroupSpikeData {
+	/**
+	 * n is the number of input spikes. Should be larger or equal to one.
+	 */
+	Val n;
+
+	/**
+	 * t is the delay between the input spikes.
+	 */
+	Time deltaT;
+
+	/**
+	 * T is the time after which the neuron should have resetted.
+	 */
+	Time T;
+
+	/**
+	 * Default constructor. Initializes all members with sane values.
+	 */
+	SingleGroupSpikeData() : n(3), deltaT(1e-3_s), T(33e-3_s) {}
+
+	/**
+	 * Constructor, sets each member to the given value.
+	 */
+	SingleGroupSpikeData(Val n, Time deltaT = 1e-3_s, Time T = 33e-3_s)
+	    : n(n), deltaT(deltaT), T(T)
+	{
+	}
+
+	SpikeVec spikes(int offs = 0) const { return buildInputSpikes(n + offs, deltaT, 0_s, 1.0); }
+};
 
 /**
  * The SpikeTrain class is used to construct input spikes as a set of random

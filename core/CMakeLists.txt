@@ -47,9 +47,9 @@ SET(ADEXPSIM_CORE_SRC
 	src/common/Timer
 	src/common/Types
 	src/common/Vector
-	src/exploration/Evaluation
 	src/exploration/Exploration
 	src/exploration/Simplex
+	src/exploration/SingleGroupEvaluation
 	src/exploration/SpikeTrainEvaluation
 	src/simulation/Controller
 	src/simulation/DormandPrinceIntegrator

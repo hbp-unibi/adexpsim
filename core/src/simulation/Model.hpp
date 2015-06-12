@@ -174,7 +174,7 @@ public:
 		while (t < tEnd) {
 			// Fetch the next spike time
 			Time nextSpikeTime =
-			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : MAX_TIME;
+			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : tEnd;
 
 			// Handle incomming spikes
 			if (nextSpikeTime <= t) {

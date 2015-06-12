@@ -64,7 +64,7 @@ struct EvaluationResult {
 	 * Default constructor. Initializes the values with the worst possible
 	 * result.
 	 */
-	SpikeTrainEvaluationResult()
+	EvaluationResult()
 	    : pBinary(0.0), pFalsePositive(1.0), pFalseNegative(1.0), pSoft(0.0)
 	{
 	}
@@ -73,8 +73,8 @@ struct EvaluationResult {
 	 * Constructor of the EvaluationResult class. Initializes all members with
 	 * the given values.
 	 */
-	SpikeTrainEvaluationResult(Val pBinary, Val pFalsePositive,
-	                           Val pFalseNegative, Val pSoft)
+	EvaluationResult(Val pBinary, Val pFalsePositive, Val pFalseNegative,
+	                 Val pSoft)
 	    : pBinary(pBinary),
 	      pFalsePositive(pFalsePositive),
 	      pFalseNegative(pFalseNegative),
@@ -82,7 +82,6 @@ struct EvaluationResult {
 	{
 	}
 };
-
 }
 
 #endif /* _ADEXPSIM_EVALUATION_RESULT_HPP_ */

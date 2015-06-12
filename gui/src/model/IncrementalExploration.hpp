@@ -62,6 +62,11 @@ private:
 	Exploration &exploration;
 
 	/**
+	 * Reference at the current neuron parameters.
+	 */
+	std::shared_ptr<ParameterCollection> params;
+
+	/**
 	 * Task code, runs the exploration, triggers the done and progress signals.
 	 */
 	void run() override;
@@ -72,8 +77,11 @@ public:
 	 *
 	 * @param exploration is a reference at the exploration instance that should
 	 * run.
+	 * @param params contains the params the exploration instance should be fed
+	 * with.
 	 */
-	IncrementalExplorationRunner(Exploration &exploration);
+	IncrementalExplorationRunner(Exploration &exploration,
+	                             std::shared_ptr<ParameterCollection> params);
 
 	~IncrementalExplorationRunner() override;
 

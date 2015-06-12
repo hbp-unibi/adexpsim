@@ -22,6 +22,8 @@
 #include <QThreadPool>
 
 #include <exploration/Exploration.hpp>
+#include <exploration/SpikeTrainEvaluation.hpp>
+#include <exploration/SingleGroupEvaluation.hpp>
 #include <utils/ParameterCollection.hpp>
 
 #include "IncrementalExploration.hpp"
@@ -33,8 +35,8 @@ namespace AdExpSim {
  */
 
 IncrementalExplorationRunner::IncrementalExplorationRunner(
-    Exploration &exploration)
-    : aborted(false), exploration(exploration)
+    Exploration &exploration, std::shared_ptr<ParameterCollection> params)
+    : aborted(false), exploration(exploration), params(params)
 {
 	setAutoDelete(false);
 }
@@ -47,10 +49,25 @@ IncrementalExplorationRunner::~IncrementalExplorationRunner()
 void IncrementalExplorationRunner::run()
 {
 	// Run the exploration process
-	const bool ok = exploration.run([&](float p) -> bool {
-		emit progress(p);
-		return !aborted.load();
-	});
+	bool ok = false;
+
+	if (params->evaluation == EvaluationType::SPIKE_TRAIN) {
+		ok = exploration.run(
+		    SpikeTrainEvaluation(params->train,
+		                         params->model == ModelType::IF_COND_EXP),
+		    [&](float p) -> bool {
+			    emit progress(p);
+			    return !aborted.load();
+			});
+	} else if (params->evaluation == EvaluationType::SINGLE_GROUP) {
+		ok = exploration.run(
+		    SingleGroupEvaluation(params->singleGroup,
+		                          params->model == ModelType::IF_COND_EXP),
+		    [&](float p) -> bool {
+			    emit progress(p);
+			    return !aborted.load();
+			});
+	}
 
 	// Emit the done event
 	emit done(ok && !aborted.load());
@@ -130,12 +147,12 @@ void IncrementalExploration::start()
 	}
 
 	// Create a new Exploration instance
-	currentExploration = new Exploration(
-	    mem[level - MIN_LEVEL], params->params, params->train, dimX, minX, maxX,
-	    dimY, minY, maxY, params->model == ModelType::IF_COND_EXP);
+	currentExploration = new Exploration(mem[level - MIN_LEVEL], params->params,
+	                                     dimX, minX, maxX, dimY, minY, maxY);
 
 	// Create a new IncrementExplorationRunner and connect all signals
-	currentRunner = new IncrementalExplorationRunner(*currentExploration);
+	currentRunner =
+	    new IncrementalExplorationRunner(*currentExploration, params);
 	connect(currentRunner, SIGNAL(progress(float)), this,
 	        SLOT(runnerProgress(float)));
 	connect(currentRunner, SIGNAL(done(bool)), this, SLOT(runnerDone(bool)));

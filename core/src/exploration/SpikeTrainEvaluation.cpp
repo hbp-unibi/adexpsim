@@ -172,8 +172,9 @@ static constexpr double TAU = log(1.0 / TAU_RANGE_VAL - 1.0) / TAU_RANGE;
 Val SpikeTrainEvaluation::sigma(Val x, const WorkingParameters &params,
                                 bool invert) const
 {
-	const Val th = useIfCondExp ? params.eTh() : params.eSpikeEff();
-	const double res = 1.0 / (1.0 + exp(-TAU * (x - th)));
+	const Val th = params.eSpikeEff(useIfCondExp);
+	const double res =
+	    1.0 / (1.0 + exp(-TAU * (x - th)));
 	return invert ? 1.0 - res : res;
 }
 
@@ -222,13 +223,13 @@ SpikeTrainEvaluation::trackMaxPotential(const WorkingParameters &params,
 }
 
 template <typename F1, typename F2>
-SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
+EvaluationResult SpikeTrainEvaluation::evaluateInternal(
     const WorkingParameters &params, Val eTar, F1 recordOutputSpike,
     F2 recordOutputGroup) const
 {
 	// Abort if the given parameters are invalid
 	if (!params.valid() || train.getRanges().empty()) {
-		return SpikeTrainEvaluationResult();
+		return EvaluationResult();
 	}
 
 	// Update the parameters
@@ -254,7 +255,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 
 	// Abort if the maximum spike count controller has tripped.
 	if (controller.tripped()) {
-		return SpikeTrainEvaluationResult(0.0, 1.0, 0.0, 0.0);
+		return EvaluationResult(0.0, 1.0, 0.0, 0.0);
 	}
 
 	// Iterate over all ranges described in the spike train and adapt the result
@@ -264,7 +265,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	const std::vector<RecordedSpike> &outputSpikes = recorder.getOutputSpikes();
 	const std::vector<SpikeTrain::Range> &ranges = train.getRanges();
 
-	SpikeTrainEvaluationResult res(0.0, 0.0, 0.0, 0.0);
+	EvaluationResult res(0.0, 0.0, 0.0, 0.0);
 	size_t group = 0;
 	size_t groupDescrIdx = ranges.front().descrIdx;
 	size_t groupExpected = 0;
@@ -382,8 +383,8 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	return res;
 }
 
-SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
-    const WorkingParameters &params, Val eTar) const
+EvaluationResult SpikeTrainEvaluation::evaluate(const WorkingParameters &params,
+                                                Val eTar) const
 {
 	// Call the evaluateInternal template with two empty functions, thus
 	// removing all of the recording code.
@@ -391,7 +392,7 @@ SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
 	                        [](const OutputGroup &) -> void {});
 }
 
-SpikeTrainEvaluationResult SpikeTrainEvaluation::evaluate(
+EvaluationResult SpikeTrainEvaluation::evaluate(
     const WorkingParameters &params, std::vector<OutputSpike> &outputSpikes,
     std::vector<OutputGroup> &outputGroups, Val eTar) const
 {

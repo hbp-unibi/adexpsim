@@ -67,8 +67,7 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	connect(actRebuild, SIGNAL(triggered()), this,
 	        SLOT(triggerUpdateParameters()));
 
-	// Create the container and layout for the table and the add/delete
-	// buttons
+	// Build the table widget
 	tableWidget = new QTableWidget(this);
 	tableWidget->setColumnCount(7);
 	tableWidget->horizontalHeader()->setSectionResizeMode(

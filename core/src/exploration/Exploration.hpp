@@ -35,7 +35,7 @@
 #include <common/Matrix.hpp>
 #include <common/Types.hpp>
 
-#include "SpikeTrainEvaluation.hpp"
+#include "EvaluationResult.hpp"
 
 namespace AdExpSim {
 
@@ -97,10 +97,10 @@ struct ExplorationMemory {
 	 * Returns an evaluation result structure for the matrix entry at the given
 	 * coordinates.
 	 */
-	SpikeTrainEvaluationResult operator()(size_t x, size_t y) const
+	EvaluationResult operator()(size_t x, size_t y) const
 	{
-		return SpikeTrainEvaluationResult(pBinary(x, y), pFalsePositive(x, y),
-		                                  pFalseNegative(x, y), pSoft(x, y));
+		return EvaluationResult(pBinary(x, y), pFalsePositive(x, y),
+		                        pFalseNegative(x, y), pSoft(x, y));
 	}
 };
 
@@ -140,11 +140,6 @@ private:
 	 */
 	size_t dimY;
 
-	/**
-	 * Evaluation object.
-	 */
-	SpikeTrainEvaluation evaluation;
-
 public:
 	/**
 	 * Callback function used to allow another function to display some kind of
@@ -164,8 +159,6 @@ public:
 	 *
 	 * @param mem is a reference at the underlying ExplorationMemory instance.
 	 * @param params is the base parameter set.
-	 * @param train is the spike train for which the exploration should be
-	 * performed.
 	 * @param dimX is the index of the parameter vector entry which is varried
 	 * in x-direction.
 	 * @param minX is the minimum parameter value in x-direction.
@@ -174,23 +167,25 @@ public:
 	 * in y-direction.
 	 * @param minY is the minimum parameter value in y-direction.
 	 * @param maxY is the maximum parameter value in y-direction.
-	 * @param useIfCondExp degrades the model to the simpler IfCondExp if set.
 	 */
 	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            const WorkingParameters &params, const SpikeTrain &train,
-	            size_t dimX, Val minX, Val maxX, size_t dimY, Val minY,
-	            Val maxY, bool useIfCondExp = false);
+	            const WorkingParameters &params, size_t dimX, Val minX,
+	            Val maxX, size_t dimY, Val minY, Val maxY);
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed
 	 * successfully, false if it was aborted (e.g. by the "progress" function
 	 * returning false).
 	 *
+	 * @param evaluation is a reference at a class with an "evaluate" method
+	 * that calculates the actual cost function values.
 	 * @param progress specifies the current progress as a value between zero
 	 * and one.
 	 * @return true if the operation was sucessful, false otherwise.
 	 */
-	bool run(const ProgressCallback &progress = [](Val) { return true; });
+	template <typename Evaluation>
+	bool run(const Evaluation &evaluation,
+	         const ProgressCallback &progress = [](Val) { return true; });
 
 	/**
 	 * Flag indicating whether the exploration is valid or not.
@@ -222,6 +217,7 @@ public:
 	 */
 	Exploration clone() const;
 };
+
 }
 
 #endif /* _ADEXPSIM_EXPLORATION_HPP_ */

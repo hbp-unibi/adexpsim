@@ -101,9 +101,15 @@ struct ParameterCollection {
 
 	/**
 	 * Holds the current SpikeTrain setup. The SpikeTrain defines the input
-	 * spikes which are being sent to the 
+	 * spikes which are being sent to the neuron. Furthermore it is used in the
+	 * input in the Simulation window.
 	 */
 	SpikeTrain train;
+
+	/**
+	 * Holds the setup used in the SingleGroupSpikeData evaluation.
+	 */
+	SingleGroupSpikeData singleGroup;
 
 	/**
 	 * Holds the current model Parameters.

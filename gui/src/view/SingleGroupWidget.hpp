@@ -17,9 +17,10 @@
  */
 
 /**
- * @file SpikeTrainWidget.hpp
+ * @file SingleGroupWidget.hpp
  *
- * Widget used to interactively create a SpikeTrain instance.
+ * Widget used to interactively set the parameters of a SingleGroupWidget
+ * instance.
  *
  * @author Andreas Stöckel
  */
@@ -29,9 +30,6 @@
 
 #include <QWidget>
 
-class QAction;
-class QLineEdit;
-class QTableWidget;
 class QTimer;
 
 namespace AdExpSim {
@@ -40,11 +38,11 @@ class ParameterCollection;
 class ParameterWidget;
 
 /**
- * The SpikeTrainWidget allows to edit all properties of the SpikeTrain class
- * and informs its controller about changes in the SpikeTrain instance by
- * emitting the "updateParameters" signal.
+ * The SingleGroupWidget allows to edit all properties of the
+ * SingleGroupSpikeData class and informs its controller about changes in the
+ * data by emitting the "updateParameters" singal.
  */
-class SpikeTrainWidget : public QWidget {
+class SingleGroupWidget : public QWidget {
 	Q_OBJECT
 private:
 	/**
@@ -53,44 +51,34 @@ private:
 	 */
 	std::shared_ptr<ParameterCollection> params;
 
-	/* Actions */
-	QAction *actAddGroup;
-	QAction *actDeleteGroup;
-	QAction *actRebuild;
-
 	/* Widgets */
 	QTimer *updateTimer;
-	QTableWidget *tableWidget;
-	ParameterWidget *paramSorted;
 	ParameterWidget *paramN;
+	ParameterWidget *paramDeltaT;
 	ParameterWidget *paramT;
-	ParameterWidget *paramSigmaT;
 
 private slots:
 	void triggerUpdateParameters();
-	void handleCellChanged(int row, int column);
 	void handleParameterUpdate(Val value, const QVariant &data);
-	void handleAddGroup();
-	void handleDeleteGroups();
 
 public slots:
 	/**
-	 * Refreshes the view to reflect the current parameters of the SpikeTrain
-	 * instance.
+	 * Refreshes the view to reflect the current parameters of the
+	 * SingleGroupSpikeData instance.
 	 */
 	void refresh();
 
 public:
 	/**
-	 * Costructor of the SpikeTrainWidget class.
+	 * Costructor of the SingleGroupWidget class.
 	 */
-	SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
-	                 QWidget *parent = nullptr);
+	SingleGroupWidget(std::shared_ptr<ParameterCollection> params,
+	                  QWidget *parent = nullptr);
 
 	/**
-	 * Destructor of the SpikeTrainWidget class.
+	 * Destructor of the SingleGroupWidget class.
 	 */
-	~SpikeTrainWidget();
+	~SingleGroupWidget();
 
 signals:
 	void updateParameters(std::set<size_t> dims);

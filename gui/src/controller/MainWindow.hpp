@@ -44,6 +44,7 @@ namespace AdExpSim {
 
 class ParameterCollection;
 class ParametersWidget;
+class SingleGroupWidget;
 class SpikeTrainWidget;
 class AbstractViewerWindow;
 
@@ -69,6 +70,7 @@ private:
 	std::vector<QPointer<AbstractViewerWindow>> windows;
 
 	/* Parameter widgets */
+	SingleGroupWidget *singleGroupWidget;
 	SpikeTrainWidget *spikeTrainWidget;
 	ParametersWidget *parametersWidget;
 	QToolBar *toolbar;
