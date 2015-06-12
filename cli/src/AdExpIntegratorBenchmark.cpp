@@ -488,7 +488,7 @@ void benchmark()
 	SpikeTrain train({{4, 0, 1, 1e-3, 1.0, -1.0, 0.0},
 	                  {4, 2, 1, 1e-3, 1.0, -1.0, 0.0},
 	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0}},
-	                 10, false, 0.1_s, 0.01);
+	                 100, false, 0.1_s, 0.01);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;
@@ -497,7 +497,7 @@ void benchmark()
 	                 [&](DefaultController &controller, Recorder &recorder) {
 		    RungeKuttaIntegrator integrator;
 		    Model::simulate<Flags & ~Model::FAST_EXP>(
-		        train.getSpikes(), recorder, controller, integrator, p, 1e-6_s,
+		        train.getSpikes(), recorder, controller, integrator, p, 1e-7_s,
 		        train.getMaxT());
 		});
 	std::cout << "Done." << std::endl;
