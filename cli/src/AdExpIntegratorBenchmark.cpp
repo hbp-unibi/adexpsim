@@ -33,15 +33,221 @@ using Recorder = VectorRecorder<std::vector<double>, SIPrefixTrafo>;
 using RecorderData = VectorRecorderData<std::vector<double>>;
 
 /**
+ * Class used to print the benchmark result as table.
+ */
+class Tablefmt {
+public:
+	struct RowData {
+		std::string integratorName;
+		std::string integratorParam;
+		double t, v, vp, gE, gEp, gI, gIp, w, wp;
+		size_t N;
+
+		RowData(const std::string &integratorName,
+		        const std::string &integratorParam, double t, size_t N,
+		        double v, double vp, double gE, double gEp, double gI,
+		        double gIp, double w, double wp)
+		    : integratorName(integratorName),
+		      integratorParam(integratorParam),
+		      t(t),
+		      v(v),
+		      vp(vp),
+		      gE(gE),
+		      gEp(gEp),
+		      gI(gI),
+		      gIp(gIp),
+		      w(w),
+		      wp(wp),
+		      N(N)
+		{
+		}
+
+		double avgp() const { return (vp + gEp + gIp + wp) / 4.0; }
+	};
+
+private:
+	std::vector<RowData> rows;
+
+	std::string printValue(double val)
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(3) << std::setw(10)
+		   << round(val * 1000.0) / 1000.0;
+		return ss.str();
+	}
+
+	std::string printPercentage(double val)
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(2) << std::setw(8)
+		   << round(val * 100.0 * 100.0) / 100.0 << "%";
+		return ss.str();
+	}
+
+	std::string printLPercentage(double val)
+	{
+		std::stringstream ss;
+		ss << std::fixed << std::setprecision(2)
+		   << round(val * 100.0 * 100.0) / 100.0;
+		return ss.str();
+	}
+
+	std::string &replace(std::string &haystack, const std::string &needle,
+	                     const std::string &replacement)
+	{
+		size_t pos;
+		while ((pos = haystack.find(needle)) != std::string::npos) {
+			haystack.erase(pos, needle.size());
+			haystack.insert(pos, replacement);
+		}
+		return haystack;
+	}
+
+public:
+	void addRow(const RowData &data) { rows.emplace_back(data); }
+
+	void printRaw(std::ostream &os)
+	{
+		std::string lastIntegratorName;
+		bool first = true;
+		for (const auto &row : rows) {
+			// Print a separator as soon as the integrator changes
+			if (lastIntegratorName != row.integratorName && !first) {
+				os << "--" << std::endl;
+			}
+			lastIntegratorName = row.integratorName;
+
+			// Prepare the caption, remove some LaTeX
+			std::string caption =
+			    row.integratorName + " (" + row.integratorParam + ")";
+			replace(caption, "\\SI", "");
+			replace(caption, "{", "");
+			replace(caption, "}", "");
+			replace(caption, "\\milli", "m");
+			replace(caption, "\\micro", "u");
+			replace(caption, "\\nano", "n");
+			replace(caption, "\\second", "s");
+			replace(caption, "\\nothing", "");
+
+			// Print all columns
+			os << std::setw(30) << caption << "  ";
+			os << "t: " << printValue(row.t) << "ms ";
+			os << "N: " << std::setw(8) << row.N << " ";
+			os << "t/N: " << printValue(row.t * 1000.0 / double(row.N))
+			   << "us ";
+			os << "| v: " << printValue(row.v) << "mV  ";
+			os << printPercentage(row.vp) << " ";
+			os << "| gE: " << printValue(row.gE * 1000.0) << "nS  ";
+			os << printPercentage(row.gEp) << " ";
+			os << "| gI: " << printValue(row.gI * 1000.0) << "nS ";
+			os << printPercentage(row.gIp) << " ";
+			os << "| w: " << printValue(row.w) << "nA  ";
+			os << printPercentage(row.wp) << " ";
+			os << "| µ: " << printPercentage(row.avgp());
+			os << std::endl;
+
+			first = false;
+		}
+	}
+
+	void printLaTeX(std::ostream &os)
+	{
+		os << "\\begin{tabular}{p{1.5cm} l r r r rr rr rr rr r}" << std::endl;
+		os << "\t\\toprule" << std::endl;
+
+		// Top header
+		os << "\t\\multicolumn{2}{c}{\\multirow{2}{*}{\\textit{Integrator}}}";
+		os << " &\\multicolumn{3}{c}{\\textit{Time and samples}}";
+		os << " &\\multicolumn{9}{c}{\\textit{Error (RMSE)}} \\\\" << std::endl;
+
+		// Rule
+		std::cout << "\t\\cmidrule(r){3-5}"
+		             "\\cmidrule(l){6-14}" << std::endl;
+
+		// Sub-header
+		os << "\t &" << std::endl;
+		os << " & \\multicolumn{1}{c}{$t \\, [\\si{\\milli\\second}]$}";
+		os << " & \\multicolumn{1}{c}{$N$}";
+		os << " & \\multicolumn{1}{c}{$\\frac{t}{N} \\, "
+		      "[\\si{\\micro\\second}]$}";
+		os << " & \\multicolumn{2}{c}{$v \\, [\\si{\\milli\\volt}]$ (\\%)}";
+		os << " & \\multicolumn{2}{c}{$\\Ge \\, [\\si{\\micro\\siemens}]$ "
+		      "(\\%)}";
+		os << " & \\multicolumn{2}{c}{$\\Gi \\, [\\si{\\micro\\siemens}]$ "
+		      "(\\%)}";
+		os << " & \\multicolumn{2}{c}{$w \\, [\\si{\\nano\\ampere}]$ (\\%)}";
+		os << " & Avg. \\% \\\\" << std::endl;
+
+		// Print all other rows
+		for (size_t i = 0; i < rows.size(); i++) {
+			// Detect the number of rows with the same integrator
+			size_t nRows = 0;
+			size_t j;
+			for (j = i; j < rows.size(); j++) {
+				if (rows[i].integratorName == rows[j].integratorName) {
+					nRows++;
+				} else {
+					break;
+				}
+			}
+
+			// Print the column group
+			bool first = true;
+			for (; i < j; i++) {
+				// Print the columns
+				const RowData &row = rows[i];
+				if (first) {
+					os << std::endl;
+					std::cout << "\t\\cmidrule(r){1-2}\\cmidrule(r){3-5}"
+					             "\\cmidrule(r){6-7}\\cmidrule(r){8-9}"
+					             "\\cmidrule(r){10-11}\\cmidrule(r){12-13}"
+					             "\\cmidrule(l){14-14}" << std::endl;
+					os << std::endl;
+					os << "\t\\multirow{" << nRows
+					   << "}{*}{\\parbox{1.5cm}{\\raggedleft "
+					   << row.integratorName << "}}" << std::endl;
+				}
+				os << "\t";
+				os << "\t& " << row.integratorParam;
+				os << "\t& " << printValue(row.t);
+				os << "\t& " << std::setw(8) << row.N;
+				os << "\t& " << printValue(row.t * 1000.0 / double(row.N));
+				os << "\t& " << printValue(row.v);
+				os << "\t& (" << printLPercentage(row.vp) << ")";
+				os << "\t& " << printValue(row.gE);
+				os << "\t& (" << printLPercentage(row.gEp) << ")";
+				os << "\t& " << printValue(row.gI);
+				os << "\t& (" << printLPercentage(row.gIp) << ")";
+				os << "\t& " << printValue(row.w);
+				os << "\t& (" << printLPercentage(row.wp) << ")";
+				os << "\t& " << printLPercentage(row.avgp());
+				os << "\\\\" << std::endl;
+				first = false;
+			}
+			i--;
+		}
+		os << "\t\\bottomrule" << std::endl;
+		os << "\\end{tabular}" << std::endl;
+	}
+};
+
+/**
  * The BenchmarkResult class contains the results captured from a single
  * benchmark run.
  */
 struct BenchmarkResult {
-	std::string name;
+	std::string integratorName;
+	std::string integratorParam;
 	RecorderData data;
 	double time;
 
-	BenchmarkResult(const std::string &name) : name(name), time(0) {}
+	BenchmarkResult(const std::string &integratorName,
+	                const std::string &integratorParam)
+	    : integratorName(integratorName),
+	      integratorParam(integratorParam),
+	      time(0)
+	{
+	}
 
 	/**
 	 * Used internally to update an entry in the given maximum vector.
@@ -150,57 +356,14 @@ struct BenchmarkResult {
 		{
 		}
 
-		std::string printPercentage(double val)
+		void print(Tablefmt &f)
 		{
-			std::stringstream ss;
-			ss << std::setprecision(5) << std::setw(6)
-			   << ceil(val * 10000.0) / 100.0 << "%";
-			return ss.str();
-		}
-
-		void print()
-		{
-			std::cout << std::setw(30) << benchmark.name << "  ";
-
-			std::cout << "t: " << std::setprecision(4) << std::setw(8)
-			          << benchmark.time << "ms ";
-
-			std::cout << "N: " << std::setprecision(4) << std::setw(8)
-			          << benchmark.data.size() << " ";
-
-			std::cout << "t/N: " << std::setprecision(4) << std::setw(8)
-			          << (benchmark.time * 1000.0) /
-			                 double(benchmark.data.size()) << "us ";
-
-			// Error in the v state
-			std::cout << "| v: " << std::setprecision(4) << std::setw(11)
-			          << rmseDelta[0] << "mV  ";
-			std::cout << printPercentage(rmseDeltaNormalized[0]) << " ";
-
-			// Error in the gE state
-			std::cout << "| gE: " << std::setprecision(4) << std::setw(11)
-			          << rmseDelta[1] << "uS  ";
-			std::cout << printPercentage(rmseDeltaNormalized[1]) << " ";
-
-			// Error in the gI state
-			std::cout << "| gI: " << std::setprecision(4) << std::setw(11)
-			          << rmseDelta[2] << "uS ";
-			std::cout << printPercentage(rmseDeltaNormalized[2]) << " ";
-
-			// Error in the w state
-			std::cout << "| w: " << std::setprecision(4) << std::setw(11)
-			          << rmseDelta[3] << "nA  ";
-			std::cout << printPercentage(rmseDeltaNormalized[3]) << " ";
-
-			// Calculate and print the average error
-			double avg = 0;
-			double avgMax = 0;
-			for (size_t k = 0; k < 4; k++) {
-				avg += rmseDeltaNormalized[k] * 0.25;
-				avgMax += maxDeltaNormalized[k] * 0.25;
-			}
-			std::cout << "| µ: " << printPercentage(avg);
-			std::cout << std::endl;
+			f.addRow({benchmark.integratorName, benchmark.integratorParam,
+			          benchmark.time, benchmark.data.size(), rmseDelta[0],
+			          rmseDeltaNormalized[0], rmseDelta[1],
+			          rmseDeltaNormalized[1], rmseDelta[2],
+			          rmseDeltaNormalized[2], rmseDelta[3],
+			          rmseDeltaNormalized[3]});
 		}
 	};
 
@@ -262,11 +425,12 @@ struct BenchmarkResult {
 };
 
 template <typename Function>
-BenchmarkResult runBenchmark(std::string name, const Parameters &params,
-                             Function f)
+BenchmarkResult runBenchmark(const std::string &integratorName,
+                             const std::string &integratorParam,
+                             const Parameters &params, Function f)
 {
 	Timer t;
-	BenchmarkResult res(name);
+	BenchmarkResult res(integratorName, integratorParam);
 	Recorder recorder(params);
 	DefaultController controller;
 
@@ -278,11 +442,12 @@ BenchmarkResult runBenchmark(std::string name, const Parameters &params,
 }
 
 template <typename Integrator, size_t Flags>
-void benchmarkSimple(const std::string &name, double tDelta,
+void benchmarkSimple(const std::string &integratorName,
+                     const std::string &integratorParam, double tDelta,
                      const Parameters &params, const SpikeTrain &train,
-                     const BenchmarkResult &reference)
+                     const BenchmarkResult &reference, Tablefmt &fmt)
 {
-	runBenchmark(name, params,
+	runBenchmark(integratorName, integratorParam, params,
 	             [&](DefaultController &controller, Recorder &recorder) {
 		             Integrator integrator;
 		             Model::simulate<Flags>(train.getSpikes(), recorder,
@@ -290,15 +455,16 @@ void benchmarkSimple(const std::string &name, double tDelta,
 		                                    Time::sec(tDelta), train.getMaxT());
 		         })
 	    .compare(reference.data)
-	    .print();
+	    .print(fmt);
 }
 
 template <typename Integrator, size_t Flags>
-void benchmarkAdaptive(const std::string &name, Val eTar,
+void benchmarkAdaptive(const std::string &integratorName,
+                       const std::string &integratorParam, Val eTar,
                        const Parameters &params, const SpikeTrain &train,
-                       const BenchmarkResult &reference)
+                       const BenchmarkResult &reference, Tablefmt &fmt)
 {
-	runBenchmark(name, params,
+	runBenchmark(integratorName, integratorParam, params,
 	             [&](DefaultController &controller, Recorder &recorder) {
 		             Integrator integrator(eTar);
 		             Model::simulate<Flags>(train.getSpikes(), recorder,
@@ -306,83 +472,86 @@ void benchmarkAdaptive(const std::string &name, Val eTar,
 		                                    Time::sec(1e-6), train.getMaxT());
 		         })
 	    .compare(reference.data)
-	    .print();
+	    .print(fmt);
 }
 
 template <size_t Flags = 0>
 void benchmark()
 {
+	// Use a new Tablefmt object
+	Tablefmt fmt;
+
 	// Use the default parameters
 	Parameters p;
 
 	// Create a vector containing all input spikes
-	SpikeTrain train({
-	                  {4, 0, 1, 1e-3, 1.0, -1.0, 0.0},
-	                  {4, 1, 1, 1e-3, 1.0, -1.0, 0.0},
-	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0}
-	                 },
-	                 100, false, 0.1_s, 0.01);
+	SpikeTrain train({{4, 0, 1, 1e-3, 1.0, -1.0, 0.0},
+	                  {4, 2, 1, 1e-3, 1.0, -1.0, 0.0},
+	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0}},
+	                 10, false, 0.1_s, 0.01);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;
 	BenchmarkResult ref =
-	    runBenchmark("Runge-Kutta (t=100ns)", p,
+	    runBenchmark("Runge-Kutta", "t=\\SI{1}{\\micro\\second}", p,
 	                 [&](DefaultController &controller, Recorder &recorder) {
 		    RungeKuttaIntegrator integrator;
 		    Model::simulate<Flags & ~Model::FAST_EXP>(
-		        train.getSpikes(), recorder, controller, integrator, p, 1e-7_s,
+		        train.getSpikes(), recorder, controller, integrator, p, 1e-6_s,
 		        train.getMaxT());
 		});
-	ref.compare(ref.data).print();
 	std::cout << "Done." << std::endl;
-	std::cout << "--" << std::endl;
 
 	// Print the reference data as stub
-	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=1us)", 1e-6, p, train,
-	                                        ref);
-	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=10us)", 10e-6, p, train,
-	                                        ref);
-	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=100us)", 100e-6, p, train,
-	                                        ref);
-	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=1ms)", 1e-3, p, train,
-	                                        ref);
+	benchmarkSimple<EulerIntegrator, Flags>(
+	    "Euler", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
+	benchmarkSimple<EulerIntegrator, Flags>(
+	    "Euler", "t=\\SI{10}{\\micro\\second}", 10e-6, p, train, ref, fmt);
+	benchmarkSimple<EulerIntegrator, Flags>(
+	    "Euler", "t=\\SI{100}{\\micro\\second}", 100e-6, p, train, ref, fmt);
+	benchmarkSimple<EulerIntegrator, Flags>(
+	    "Euler", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
 
-	std::cout << "--" << std::endl;
+	benchmarkSimple<MidpointIntegrator, Flags>(
+	    "Midpoint", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
+	benchmarkSimple<MidpointIntegrator, Flags>(
+	    "Midpoint", "t=\\SI{10}{\\micro\\second}", 10e-6, p, train, ref, fmt);
+	benchmarkSimple<MidpointIntegrator, Flags>(
+	    "Midpoint", "t=\\SI{100}{\\micro\\second}", 100e-6, p, train, ref, fmt);
+	benchmarkSimple<MidpointIntegrator, Flags>(
+	    "Midpoint", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
 
-	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=1us)", 1e-6, p,
-	                                           train, ref);
-	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=10us)", 10e-6, p,
-	                                           train, ref);
-	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=100us)", 100e-6, p,
-	                                           train, ref);
-	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=1ms)", 1e-3, p,
-	                                           train, ref);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>(
+	    "Runge-Kutta", "t=\\SI{1}{\\micro\\second}", 1e-6, p, train, ref, fmt);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta",
+	                                             "t=\\SI{10}{\\micro\\second}",
+	                                             10e-6, p, train, ref, fmt);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta",
+	                                             "t=\\SI{100}{\\micro\\second}",
+	                                             100e-6, p, train, ref, fmt);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>(
+	    "Runge-Kutta", "t=\\SI{1}{\\milli\\second}", 1e-3, p, train, ref, fmt);
 
-	std::cout << "--" << std::endl;
-
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=1us)", 1e-6, p,
-	                                             train, ref);
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=10us)", 10e-6,
-	                                             p, train, ref);
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=100us)",
-	                                             100e-6, p, train, ref);
-	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=1ms)", 1e-3, p,
-	                                             train, ref);
-
-	std::cout << "--" << std::endl;
-
-	benchmarkAdaptive<DormandPrinceIntegrator, Flags>("Dormand-Prince 5 (e=1u)",
-	                                                  1e-6, p, train, ref);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince 5 (e=10u)", 10e-6, p, train, ref);
+	    "Dormand-Prince", "e=\\SI{1}{\\micro\\nothing}", 1e-6, p, train, ref,
+	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince 5 (e=100u)", 100e-6, p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator, Flags>("Dormand-Prince 5 (e=1m)",
-	                                                  1e-3, p, train, ref);
+	    "Dormand-Prince", "e=\\SI{10}{\\micro\\nothing}", 10e-6, p, train, ref,
+	    fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince 5 (e=10m)", 10e-3, p, train, ref);
+	    "Dormand-Prince", "e=\\SI{100}{\\micro\\nothing}", 100e-6, p, train,
+	    ref, fmt);
 	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
-	    "Dormand-Prince 5 (e=100m)", 100e-3, p, train, ref);
+	    "Dormand-Prince", "e=\\SI{1}{\\milli\\nothing}", 1e-3, p, train, ref,
+	    fmt);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince", "e=\\SI{10}{\\milli\\nothing}", 10e-3, p, train, ref,
+	    fmt);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince", "e=\\SI{100}{\\milli\\nothing}", 100e-3, p, train,
+	    ref, fmt);
+
+	fmt.printLaTeX(std::cout);
 }
 
 int main()
@@ -410,7 +579,6 @@ int main()
 	std::cout << std::endl;
 
 	benchmark<Model::IF_COND_EXP>();
-
 
 	return 0;
 }
