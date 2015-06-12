@@ -29,10 +29,8 @@
 #include <vector>
 
 using namespace AdExpSim;
-using Recorder = VectorRecorder<std::vector<Val>, SIPrefixTrafo>;
-using RecorderData = VectorRecorderData<std::vector<Val>>;
-
-constexpr size_t SimulationFlags = Model::FAST_EXP;
+using Recorder = VectorRecorder<std::vector<double>, SIPrefixTrafo>;
+using RecorderData = VectorRecorderData<std::vector<double>>;
 
 /**
  * The BenchmarkResult class contains the results captured from a single
@@ -112,9 +110,9 @@ struct BenchmarkResult {
 	 */
 	template <typename Vector1, typename Vector2>
 	static void updateSqSum(Vector1 &sum, size_t k, const Vector2 &v1, size_t i,
-	                        const Vector2 &v2, size_t j, Val h)
+	                        const Vector2 &v2, size_t j, double h)
 	{
-		Val d = minDist(v1, i, v2, j);
+		double d = minDist(v1, i, v2, j);
 		sum[k] += d * d * h;
 	}
 
@@ -152,7 +150,7 @@ struct BenchmarkResult {
 		{
 		}
 
-		std::string printPercentage(Val val)
+		std::string printPercentage(double val)
 		{
 			std::stringstream ss;
 			ss << std::setprecision(5) << std::setw(6)
@@ -171,8 +169,8 @@ struct BenchmarkResult {
 			          << benchmark.data.size() << " ";
 
 			std::cout << "t/N: " << std::setprecision(4) << std::setw(8)
-			          << (benchmark.time * 1000.0) / Val(benchmark.data.size())
-			          << "us ";
+			          << (benchmark.time * 1000.0) /
+			                 double(benchmark.data.size()) << "us ";
 
 			// Error in the v state
 			std::cout << "| v: " << std::setprecision(4) << std::setw(11)
@@ -195,8 +193,8 @@ struct BenchmarkResult {
 			std::cout << printPercentage(rmseDeltaNormalized[3]) << " ";
 
 			// Calculate and print the average error
-			Val avg = 0;
-			Val avgMax = 0;
+			double avg = 0;
+			double avgMax = 0;
 			for (size_t k = 0; k < 4; k++) {
 				avg += rmseDeltaNormalized[k] * 0.25;
 				avgMax += maxDeltaNormalized[k] * 0.25;
@@ -216,8 +214,8 @@ struct BenchmarkResult {
 		// Iterate over all entries in this data vector
 		for (size_t i = 1; i < data.size(); i++) {
 			// Fetch the current timestamp
-			Val t = data.ts[i];
-			Val tDelta = t - data.ts[i - 1];
+			double t = data.ts[i];
+			double tDelta = t - data.ts[i - 1];
 
 			// Find the two indices in the reference data next to this timestamp
 			size_t j = std::distance(
@@ -252,7 +250,7 @@ struct BenchmarkResult {
 
 		// Calculate the normalized deltas
 		for (size_t k = 0; k < 4; k++) {
-			const Val norm = (res.refMax[k] - res.refMin[k]);
+			const double norm = (res.refMax[k] - res.refMin[k]);
 			if (norm != 0) {
 				res.maxDeltaNormalized[k] = res.maxDelta[k] / norm;
 				res.rmseDeltaNormalized[k] = res.rmseDelta[k] / norm;
@@ -279,7 +277,7 @@ BenchmarkResult runBenchmark(std::string name, const Parameters &params,
 	return res;
 }
 
-template <typename Integrator>
+template <typename Integrator, size_t Flags>
 void benchmarkSimple(const std::string &name, double tDelta,
                      const Parameters &params, const SpikeTrain &train,
                      const BenchmarkResult &reference)
@@ -287,31 +285,32 @@ void benchmarkSimple(const std::string &name, double tDelta,
 	runBenchmark(name, params,
 	             [&](DefaultController &controller, Recorder &recorder) {
 		             Integrator integrator;
-		             Model::simulate<SimulationFlags>(
-		                 train.getSpikes(), recorder, controller, integrator,
-		                 params, Time::sec(tDelta), train.getMaxT());
+		             Model::simulate<Flags>(train.getSpikes(), recorder,
+		                                    controller, integrator, params,
+		                                    Time::sec(tDelta), train.getMaxT());
 		         })
 	    .compare(reference.data)
 	    .print();
 }
 
-template <typename Integrator>
+template <typename Integrator, size_t Flags>
 void benchmarkAdaptive(const std::string &name, Val eTar,
                        const Parameters &params, const SpikeTrain &train,
                        const BenchmarkResult &reference)
 {
-	runBenchmark(
-	    name, params, [&](DefaultController &controller, Recorder &recorder) {
-		    Integrator integrator(eTar);
-		    Model::simulate<SimulationFlags>(train.getSpikes(), recorder,
-		                                     controller, integrator, params,
-		                                     Time::sec(1e-6), train.getMaxT());
-		})
+	runBenchmark(name, params,
+	             [&](DefaultController &controller, Recorder &recorder) {
+		             Integrator integrator(eTar);
+		             Model::simulate<Flags>(train.getSpikes(), recorder,
+		                                    controller, integrator, params,
+		                                    Time::sec(1e-6), train.getMaxT());
+		         })
 	    .compare(reference.data)
 	    .print();
 }
 
-int main()
+template <size_t Flags = 0>
+void benchmark()
 {
 	// Use the default parameters
 	Parameters p;
@@ -320,66 +319,98 @@ int main()
 	SpikeTrain train({
 	                  {4, 0, 1, 1e-3, 1.0, -1.0, 0.0},
 	                  {4, 1, 1, 1e-3, 1.0, -1.0, 0.0},
-	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0},
+	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0}
 	                 },
 	                 100, false, 0.1_s, 0.01);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;
 	BenchmarkResult ref =
-	    runBenchmark("Runge-Kutta (t=1uS)", p,
+	    runBenchmark("Runge-Kutta (t=100ns)", p,
 	                 [&](DefaultController &controller, Recorder &recorder) {
 		    RungeKuttaIntegrator integrator;
-		    Model::simulate<SimulationFlags>(train.getSpikes(), recorder,
-		                                     controller, integrator, p, 1e-6_s,
-		                                     train.getMaxT());
+		    Model::simulate<Flags & ~Model::FAST_EXP>(
+		        train.getSpikes(), recorder, controller, integrator, p, 1e-7_s,
+		        train.getMaxT());
 		});
 	ref.compare(ref.data).print();
 	std::cout << "Done." << std::endl;
 	std::cout << "--" << std::endl;
 
 	// Print the reference data as stub
-	benchmarkSimple<EulerIntegrator>("Euler (t=1us)", 1e-6, p, train, ref);
-	benchmarkSimple<EulerIntegrator>("Euler (t=10us)", 10e-6, p, train, ref);
-	benchmarkSimple<EulerIntegrator>("Euler (t=100us)", 100e-6, p, train, ref);
-	benchmarkSimple<EulerIntegrator>("Euler (t=1ms)", 1e-3, p, train, ref);
+	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=1us)", 1e-6, p, train,
+	                                        ref);
+	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=10us)", 10e-6, p, train,
+	                                        ref);
+	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=100us)", 100e-6, p, train,
+	                                        ref);
+	benchmarkSimple<EulerIntegrator, Flags>("Euler (t=1ms)", 1e-3, p, train,
+	                                        ref);
 
 	std::cout << "--" << std::endl;
 
-	benchmarkSimple<MidpointIntegrator>("Midpoint (t=1us)", 1e-6, p, train,
-	                                    ref);
-	benchmarkSimple<MidpointIntegrator>("Midpoint (t=10us)", 10e-6, p, train,
-	                                    ref);
-	benchmarkSimple<MidpointIntegrator>("Midpoint (t=100us)", 100e-6, p, train,
-	                                    ref);
-	benchmarkSimple<MidpointIntegrator>("Midpoint (t=1ms)", 1e-3, p, train,
-	                                    ref);
+	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=1us)", 1e-6, p,
+	                                           train, ref);
+	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=10us)", 10e-6, p,
+	                                           train, ref);
+	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=100us)", 100e-6, p,
+	                                           train, ref);
+	benchmarkSimple<MidpointIntegrator, Flags>("Midpoint (t=1ms)", 1e-3, p,
+	                                           train, ref);
 
 	std::cout << "--" << std::endl;
 
-	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=1us)", 1e-6, p, train,
-	                                      ref);
-	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=10us)", 10e-6, p,
-	                                      train, ref);
-	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=100us)", 100e-6, p,
-	                                      train, ref);
-	benchmarkSimple<RungeKuttaIntegrator>("Runge-Kutta (t=1ms)", 1e-3, p, train,
-	                                      ref);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=1us)", 1e-6, p,
+	                                             train, ref);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=10us)", 10e-6,
+	                                             p, train, ref);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=100us)",
+	                                             100e-6, p, train, ref);
+	benchmarkSimple<RungeKuttaIntegrator, Flags>("Runge-Kutta (t=1ms)", 1e-3, p,
+	                                             train, ref);
 
 	std::cout << "--" << std::endl;
 
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=1u)", 1e-6,
-	                                           p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=10u)",
-	                                           10e-6, p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=100u)",
-	                                           100e-6, p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=1m)", 1e-3,
-	                                           p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=10m)",
-	                                           10e-3, p, train, ref);
-	benchmarkAdaptive<DormandPrinceIntegrator>("Dormand-Prince 5 (e=100m)",
-	                                           100e-3, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>("Dormand-Prince 5 (e=1u)",
+	                                                  1e-6, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince 5 (e=10u)", 10e-6, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince 5 (e=100u)", 100e-6, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>("Dormand-Prince 5 (e=1m)",
+	                                                  1e-3, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince 5 (e=10m)", 10e-3, p, train, ref);
+	benchmarkAdaptive<DormandPrinceIntegrator, Flags>(
+	    "Dormand-Prince 5 (e=100m)", 100e-3, p, train, ref);
+}
+
+int main()
+{
+	// Run the AdExp model
+	std::cout << std::endl;
+	std::cout << "BENCHMARK 1: AdExp Model" << std::endl;
+	std::cout << "========================" << std::endl;
+	std::cout << std::endl;
+
+	benchmark<>();
+
+	// Run the AdExp model
+	std::cout << std::endl;
+	std::cout << "BENCHMARK 2: AdExp Model, fast exp" << std::endl;
+	std::cout << "==================================" << std::endl;
+	std::cout << std::endl;
+
+	benchmark<Model::FAST_EXP>();
+
+	// Run the AdExp model
+	std::cout << std::endl;
+	std::cout << "BENCHMARK 3: IfCondExp Model" << std::endl;
+	std::cout << "============================" << std::endl;
+	std::cout << std::endl;
+
+	benchmark<Model::IF_COND_EXP>();
+
 
 	return 0;
 }
