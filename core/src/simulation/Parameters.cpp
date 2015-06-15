@@ -137,45 +137,6 @@ Val WorkingParameters::fromParameter(Val v, size_t idx, Val cM, Val eL)
 	return v;
 }
 
-Val WorkingParameters::fetchParameter(size_t idx, const Parameters &params)
-{
-	return fetchParameter(idx, const_cast<Parameters &>(params));
-}
-
-Val &WorkingParameters::fetchParameter(size_t idx, Parameters &params)
-{
-	switch (idx) {
-		case 0:
-			return params.gL();
-		case 1:
-			return params.tauE();
-		case 2:
-			return params.tauI();
-		case 3:
-			return params.tauW();
-		case 4:
-			return params.eE();
-		case 5:
-			return params.eI();
-		case 6:
-			return params.eTh();
-		case 7:
-			return params.eSpike();
-		case 8:
-			return params.eReset();
-		case 9:
-			return params.deltaTh();
-		case 10:
-			return params.a();
-		case 11:
-			return params.b();
-		case 12:
-			return params.w();
-	}
-	// TODO: Mark as unreachable
-	return params.w();
-}
-
 Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
 {
 	constexpr double EPS = 1e-9;

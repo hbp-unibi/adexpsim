@@ -70,7 +70,7 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 	for (size_t i = 0; i < 13; i++) {
 		std::string name = WorkingParameters::names[i];
 		std::string unit = WorkingParameters::units[i];
-		Val value = WorkingParameters::fetchParameter(i, p);
+		Val value = p[i];
 		Val min = value * 0.1;
 		Val max = value * 10;
 		if (max < min) {
@@ -130,10 +130,9 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 		size_t i = data.toUInt();
 		updatedDims.emplace(i);
 		if (WorkingParameters::linear[i]) {
-			WorkingParameters::fetchParameter(i, p) = value;
+			p[i] = value;
 		} else {
-			WorkingParameters::fetchParameter(i, p) =
-			    WorkingParameters::toParameter(value, i, p);
+			p[i] = WorkingParameters::toParameter(value, i, p);
 		}
 	}
 
@@ -156,7 +155,7 @@ void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 		}
 	}
 	for (size_t d : dims) {
-		Val value = WorkingParameters::fetchParameter(d, p);
+		Val value = p[d];
 		if (!WorkingParameters::linear[d]) {
 			value = WorkingParameters::fromParameter(value, d, p);
 		}

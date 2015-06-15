@@ -272,8 +272,7 @@ public:
 	 */
 	static Val fromParameter(size_t idx, const Parameters &params)
 	{
-		return fromParameter(fetchParameter(idx, params), idx, params.cM(),
-		                     params.eL());
+		return fromParameter(params[idx], idx, params.cM(), params.eL());
 	}
 
 	/**
@@ -290,16 +289,6 @@ public:
 	 * Parameters to the WorkingParameters range.
 	 */
 	static Val fromParameter(Val v, size_t idx, Val cM, Val eL);
-
-	/**
-	 * Fetches a value from a Parameter set.
-	 */
-	static Val fetchParameter(size_t idx, const Parameters &params);
-
-	/**
-	 * Fetches a value from a Parameter set.
-	 */
-	static Val &fetchParameter(size_t idx, Parameters &params);
 
 	/**
 	 * Function used to calculate the effective spike potential.

@@ -317,7 +317,7 @@ void ExplorationWidget::rangeChanged()
 void ExplorationWidget::dimensionChanged(QCPAxis *axis, size_t dim)
 {
 	// Center the axis around the value
-	Val v = WorkingParameters::fetchParameter(dim, params->params);
+	Val v = params->params[dim];
 	if (!WorkingParameters::linear[dim]) {
 		v = WorkingParameters::fromParameter(v, dim, params->params);
 	}
@@ -408,8 +408,8 @@ void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
 	if (wp.valid()) {
 		// Update the parameters and emit the corrsponding event
 		QPointF wpp = plotToParameters(x, y);
-		WorkingParameters::fetchParameter(getDimX(), params->params) = wpp.x();
-		WorkingParameters::fetchParameter(getDimY(), params->params) = wpp.y();
+		params->params[getDimX()] = wpp.x();
+		params->params[getDimY()] = wpp.y();
 		emit updateParameters({getDimX(), getDimY()});
 
 		// Move the parameter crosshair to a new position and replot
@@ -427,9 +427,8 @@ void ExplorationWidget::handleRestrictZoom()
 
 void ExplorationWidget::centerView()
 {
-	QPointF p = parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), params->params),
-	    WorkingParameters::fetchParameter(getDimY(), params->params));
+	QPointF p =
+	    parametersToPlot(params->params[getDimX()], params->params[getDimY()]);
 	pltExploration->xAxis->setRange(QCPRange(p.x() * 0.5, p.x() * 1.5));
 	pltExploration->yAxis->setRange(QCPRange(p.y() * 0.5, p.y() * 1.5));
 	pltExploration->replot();
@@ -471,9 +470,8 @@ static void fillColorMap(QCPColorMap *map, size_t nx, size_t ny, Fun f)
 void ExplorationWidget::updateCrosshair()
 {
 	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
-	crosshair->positions()[0]->setCoords(parametersToPlot(
-	    WorkingParameters::fetchParameter(getDimX(), params->params),
-	    WorkingParameters::fetchParameter(getDimY(), params->params)));
+	crosshair->positions()[0]->setCoords(
+	    parametersToPlot(params->params[getDimX()], params->params[getDimY()]));
 }
 
 void ExplorationWidget::updateInvalidRegionsOverlay()
