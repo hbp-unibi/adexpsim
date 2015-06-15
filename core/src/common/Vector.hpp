@@ -173,6 +173,7 @@ public:
 };
 
 #define NAMED_VECTOR_ELEMENT(NAME, IDX) \
+	static constexpr size_t idx_ ## NAME = IDX; \
 	void NAME(Val x) { arr[IDX] = x; }  \
 	Val &NAME() { return arr[IDX]; }    \
 	Val NAME() const { return arr[IDX]; }
