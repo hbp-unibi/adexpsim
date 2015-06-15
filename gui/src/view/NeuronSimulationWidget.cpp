@@ -144,15 +144,16 @@ void NeuronSimulationWidget::updatePlot()
 		pltVolt->setCurrentLayer("limits");
 		const ParameterCollection &p = sim.getParameters();
 		WorkingParameters wp(p.params);
-		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eE));
-		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eI));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eE()));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eI()));
 		if (p.model == ModelType::AD_IF_COND_EXP) {
 			addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(
-			                         wp.eSpikeEff() + p.params.eL));
+			                         wp.eSpikeEff() + p.params.eL()));
 		}
-		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eTh));
-		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eL));
-		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eReset));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eTh()));
+		addHorzLine(pltVolt, SIPrefixTrafo::transformVoltage(p.params.eL()));
+		addHorzLine(pltVolt,
+		            SIPrefixTrafo::transformVoltage(p.params.eReset()));
 
 		addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
 

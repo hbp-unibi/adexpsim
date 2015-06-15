@@ -158,8 +158,8 @@ public:
 		// calls is larger than the initially specified interval.
 		if (t - last > interval || force) {
 			// Scale state and auxiliary state by the membrane capacitance
-			State ss = s * params->cM;
-			AuxiliaryState ass = as * params->cM;
+			State ss = s * params->cM();
+			AuxiliaryState ass = as * params->cM();
 
 			// Make sure the timestamps are monotonous.
 			if (t <= last) {
@@ -168,7 +168,7 @@ public:
 
 			// Call the actual record function with the correctly rescaled
 			// values.
-			static_cast<Impl *>(this)->doRecord(t, s.v() + params->eL, ss[1],
+			static_cast<Impl *>(this)->doRecord(t, s.v() + params->eL(), ss[1],
 			                                    ss[2], ss[3], ass[0], ass[1],
 			                                    ass[2], ass[3]);
 

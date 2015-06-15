@@ -51,9 +51,9 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Create the widgets for the parameters which are not in the working set
 	Parameters &p = params->params;
-	paramCM =
-	    new ParameterWidget(this, "cM", p.cM, p.cM * 0.1, p.cM * 10, "F", "cM");
-	paramEL = new ParameterWidget(this, "eL", p.eL, MIN_V, MAX_V, "V", "eL");
+	paramCM = new ParameterWidget(this, "cM", p.cM(), p.cM() * 0.1, p.cM() * 10,
+	                              "F", "cM");
+	paramEL = new ParameterWidget(this, "eL", p.eL(), MIN_V, MAX_V, "V", "eL");
 	connect(paramCM, SIGNAL(update(Val, const QVariant &)), this,
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramEL, SIGNAL(update(Val, const QVariant &)), this,
@@ -122,9 +122,9 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 		QString s = data.toString();
 		updatedDims.clear();
 		if (s == "cM") {
-			p.cM = value;
+			p.cM() = value;
 		} else if (s == "eL") {
-			p.eL = value;
+			p.eL() = value;
 		}
 	} else if (data.type() == QVariant::UInt) {
 		size_t i = data.toUInt();
@@ -146,8 +146,8 @@ void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 	blockSignals(true);
 	Parameters &p = params->params;
 	if (dims.empty()) {
-		paramCM->setValue(p.cM);
-		paramEL->setValue(p.eL);
+		paramCM->setValue(p.cM());
+		paramEL->setValue(p.eL());
 		for (size_t d = 0; d < WorkingParameters::Size; d++) {
 			workingParams[d]->setVisible(params->model ==
 			                                 ModelType::AD_IF_COND_EXP ||

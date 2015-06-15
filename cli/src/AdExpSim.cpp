@@ -42,11 +42,11 @@ int main(int argc, char *argv[])
 	WorkingParameters wParams(params);
 	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() << std::endl;
 	std::cerr << "Effective spike potential: "
-	          << wParams.eSpikeEff() + params.eL << std::endl;
+	          << wParams.eSpikeEff() + params.eL() << std::endl;
 
 	Model::simulate<Model::FAST_EXP>(
 	    train.getSpikes(), recorder, controller, integrator, wParams, 1e-3_s);
-	std::cerr << "Max. membrane potential: " << controller.vMax + params.eL
+	std::cerr << "Max. membrane potential: " << controller.vMax + params.eL()
 	          << std::endl;
 	return 0;
 }

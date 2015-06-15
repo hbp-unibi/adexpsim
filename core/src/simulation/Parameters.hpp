@@ -59,22 +59,42 @@ constexpr Val w = 0.03e-6;      // Default synapse weight [S]
 /**
  * Structure holding the parameters of a single AdExp neuron.
  */
-struct Parameters {
-	Val cM = DefaultParameters::cM;    // Membrane capacitance [F]
-	Val gL = DefaultParameters::gL;    // Membrane leak conductance [S]
-	Val eL = DefaultParameters::eL;    // Leak channel reversal potential [V]
-	Val eE = DefaultParameters::eE;    // Excitatory reversal potential [V]
-	Val eI = DefaultParameters::eI;    // Inhibitory reversal potential [V]
-	Val eTh = DefaultParameters::eTh;  // Threshold potential [V]
-	Val eSpike = DefaultParameters::eSpike;    // Spike potential [V]
-	Val eReset = DefaultParameters::eReset;    // Reset potential [V]
-	Val deltaTh = DefaultParameters::deltaTh;  // Slope factor [V]
-	Val tauI = DefaultParameters::tauI;        // Time constant for decay of gI
-	Val tauE = DefaultParameters::tauE;        // Time constant for decay of gE
-	Val tauW = DefaultParameters::tauW;        // Time constant for decay of w
-	Val a = DefaultParameters::a;              // Subthreshold adaptation [S]
-	Val b = DefaultParameters::b;              // Spike triggered adaptation [A]
-	Val w = DefaultParameters::w;              // Synapse weight  [S]
+class Parameters : public Vector<Parameters, 15> {
+public:
+	using Vector<Parameters, 15>::Vector;
+
+	/**
+	 * Default constructor, uses the values defined in the DefaultParameters
+	 * namespace as default parameters.
+	 */
+	Parameters()
+	    : Vector<Parameters, 15>(
+	          {DefaultParameters::cM, DefaultParameters::gL,
+	           DefaultParameters::eL, DefaultParameters::eE,
+	           DefaultParameters::eI, DefaultParameters::eTh,
+	           DefaultParameters::eSpike, DefaultParameters::eReset,
+	           DefaultParameters::deltaTh, DefaultParameters::tauI,
+	           DefaultParameters::tauE, DefaultParameters::tauW,
+	           DefaultParameters::a, DefaultParameters::b,
+	           DefaultParameters::w})
+	{
+	}
+
+	NAMED_VECTOR_ELEMENT(cM, 0);       // Membrane capacitance [F]
+	NAMED_VECTOR_ELEMENT(gL, 1);       // Membrane leak conductance [S]
+	NAMED_VECTOR_ELEMENT(eL, 2);       // Leak channel reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eE, 3);       // Excitatory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eI, 4);       // Inhibitory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eTh, 5);      // Threshold potential [V]
+	NAMED_VECTOR_ELEMENT(eSpike, 6);   // Spike potential [V]
+	NAMED_VECTOR_ELEMENT(eReset, 7);   // Reset potential [V]
+	NAMED_VECTOR_ELEMENT(deltaTh, 8);  // Slope factor [V]
+	NAMED_VECTOR_ELEMENT(tauI, 9);     // Time constant for decay of gI
+	NAMED_VECTOR_ELEMENT(tauE, 10);    // Time constant for decay of gE
+	NAMED_VECTOR_ELEMENT(tauW, 11);    // Time constant for decay of w
+	NAMED_VECTOR_ELEMENT(a, 12);       // Subthreshold adaptation [S]
+	NAMED_VECTOR_ELEMENT(b, 13);       // Spike triggered adaptation [A]
+	NAMED_VECTOR_ELEMENT(w, 14);       // Synapse weight  [S]
 };
 
 /**
@@ -122,21 +142,12 @@ public:
 	 * should be created.
 	 */
 	WorkingParameters(const Parameters &p = Parameters())
-	    : Vector<WorkingParameters, 13>({
-	          p.gL / p.cM,        // lL (0)
-	          Val(1.0) / p.tauE,  // lE (1)
-	          Val(1.0) / p.tauI,  // lI (2)
-	          Val(1.0) / p.tauW,  // lW (3)
-	          p.eE - p.eL,        // eE (4)
-	          p.eI - p.eL,        // eI (5)
-	          p.eTh - p.eL,       // eTh (6)
-	          p.eSpike - p.eL,    // eSpike (7)
-	          p.eReset - p.eL,    // eReset (8)
-	          p.deltaTh,          // deltaTh (9)
-	          p.a / p.cM,         // lA (10)
-	          p.b / p.cM,         // lB (11)
-	          p.w / p.cM          // wSpike (12)
-	      })
+	    : Vector<WorkingParameters, 13>(
+	          {fromParameter(0, p), fromParameter(1, p), fromParameter(2, p),
+	           fromParameter(3, p), fromParameter(4, p), fromParameter(5, p),
+	           fromParameter(6, p), fromParameter(7, p), fromParameter(8, p),
+	           fromParameter(9, p), fromParameter(10, p), fromParameter(11, p),
+	           fromParameter(12, p)})
 	{
 		update();
 	}
@@ -153,7 +164,7 @@ public:
 	NAMED_VECTOR_ELEMENT(deltaTh, 9);  // Spike slope factor [V]
 	NAMED_VECTOR_ELEMENT(lA, 10);      // Subthreshold adaptation [Hz]
 	NAMED_VECTOR_ELEMENT(lB, 11);      // Spike trig. adaptation cur. [V/s]
-	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [V/A*s]
+	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [Hz]
 
 	/**
 	 * Vector containing the name of each component.
@@ -204,7 +215,7 @@ public:
 	 */
 	Parameters toParameters(const Parameters &params) const
 	{
-		return toParameters(params.cM, params.eL);
+		return toParameters(params.cM(), params.eL());
 	}
 
 	/**
@@ -238,7 +249,7 @@ public:
 	 */
 	static Val toParameter(Val v, size_t idx, const Parameters &params)
 	{
-		return toParameter(v, idx, params.cM, params.eL);
+		return toParameter(v, idx, params.cM(), params.eL());
 	}
 
 	/**
@@ -246,15 +257,6 @@ public:
 	 * WorkingParameters to the Parameters range.
 	 */
 	static Val toParameter(Val v, size_t idx, Val cM, Val eL);
-
-	/**
-	 * Transforms the parameter with the given index from the
-	 * Parameters to the WorkingParameters range.
-	 */
-	Val fromParameter(size_t idx, const Parameters &params) const
-	{
-		return fromParameter(arr[idx], idx, params);
-	}
 
 	/**
 	 * Transforms the parameter with the given index from the
@@ -269,9 +271,19 @@ public:
 	 * Transforms the parameter with the given index from the
 	 * Parameters to the WorkingParameters range.
 	 */
+	static Val fromParameter(size_t idx, const Parameters &params)
+	{
+		return fromParameter(fetchParameter(idx, params), idx, params.cM(),
+		                     params.eL());
+	}
+
+	/**
+	 * Transforms the parameter with the given index from the
+	 * Parameters to the WorkingParameters range.
+	 */
 	static Val fromParameter(Val v, size_t idx, const Parameters &params)
 	{
-		return fromParameter(v, idx, params.cM, params.eL);
+		return fromParameter(v, idx, params.cM(), params.eL());
 	}
 
 	/**

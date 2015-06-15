@@ -71,21 +71,21 @@ const std::vector<std::string> WorkingParameters::originalDescriptions = {
 Parameters WorkingParameters::toParameters(Val cM, Val eL) const
 {
 	Parameters res;
-	res.cM = cM;
-	res.gL = lL() * cM;
-	res.eL = eL;
-	res.eE = eE() + eL;
-	res.eI = eI() + eL;
-	res.eTh = eTh() + eL;
-	res.eSpike = eSpike() + eL;
-	res.eReset = eReset() + eL;
-	res.deltaTh = deltaTh();
-	res.tauI = 1.0 / lI();
-	res.tauE = 1.0 / lE();
-	res.tauW = 1.0 / lW();
-	res.a = lA() * cM;
-	res.b = lB() * cM;
-	res.w = wSpike() * cM;
+	res.cM() = cM;
+	res.gL() = lL() * cM;
+	res.eL() = eL;
+	res.eE() = eE() + eL;
+	res.eI() = eI() + eL;
+	res.eTh() = eTh() + eL;
+	res.eSpike() = eSpike() + eL;
+	res.eReset() = eReset() + eL;
+	res.deltaTh() = deltaTh();
+	res.tauI() = 1.0 / lI();
+	res.tauE() = 1.0 / lE();
+	res.tauW() = 1.0 / lW();
+	res.a() = lA() * cM;
+	res.b() = lB() * cM;
+	res.w() = wSpike() * cM;
 	return res;
 }
 
@@ -146,33 +146,34 @@ Val &WorkingParameters::fetchParameter(size_t idx, Parameters &params)
 {
 	switch (idx) {
 		case 0:
-			return params.gL;
+			return params.gL();
 		case 1:
-			return params.tauE;
+			return params.tauE();
 		case 2:
-			return params.tauI;
+			return params.tauI();
 		case 3:
-			return params.tauW;
+			return params.tauW();
 		case 4:
-			return params.eE;
+			return params.eE();
 		case 5:
-			return params.eI;
+			return params.eI();
 		case 6:
-			return params.eTh;
+			return params.eTh();
 		case 7:
-			return params.eSpike;
+			return params.eSpike();
 		case 8:
-			return params.eReset;
+			return params.eReset();
 		case 9:
-			return params.deltaTh;
+			return params.deltaTh();
 		case 10:
-			return params.a;
+			return params.a();
 		case 11:
-			return params.b;
+			return params.b();
 		case 12:
-			return params.w;
+			return params.w();
 	}
-	return params.w;
+	// TODO: Mark as unreachable
+	return params.w();
 }
 
 Val WorkingParameters::calculateESpikeEff(double eTh, double deltaTh)
