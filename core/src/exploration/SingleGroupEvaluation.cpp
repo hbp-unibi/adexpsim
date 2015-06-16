@@ -86,10 +86,10 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 	NullRecorder n;
 
 	// Use max value controller to track the maximum value
-	SingleGroupEvaluationController cN, cNM1;
+	SingleGroupEvaluationController cN, cNM1, cNS;
 
 	// Use the DormandPrinceIntegrator
-	DormandPrinceIntegrator iN, iNM1;
+	DormandPrinceIntegrator iN, iNM1, iNS;
 
 	// Simulate for both the sXi and the sXiM1 input spike train
 	if (useIfCondExp) {
@@ -97,6 +97,9 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 		    sN, n, cN, iN, params, Time(-1), spikeData.T);
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
 		    sNM1, n, cNM1, iNM1, params, Time(-1), spikeData.T);
+		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
+		    sN, n, cNS, iNS, params, Time(-1), spikeData.T,
+		    State(params.eReset()));
 	} else {
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sN, n, cN, iN, params, Time(-1),
@@ -104,12 +107,16 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sNM1, n, cNM1, iNM1, params, Time(-1),
 		                                 spikeData.T);
+		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
+		                Model::FAST_EXP>(sN, n, cNS, iNS, params, Time(-1),
+		                                 spikeData.T, State(params.eReset()));
 	}
 
 	const Val th = params.eSpikeEff(useIfCondExp);
-	const bool ok = cN.vMax > th && cNM1.vMax < th;
+	const bool ok = cN.vMax > th && cNM1.vMax < th && cNS.vMax < th;
 	const Val pFalseNegative = sigmaV(cN.vMax, th, true);
-	const Val pFalsePositive = sigmaV(cNM1.vMax, th, false);
+	const Val pFalsePositive =
+	    1.0 - sigmaV(cNM1.vMax, th, true) * sigmaV(cNS.vMax, th, true);
 	const State sInit = State(0.0, 0.0, 0.0, 0.0);
 	const State sRescale = State(100.0, 0.1, 0.1, 0.1);
 	const Val eDiff = ((sInit - cN.state) * sRescale).sqrL2Norm();
