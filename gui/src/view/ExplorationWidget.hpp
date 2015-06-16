@@ -115,6 +115,11 @@ public:
 	 */
 	size_t getDimY();
 
+	/**
+	 * Draws the current exploration as PDF.
+	 */
+	void saveToPdf(const QString &filename);
+
 public slots:
 	/**
 	 * Slot that can be connected to the corresponding event of the

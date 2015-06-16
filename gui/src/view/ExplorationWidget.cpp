@@ -225,6 +225,13 @@ size_t ExplorationWidget::getDimY()
 	return comboDimY->itemData(comboDimY->currentIndex()).toInt();
 }
 
+void ExplorationWidget::saveToPdf(const QString &filename)
+{
+	overlayHW->setPen(QPen(QColor(200, 75, 25), 2));
+	pltExploration->savePdf(filename);
+	overlayHW->setPen(QPen(QColor(200, 75, 25), 1));
+}
+
 /*
  * Coordinate transformation functions
  */

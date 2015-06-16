@@ -111,6 +111,11 @@ private slots:
 	 */
 	void handleUpdateResolution(int index);
 
+	/**
+	 * Called when the "save as pdf" button is pressed.
+	 */
+	void handleSavePdf();
+
 public slots:
 	void lock();
 	void unlock();

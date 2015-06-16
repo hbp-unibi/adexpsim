@@ -20,6 +20,7 @@
 
 #include <QAction>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QVBoxLayout>
 #include <QToolBar>
 #include <QWidget>
@@ -113,6 +114,7 @@ void ExplorationWindow::createWidgets()
 	// Connect the actions
 	connect(actLockView, SIGNAL(triggered(bool)), this,
 	        SLOT(handleLockView(bool)));
+	connect(actSavePDF, SIGNAL(triggered()), this, SLOT(handleSavePdf()));
 
 	// Center the view of the ExplorationWidget to trigger an initial
 	// exploration
@@ -223,5 +225,14 @@ void ExplorationWindow::unlock()
 }
 
 bool ExplorationWindow::isLocked() { return actLockView->isChecked(); }
+
+void ExplorationWindow::handleSavePdf()
+{
+	QString fileName = QFileDialog::getSaveFileName(this, "Save PDF", QString(),
+	                                                "PDF Files (*.pdf)");
+	if (!fileName.isEmpty()) {
+		explorationWidget->saveToPdf(fileName);
+	}
+}
 }
 
