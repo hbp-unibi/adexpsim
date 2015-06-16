@@ -283,7 +283,13 @@ struct Range {
 
 	Range() : min(0), max(0), steps(1) {}
 
-	Range(Val min, Val max, size_t steps) : min(min), max(max), steps(steps) {}
+	Range(Val min, Val max, size_t steps = 1) : min(min), max(max), steps(steps)
+	{
+	}
+
+	bool contains(Val v) const { return (v >= min) && (v <= max); }
+
+	Val clamp(Val v) const { return v > max ? max : (v < min ? min : v); }
 
 	Val value(size_t i) const { return getOffs() + getScale() * i; }
 

@@ -52,7 +52,7 @@ public:
 	QPen pen() const { return mPen; }
 
 	// setters;
-	void setPen(const QPen &pen);
+	void setPen(const QPen &pen) {mPen = pen;}
 
 	double selectTest(const QPointF &pos, bool onlySelectable,
 	                  QVariant *details = 0) const override;

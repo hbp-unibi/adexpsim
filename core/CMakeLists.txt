@@ -53,6 +53,7 @@ SET(ADEXPSIM_CORE_SRC
 	src/exploration/SpikeTrainEvaluation
 	src/simulation/Controller
 	src/simulation/DormandPrinceIntegrator
+	src/simulation/HardwareParameters
 	src/simulation/Integrator
 	src/simulation/Model
 	src/simulation/Parameters

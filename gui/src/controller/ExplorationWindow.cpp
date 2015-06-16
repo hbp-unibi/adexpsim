@@ -33,8 +33,8 @@
 
 namespace AdExpSim {
 
-ExplorationWindow::ExplorationWindow(std::shared_ptr<ParameterCollection> params,
-                                     QWidget *parent)
+ExplorationWindow::ExplorationWindow(
+    std::shared_ptr<ParameterCollection> params, QWidget *parent)
     : AbstractViewerWindow(params, parent),
       fitView(true),
       hadUpdate(false),

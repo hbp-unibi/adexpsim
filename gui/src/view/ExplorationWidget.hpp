@@ -50,6 +50,7 @@ class ExplorationWidget : public QWidget {
 	Q_OBJECT
 
 private:
+	QAction *actShowHWLimits;
 	QAction *actZoomFit;
 	QAction *actZoomCenter;
 	QAction *actLockXAxis;
@@ -69,6 +70,7 @@ private:
 	QCustomPlot *pltExploration;
 	ExplorationWidgetCrosshair *crosshair;
 	ExplorationWidgetInvalidOverlay *overlay;
+	ExplorationWidgetInvalidOverlay *overlayHW;
 	std::shared_ptr<ParameterCollection> params;
 	std::shared_ptr<Exploration> exploration;
 

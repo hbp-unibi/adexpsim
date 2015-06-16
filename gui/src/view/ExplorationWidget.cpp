@@ -33,6 +33,7 @@
 #include <exploration/EvaluationResult.hpp>
 #include <exploration/Exploration.hpp>
 #include <utils/ParameterCollection.hpp>
+#include <simulation/HardwareParameters.hpp>
 
 #include "ExplorationWidget.hpp"
 #include "ExplorationWidgetCrosshair.hpp"
@@ -94,6 +95,10 @@ ExplorationWidget::ExplorationWidget(
 	        SLOT(dimensionYChanged()));
 
 	// Create the actions
+	actShowHWLimits = new QAction(QIcon("data/icon_hw.png"), "HW Limits", this);
+	actShowHWLimits->setToolTip("Show the hardware limits");
+	actShowHWLimits->setCheckable(true);
+	actShowHWLimits->setChecked(false);
 	actZoomFit =
 	    new QAction(QIcon::fromTheme("zoom-original"), "Fit View", this);
 	actZoomFit->setToolTip(
@@ -114,6 +119,7 @@ ExplorationWidget::ExplorationWidget(
 	actLockYAxis->setToolTip("Allow zoom in Y direction");
 
 	// Connect the action events to the corresponding slots
+	connect(actShowHWLimits, SIGNAL(triggered()), this, SLOT(refresh()));
 	connect(actZoomFit, SIGNAL(triggered()), this, SLOT(fitView()));
 	connect(actZoomCenter, SIGNAL(triggered()), this, SLOT(centerView()));
 	connect(actLockXAxis, SIGNAL(triggered()), this,
@@ -121,6 +127,8 @@ ExplorationWidget::ExplorationWidget(
 	connect(actLockYAxis, SIGNAL(triggered()), this,
 	        SLOT(handleRestrictZoom()));
 
+	toolbar->addAction(actShowHWLimits);
+	toolbar->addSeparator();
 	toolbar->addAction(actZoomFit);
 	toolbar->addAction(actZoomCenter);
 	toolbar->addAction(actLockXAxis);
@@ -142,9 +150,14 @@ ExplorationWidget::ExplorationWidget(
 
 	// Add the crosshair and the "invalid overlay"
 	overlay = new ExplorationWidgetInvalidOverlay(pltExploration);
+	overlayHW = new ExplorationWidgetInvalidOverlay(pltExploration);
+	overlayHW->setPen(QPen(QColor(200, 75, 25), 1));
 	pltExploration->addItem(overlay);
+	pltExploration->addItem(overlayHW);
+
 	pltExploration->addLayer("overlay");
 	overlay->setLayer("overlay");
+	overlayHW->setLayer("overlay");
 
 	crosshair = new ExplorationWidgetCrosshair(pltExploration);
 	pltExploration->addItem(crosshair);
@@ -487,7 +500,10 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 
 	if (exploration->valid()) {
 		// Calculate the validity mask
+		const bool showHWOverlay = actShowHWLimits->isChecked();
+		const size_t HW_RES = showHWOverlay ? RES : 0;
 		MatrixBase<bool> mask(RES, RES);
+		MatrixBase<bool> maskHW(HW_RES, HW_RES);
 		const Range &rX = exploration->getRangeX();
 		const Range &rY = exploration->getRangeY();
 		const Range rEX(rX.min, rX.max, RES);
@@ -500,6 +516,13 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 				wp[dimX] = rEX.value(x);
 				wp[dimY] = rEY.value(y);
 				mask(x, y) = wp.valid();
+				if (showHWOverlay) {
+					maskHW(x, y) =
+					    BrainScaleSParameters::inst
+					        .map(wp, params->model == ModelType::IF_COND_EXP,
+					             true)
+					        .size() > 0;
+				}
 			}
 		}
 
@@ -508,9 +531,13 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 		QPointF max = workingParametersToPlot(rX.max, rY.max);
 		overlay->setMask(Range(min.x(), max.x(), RES),
 		                 Range(min.y(), max.y(), RES), mask);
+		overlayHW->setMask(Range(min.x(), max.x(), HW_RES),
+		                   Range(min.y(), max.y(), HW_RES), maskHW);
 	} else {
 		overlay->setMask(Range(0, 0, 0), Range(0, 0, 0),
 		                 MatrixBase<bool>(0, 0));
+		overlayHW->setMask(Range(0, 0, 0), Range(0, 0, 0),
+		                   MatrixBase<bool>(0, 0));
 	}
 }
 
