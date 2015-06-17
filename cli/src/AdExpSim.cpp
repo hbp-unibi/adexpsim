@@ -29,25 +29,29 @@ int main(int argc, char *argv[])
 {
 	// Use the default parameters
 	Parameters params;
-	MaxValueController controller;
+	NullController controller;
 	DormandPrinceIntegrator integrator;
 
 	// Create the recorder
 	CsvRecorder<> recorder(params, 0.1e-3_s, std::cout);
 
 	// Create a vector containing all input spikes
-	SpikeTrain train({{4, 1, 1e-3}, {1, 0, 1e-3}}, 10,
-	                 true, 0.1_s, 0.01);
+	/*	SpikeTrain train({{4, 1, 1e-3}, {1, 0, 1e-3}}, 10,
+	                     true, 0.1_s, 0.01);
+	SpikeVec spikes = train.getSpikes();*/
+	SpikeVec spikes = buildInputSpikes(3, 0.5e-3_s);
 
 	WorkingParameters wParams(params);
-	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() << std::endl;
-	std::cerr << "Effective spike potential: "
-	          << wParams.eSpikeEff() + params.eL() << std::endl;
+	/*	std::cerr << "Max. iTh exponent: " << wParams.maxIThExponent() <<
+	   std::endl;
+	    std::cerr << "Effective spike potential: "
+	              << wParams.eSpikeEff() + params.eL() << std::endl;*/
 
-	Model::simulate<Model::FAST_EXP>(
-	    train.getSpikes(), recorder, controller, integrator, wParams, 1e-3_s);
-	std::cerr << "Max. membrane potential: " << controller.vMax + params.eL()
-	          << std::endl;
+	Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
+	    spikes, recorder, controller, integrator, wParams, Time(-1), 0.1_s, State(wParams.eReset()));
+	/*	std::cerr << "Max. membrane potential: " << controller.vMax +
+	   params.eL()
+	              << std::endl;*/
 	return 0;
 }
 
