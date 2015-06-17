@@ -121,7 +121,8 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 	const State sRescale = State(100.0, 0.1, 0.1, 0.1);
 	const Val eDiff = ((sInit - cN.state) * sRescale).sqrL2Norm();
 	const Val eDiffM1 = ((sInit - cNM1.state) * sRescale).sqrL2Norm();
-	const Val pReset = exp(-(eDiff + eDiffM1));
+	const Val eDiffS = ((sInit - cNS.state) * sRescale).sqrL2Norm();
+	const Val pReset = exp(-((eDiff + eDiffM1 + eDiffS) * 0.333333f));
 	return EvaluationResult(
 	    ok ? 1.0 : 0.0, pFalsePositive, pFalseNegative,
 	    (1.0 - pFalseNegative) * (1.0 - pFalsePositive) * pReset);
