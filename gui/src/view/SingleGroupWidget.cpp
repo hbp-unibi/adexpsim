@@ -19,6 +19,7 @@
 #include <QAction>
 #include <QHBoxLayout>
 #include <QTimer>
+#include <QToolBar>
 #include <QVBoxLayout>
 
 #include <utils/ParameterCollection.hpp>
@@ -43,6 +44,16 @@ SingleGroupWidget::SingleGroupWidget(
 	layout->setMargin(0);
 	layout->setSpacing(0);
 
+	// Create the toolbar and the corresponding actions
+	actCopyFromSpikeTrain = new QAction(QIcon::fromTheme("go-down"), "From SpikeTrain", this);
+	actCopyFromSpikeTrain->setToolTip("Copy parameters from Spike Train settings");
+	actCopyToSpikeTrain = new QAction(QIcon::fromTheme("go-up"), "To SpikeTrain", this);
+	actCopyToSpikeTrain->setToolTip("Copy parameters to Spike Train settings");
+
+	toolbar = new QToolBar();
+	toolbar->addAction(actCopyFromSpikeTrain);
+	toolbar->addAction(actCopyToSpikeTrain);
+
 	// Create the other parameter widgets
 	paramN = new ParameterWidget(this, "n", 3, 1, 20, "", "n");
 	paramN->setIntOnly(true);
@@ -61,6 +72,7 @@ SingleGroupWidget::SingleGroupWidget(
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 
 	// Add all widgets to the main layout
+	layout->addWidget(toolbar);
 	layout->addWidget(paramN);
 	layout->addWidget(paramDeltaT);
 	layout->addWidget(paramT);

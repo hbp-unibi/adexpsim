@@ -30,7 +30,9 @@
 
 #include <QWidget>
 
+class QAction;
 class QTimer;
+class QToolBar;
 
 namespace AdExpSim {
 
@@ -51,8 +53,13 @@ private:
 	 */
 	std::shared_ptr<ParameterCollection> params;
 
+	/* Actions */
+	QAction *actCopyFromSpikeTrain;
+	QAction *actCopyToSpikeTrain;
+
 	/* Widgets */
 	QTimer *updateTimer;
+	QToolBar *toolbar;
 	ParameterWidget *paramN;
 	ParameterWidget *paramDeltaT;
 	ParameterWidget *paramT;
