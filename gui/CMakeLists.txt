@@ -75,6 +75,7 @@ ADD_EXECUTABLE(AdExpSimGui
 # Use the Widgets module from Qt 5.
 TARGET_LINK_LIBRARIES(AdExpSimGui
 	AdExpSimCore
+	AdExpSimIo
 	qcustomplot
 	Qt5::Widgets
 )
