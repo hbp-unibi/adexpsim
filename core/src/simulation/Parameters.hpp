@@ -293,6 +293,154 @@ public:
 	static Val fromParameter(Val v, size_t idx, Val cM, Val eL);
 
 	/**
+	 * Transforms the given working parameter to a value to be used when
+	 * plotting the parameter.
+	 */
+	static Val workingToPlot(Val v, size_t idx, Val cM, Val eL)
+	{
+		if (linear[idx]) {
+			return toParameter(v, idx, cM, eL);
+		}
+		return v;
+	}
+
+	/**
+	 * Transforms the given working parameter to a value to be used when
+	 * plotting the parameter.
+	 */
+	static Val workingToPlot(Val v, size_t idx, const Parameters &params)
+	{
+		return workingToPlot(v, idx, params.cM(), params.eL());
+	}
+
+	/**
+	 * Transforms the given working parameter to a value to be used when
+	 * plotting the parameter.
+	 */
+	Val workingToPlot(size_t idx, Val cM, Val eL) const
+	{
+		return workingToPlot(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the given working parameter to a value to be used when
+	 * plotting the parameter.
+	 */
+	Val workingToPlot(size_t idx, const Parameters &params) const
+	{
+		return workingToPlot(arr[idx], idx, params);
+	}
+
+	/**
+	 * Transforms the given parameter to a value to be used when plotting the
+	 * parameter.
+	 */
+	static Val parameterToPlot(Val v, size_t idx, Val cM, Val eL)
+	{
+		if (!linear[idx]) {
+			return fromParameter(v, idx, cM, eL);
+		}
+		return v;
+	}
+
+	/**
+	 * Transforms the given parameter to a value to be used when plotting the
+	 * parameter.
+	 */
+	static Val parameterToPlot(Val v, size_t idx, const Parameters &params)
+	{
+		return parameterToPlot(v, idx, params.cM(), params.eL());
+	}
+
+	/**
+	 * Transforms the given parameter to a value to be used when plotting the
+	 * parameter.
+	 */
+	Val parameterToPlot(size_t idx, Val cM, Val eL) const
+	{
+		return parameterToPlot(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the given parameter to a value to be used when plotting the
+	 * parameter.
+	 */
+	Val parameterToPlot(size_t idx, const Parameters &params) const
+	{
+		return parameterToPlot(arr[idx], idx, params);
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a working parameter value.
+	 */
+	static Val plotToWorking(Val v, size_t idx, Val cM, Val eL)
+	{
+		if (linear[idx]) {
+			return fromParameter(v, idx, cM, eL);
+		}
+		return v;
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a working parameter value.
+	 */
+	static Val plotToWorking(Val v, size_t idx, const Parameters &params)
+	{
+		return plotToWorking(v, idx, params.cM(), params.eL());
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a working parameter value.
+	 */
+	Val plotToWorking(size_t idx, Val cM, Val eL) const
+	{
+		return plotToWorking(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a working parameter value.
+	 */
+	Val plotToWorking(size_t idx, const Parameters &params) const
+	{
+		return plotToWorking(arr[idx], idx, params);
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a parameter value.
+	 */
+	static Val plotToParameter(Val v, size_t idx, Val cM, Val eL)
+	{
+		if (!linear[idx]) {
+			return toParameter(v, idx, cM, eL);
+		}
+		return v;
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a parameter value.
+	 */
+	static Val plotToParameter(Val v, size_t idx, const Parameters &params)
+	{
+		return plotToParameter(v, idx, params.cM(), params.eL());
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a parameter value.
+	 */
+	Val plotToParameter(size_t idx, Val cM, Val eL) const
+	{
+		return plotToParameter(arr[idx], idx, cM, eL);
+	}
+
+	/**
+	 * Transforms the given plot coordinate to a parameter value.
+	 */
+	Val plotToParameter(size_t idx, const Parameters &params) const
+	{
+		return plotToParameter(arr[idx], idx, params);
+	}
+
+	/**
 	 * Function used to calculate the effective spike potential.
 	 */
 	static Val calculateESpikeEff(double eTh, double deltaTh);
