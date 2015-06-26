@@ -69,8 +69,8 @@ public:
 	 */
 	Parameters()
 	    : Vector<Parameters, 15>(
-	          {DefaultParameters::gL, DefaultParameters::tauI,
-	           DefaultParameters::tauE, DefaultParameters::tauW,
+	          {DefaultParameters::gL, DefaultParameters::tauE,
+	           DefaultParameters::tauI, DefaultParameters::tauW,
 	           DefaultParameters::eE, DefaultParameters::eI,
 	           DefaultParameters::eTh, DefaultParameters::eSpike,
 	           DefaultParameters::eReset, DefaultParameters::deltaTh,
@@ -80,8 +80,8 @@ public:
 	}
 
 	NAMED_VECTOR_ELEMENT(gL, 0);       // Membrane leak conductance [S]
-	NAMED_VECTOR_ELEMENT(tauI, 1);     // Time constant for decay of gI
-	NAMED_VECTOR_ELEMENT(tauE, 2);     // Time constant for decay of gE
+	NAMED_VECTOR_ELEMENT(tauE, 1);     // Time constant for decay of gE
+	NAMED_VECTOR_ELEMENT(tauI, 2);     // Time constant for decay of gI
 	NAMED_VECTOR_ELEMENT(tauW, 3);     // Time constant for decay of w
 	NAMED_VECTOR_ELEMENT(eE, 4);       // Excitatory reversal potential [V]
 	NAMED_VECTOR_ELEMENT(eI, 5);       // Inhibitory reversal potential [V]
