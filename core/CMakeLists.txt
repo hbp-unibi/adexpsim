@@ -33,15 +33,13 @@ INCLUDE_DIRECTORIES(
 	src/
 )
 
-# Find the OpenCL libraries
-OPTION(WITH_OPENCL "Use OpenCL for design space exploration" OFF)
-
 CONFIGURE_FILE(
 	"${PROJECT_SOURCE_DIR}/include/config.h.in"
 	"${PROJECT_SOURCE_DIR}/include/config.h"
 )
 
-SET(ADEXPSIM_CORE_SRC
+# AdExpSimCore library
+ADD_LIBRARY(AdExpSimCore
 	src/common/Matrix
 	src/common/Terminal
 	src/common/Timer
@@ -63,28 +61,8 @@ SET(ADEXPSIM_CORE_SRC
 	src/utils/ParameterCollection
 )
 
-# Conditionally add the OpenCL source code
-IF (WITH_OPENCL)
-	SET(ADEXPSIM_CORE_SRC
-		${ADEXPSIM_CORE_SRC}
-		src/exploration/ExplorationOpenCL
-	)
-	FIND_PACKAGE(OpenCL REQUIRED)
-	INCLUDE_DIRECTORIES(
-		${OPENCL_INCLUDE_DIR}
-	)
-ELSE ()
-	SET(OPENCL_LIBRARY "")
-ENDIF ()
-
-# AdExpSimCore library
-ADD_LIBRARY(AdExpSimCore
-	${ADEXPSIM_CORE_SRC}
-)
-
 # Link library
 TARGET_LINK_LIBRARIES(AdExpSimCore
-	${OPENCL_LIBRARY}
 	rt
 	pthread
 )
