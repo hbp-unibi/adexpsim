@@ -49,6 +49,9 @@ private:
 private slots:
 	void triggerUpdateParameters();
 	void handleParameterUpdate(Val value, const QVariant &data);
+	void handleParameterUpdateRange(Val min, Val max, const QVariant &data);
+	void handleParameterUpdateOptimize(bool optimize, const QVariant &data);
+	void handleParameterUpdateExplore(bool explore, const QVariant &data);
 
 public:
 	ParametersWidget(std::shared_ptr<ParameterCollection> params,

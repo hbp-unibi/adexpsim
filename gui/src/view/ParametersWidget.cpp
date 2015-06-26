@@ -67,7 +67,7 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 	layout->addWidget(paramEL);
 
 	// Create the parameter widgets for all parameters in the working set
-	for (size_t i = 0; i < 13; i++) {
+	for (size_t i = 0; i < WorkingParameters::Size; i++) {
 		std::string name = WorkingParameters::names[i];
 		std::string unit = WorkingParameters::units[i];
 		Val value = p[i];
@@ -100,8 +100,19 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 		workingParams[i] =
 		    new ParameterWidget(this, QString::fromStdString(name), value, min,
 		                        max, QString::fromStdString(unit), uint(i));
+		workingParams[i]->setOptimizeEnabled(true);
+		workingParams[i]->setOptimize(params->optimize[i]);
+		workingParams[i]->setExploreEnabled(true);
+		workingParams[i]->setExplore(params->explore[i]);
+
 		connect(workingParams[i], SIGNAL(update(Val, const QVariant &)), this,
 		        SLOT(handleParameterUpdate(Val, const QVariant &)));
+		connect(workingParams[i], SIGNAL(updateExplore(bool, const QVariant &)),
+		        this,
+		        SLOT(handleParameterUpdateExplore(bool, const QVariant &)));
+		connect(workingParams[i],
+		        SIGNAL(updateOptimize(bool, const QVariant &)), this,
+		        SLOT(handleParameterUpdateOptimize(bool, const QVariant &)));
 
 		layout->addWidget(workingParams[i]);
 	}
@@ -138,6 +149,27 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 
 	// Wait 100ms with triggering the update
 	updateTimer->start(100);
+}
+
+void ParametersWidget::handleParameterUpdateRange(Val min, Val max,
+                                                  const QVariant &data)
+{
+}
+
+void ParametersWidget::handleParameterUpdateOptimize(bool optimize,
+                                                     const QVariant &data)
+{
+	if (data.type() == QVariant::UInt) {
+		params->optimize[data.toUInt()] = optimize;
+	}
+}
+
+void ParametersWidget::handleParameterUpdateExplore(bool explore,
+                                                    const QVariant &data)
+{
+	if (data.type() == QVariant::UInt) {
+		params->explore[data.toUInt()] = explore;
+	}
 }
 
 void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)

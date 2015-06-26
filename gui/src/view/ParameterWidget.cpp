@@ -16,12 +16,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QSlider>
 #include <QPushButton>
+#include <QSlider>
+#include <QToolButton>
 #include <QWidget>
-#include <QHBoxLayout>
 #include <QVBoxLayout>
 
 #include "ParameterWidget.hpp"
@@ -86,6 +87,22 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	btnRange->setFixedHeight(24);
 	btnRange->setText("▸");
 
+	// "Optimize" and "Explore" buttons (default: invisible)
+	btnOptimize = new QToolButton(cntRange);
+	btnOptimize->setIcon(QIcon::fromTheme("edit-find"));
+	btnOptimize->setCheckable(true);
+	btnOptimize->setToolTip(
+	    "Enable optimization when performing an optimization run");
+	btnOptimize->hide();
+
+	btnExplore = new QToolButton(cntRange);
+	btnExplore->setIcon(QIcon::fromTheme("camera-photo"));
+	btnExplore->setCheckable(true);
+	btnExplore->setToolTip(
+	    "Explore this dimension in the set parameter range when running an "
+	    "optimization");
+	btnExplore->hide();
+
 	// Connect all events
 	connect(edtValue, SIGNAL(editingFinished()), this, SLOT(handleEdit()));
 	connect(edtMin, SIGNAL(editingFinished()), this, SLOT(handleEdit()));
@@ -93,6 +110,10 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	connect(sliderValue, SIGNAL(valueChanged(int)), this,
 	        SLOT(handleSlide(int)));
 	connect(btnRange, SIGNAL(clicked()), this, SLOT(toggleRange()));
+	connect(btnOptimize, SIGNAL(toggled(bool)), this,
+	        SLOT(handleOptimizeToggled(bool)));
+	connect(btnExplore, SIGNAL(toggled(bool)), this,
+	        SLOT(handleExploreToggled(bool)));
 
 	// Combine all widgets in the layout
 	QVBoxLayout *layMain = new QVBoxLayout(this);
@@ -111,6 +132,9 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	layRange->addWidget(new QLabel("Max:"));
 	layRange->addSpacing(10);
 	layRange->addWidget(edtMax);
+	layRange->addSpacing(10);
+	layRange->addWidget(btnOptimize);
+	layRange->addWidget(btnExplore);
 	layMain->addWidget(cntValue);
 	layMain->addWidget(cntRange);
 	layMain->addWidget(createSeparator(this));
@@ -165,6 +189,20 @@ void ParameterWidget::setMax(Val max)
 	blockSignals(false);
 }
 
+void ParameterWidget::setOptimize(bool optimize)
+{
+	blockSignals(true);
+	btnOptimize->setChecked(optimize);
+	blockSignals(false);
+}
+
+void ParameterWidget::setExplore(bool explore)
+{
+	blockSignals(true);
+	btnExplore->setChecked(explore);
+	blockSignals(false);
+}
+
 void ParameterWidget::setIntOnly(bool intOnly)
 {
 	blockSignals(true);
@@ -193,20 +231,34 @@ void ParameterWidget::setMinMaxEnabled(bool enabled)
 	blockSignals(false);
 }
 
-static void parseDouble(const QString &str, double &value, bool &valid)
+void ParameterWidget::setOptimizeEnabled(bool enabled)
 {
-	Val newValue = str.toDouble(&valid);
-	if (valid) {
-		value = newValue;
-	}
+	btnOptimize->setVisible(enabled);
 }
 
-static void parseLong(const QString &str, double &value, bool &valid)
+void ParameterWidget::setExploreEnabled(bool enabled)
 {
-	Val newValue = str.toLong(&valid);
+	btnExplore->setVisible(enabled);
+}
+
+static bool parseDouble(const QString &str, Val &value, bool &valid)
+{
+	Val newValue = str.toDouble(&valid);
+	bool changed = valid && (newValue != value);
 	if (valid) {
 		value = newValue;
 	}
+	return changed;
+}
+
+static bool parseLong(const QString &str, Val &value, bool &valid)
+{
+	Val newValue = str.toLong(&valid);
+	bool changed = valid && (newValue != value);
+	if (valid) {
+		value = newValue;
+	}
+	return changed;
 }
 
 static constexpr char EDIT_DEFAULT_STYLE[] = "";
@@ -215,43 +267,48 @@ static constexpr char EDIT_INVALID_STYLE[] =
 static constexpr char EDIT_OUT_OF_RANGE_STYLE[] =
     "QLineEdit {background-color: rgb(255, 200, 100);}";
 
-static void parseDoubleInLineEdit(QLineEdit *edit, double &value, bool &valid)
+static bool parseDoubleInLineEdit(QLineEdit *edit, Val &value, bool &valid)
 {
-	parseDouble(edit->text(), value, valid);
+	bool changed = parseDouble(edit->text(), value, valid);
 	if (valid) {
 		edit->setStyleSheet(EDIT_DEFAULT_STYLE);
 	} else {
 		edit->setStyleSheet(EDIT_INVALID_STYLE);
 	}
+	return changed;
 }
 
-static void parseLongInLineEdit(QLineEdit *edit, double &value, bool &valid)
+static bool parseLongInLineEdit(QLineEdit *edit, Val &value, bool &valid)
 {
-	parseLong(edit->text(), value, valid);
+	bool changed = parseLong(edit->text(), value, valid);
 	if (valid) {
 		edit->setStyleSheet(EDIT_DEFAULT_STYLE);
 	} else {
 		edit->setStyleSheet(EDIT_INVALID_STYLE);
 	}
+	return changed;
 }
 
 void ParameterWidget::handleEdit()
 {
 	// Parse the numbers and update the lineedit style
+	bool changedValue, changedMin, changedMax;
 	if (intOnly) {
-		parseLongInLineEdit(edtValue, value, valueValid);
-		parseLongInLineEdit(edtMin, min, minValid);
-		parseLongInLineEdit(edtMax, max, maxValid);
+		changedValue = parseLongInLineEdit(edtValue, value, valueValid);
+		changedMin = parseLongInLineEdit(edtMin, min, minValid);
+		changedMax = parseLongInLineEdit(edtMax, max, maxValid);
 	} else {
-		parseDoubleInLineEdit(edtValue, value, valueValid);
-		parseDoubleInLineEdit(edtMin, min, minValid);
-		parseDoubleInLineEdit(edtMax, max, maxValid);
+		changedValue = parseDoubleInLineEdit(edtValue, value, valueValid);
+		changedMin = parseDoubleInLineEdit(edtMin, min, minValid);
+		changedMax = parseDoubleInLineEdit(edtMax, max, maxValid);
 	}
 	validate();
 	refreshSlider();
-	if (valueValid && edtValue->text() != oldValueStr) {
+	if (changedValue) {
 		emit update(value, data);
-		oldValueStr = edtValue->text();
+	}
+	if (changedMin || changedMax) {
+		emit updateRange(min, max, data);
 	}
 }
 
@@ -264,10 +321,19 @@ void ParameterWidget::handleSlide(int x)
 	}
 	valueValid = true;
 	edtValue->setText(toStr(value));
-	oldValueStr = edtValue->text();
 	edtValue->setStyleSheet(EDIT_DEFAULT_STYLE);
 	validate();
 	emit update(value, data);
+}
+
+void ParameterWidget::handleOptimizeToggled(bool checked)
+{
+	emit updateOptimize(checked, data);
+}
+
+void ParameterWidget::handleExploreToggled(bool checked)
+{
+	emit updateExplore(checked, data);
 }
 
 void ParameterWidget::validate()
@@ -301,7 +367,6 @@ void ParameterWidget::refresh()
 {
 	// Update the edit fields
 	edtValue->setText(toStr(value));
-	oldValueStr = edtValue->text();
 	valueValid = true;
 
 	edtMin->setText(toStr(min));

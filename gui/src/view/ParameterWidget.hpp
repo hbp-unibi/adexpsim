@@ -32,6 +32,7 @@ class QLabel;
 class QPushButton;
 class QLineEdit;
 class QSlider;
+class QToolButton;
 class QWidget;
 
 #include <common/Types.hpp>
@@ -49,12 +50,13 @@ private:
 	QLabel *lblName;
 	QLabel *lblUnit;
 	QPushButton *btnRange;
+	QToolButton *btnOptimize;
+	QToolButton *btnExplore;
 	QSlider *sliderValue;
 
 	QString name;
-	double value, min, max;
+	Val value, min, max;
 	bool valueValid, minValid, maxValid;
-	QString oldValueStr;
 	QVariant data;
 	bool intOnly;
 
@@ -67,6 +69,8 @@ private:
 private slots:
 	void toggleRange();
 	void handleEdit();
+	void handleOptimizeToggled(bool checked);
+	void handleExploreToggled(bool checked);
 	void handleSlide(int value);
 
 public:
@@ -80,11 +84,18 @@ public:
 	void setValue(Val value);
 	void setMin(Val min);
 	void setMax(Val max);
+	void setOptimize(bool optimize);
+	void setExplore(bool explore);
 	void setIntOnly(bool intOnly);
 	void setMinMaxEnabled(bool enabled);
+	void setOptimizeEnabled(bool enabled);
+	void setExploreEnabled(bool enabled);
 
 signals:
 	void update(Val value, const QVariant &data);
+	void updateOptimize(bool optimize, const QVariant &data);
+	void updateExplore(bool explore, const QVariant &data);
+	void updateRange(Val min, Val max, const QVariant &data);
 };
 }
 

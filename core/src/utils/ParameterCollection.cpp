@@ -32,7 +32,14 @@ ParameterCollection::ParameterCollection()
       train({
              {3, 1, 1e-3}, {2, 0, 1e-3}, {0, 0, 1e-3},
             },
-            3, true, 0.033_s)
+            3, true, 0.033_s),
+      singleGroup(train.toSingleGroupSpikeData())
 {
+	// Initialize the optimize/explore flags
+	optimize.fill(true);
+	explore.fill(false);
+
+	// Initialize the minimum/maximum values
+	// TODO
 }
 }
