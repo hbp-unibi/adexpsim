@@ -42,8 +42,6 @@
 
 namespace AdExpSim {
 
-constexpr double COST_SCALE = 0.1;
-
 static void fillDimensionCombobox(QComboBox *box)
 {
 	for (int i = 0; i < 13; i++) {
@@ -159,9 +157,22 @@ ExplorationWidget::ExplorationWidget(
 	overlay->setLayer("overlay");
 	overlayHW->setLayer("overlay");
 
-	crosshair = new ExplorationWidgetCrosshair(pltExploration);
-	pltExploration->addItem(crosshair);
 	pltExploration->addLayer("crosshair");
+
+	crosshair = new ExplorationWidgetCrosshair(pltExploration);
+	crosshairHW1 = new ExplorationWidgetCrosshair(pltExploration);
+	crosshairHW1->setPen(QPen(Qt::gray, 1));
+	crosshairHW1->setVisible(false);
+	crosshairHW2 = new ExplorationWidgetCrosshair(pltExploration);
+	crosshairHW2->setPen(QPen(Qt::gray, 1));
+	crosshairHW2->setVisible(false);
+
+	pltExploration->addItem(crosshairHW1);
+	pltExploration->addItem(crosshairHW2);
+	pltExploration->addItem(crosshair);
+
+	crosshairHW1->setLayer("crosshair");
+	crosshairHW2->setLayer("crosshair");
 	crosshair->setLayer("crosshair");
 
 	// Connect the axis change events to allow updating the view once the axes
@@ -464,9 +475,34 @@ static void fillColorMap(QCPColorMap *map, size_t nx, size_t ny, Fun f)
 
 void ExplorationWidget::updateCrosshair()
 {
-	crosshair->positions()[0]->setType(QCPItemPosition::ptPlotCoords);
-	crosshair->positions()[0]->setCoords(
-	    parametersToPlot(params->params[getDimX()], params->params[getDimY()]));
+	const Parameters &p = params->params;
+	QPointF pos = parametersToPlot(p[getDimX()], p[getDimY()]);
+	crosshair->setCoords(pos);
+	crosshairHW1->setVisible(false);
+	crosshairHW2->setVisible(false);
+
+	// Show the next possible HW parameters for the weight dimension
+	if ((getDimX() == Parameters::idx_w || getDimY() == Parameters::idx_w) &&
+	    actShowHWLimits->isChecked()) {
+		// Fetch the next possible weights
+		auto ws = BrainScaleSParameters::inst.nextWeights(p[Parameters::idx_w]);
+
+		// Decide which dimension the w-dimension is on
+		qreal &v =
+		    (getDimX() == WorkingParameters::idx_wSpike) ? pos.rx() : pos.ry();
+		if (ws.size() >= 1) {
+			v = WorkingParameters::parameterToPlot(ws[0], Parameters::idx_w,
+			                                       params->params);
+			crosshairHW1->setCoords(pos);
+			crosshairHW1->setVisible(true);
+		}
+		if (ws.size() >= 2) {
+			v = WorkingParameters::parameterToPlot(ws[1], Parameters::idx_w,
+			                                       params->params);
+			crosshairHW2->setCoords(pos);
+			crosshairHW2->setVisible(true);
+		}
+	}
 }
 
 void ExplorationWidget::updateInvalidRegionsOverlay()

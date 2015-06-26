@@ -24,11 +24,22 @@ ExplorationWidgetCrosshair::ExplorationWidgetCrosshair(QCustomPlot *parentPlot)
     : QCPAbstractItem(parentPlot),
       center(createPosition(QLatin1String("center")))
 {
+	center->setType(QCPItemPosition::ptPlotCoords);
 	center->setCoords(0, 0);
 	setPen(QPen(Qt::black, 2));
 }
 
 ExplorationWidgetCrosshair::~ExplorationWidgetCrosshair() {}
+
+void ExplorationWidgetCrosshair::setCoords(double x, double y)
+{
+	center->setCoords(x, y);
+}
+
+void ExplorationWidgetCrosshair::setCoords(const QPointF &pos)
+{
+	center->setCoords(pos.x(), pos.y());
+}
 
 void ExplorationWidgetCrosshair::setPen(const QPen &pen) { mPen = pen; }
 

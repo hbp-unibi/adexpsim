@@ -39,6 +39,9 @@ public:
 	double selectTest(const QPointF &pos, bool onlySelectable,
 	                  QVariant *details = 0) const override;
 
+	void setCoords(double x, double y);
+	void setCoords(const QPointF &pos);
+
 protected:
 	QPen mPen;
 	void draw(QCPPainter *painter) override;

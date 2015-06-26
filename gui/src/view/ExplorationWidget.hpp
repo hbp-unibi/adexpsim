@@ -70,6 +70,8 @@ private:
 	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
 	ExplorationWidgetCrosshair *crosshair;
+	ExplorationWidgetCrosshair *crosshairHW1;
+	ExplorationWidgetCrosshair *crosshairHW2;
 	ExplorationWidgetInvalidOverlay *overlay;
 	ExplorationWidgetInvalidOverlay *overlayHW;
 	std::shared_ptr<ParameterCollection> params;
