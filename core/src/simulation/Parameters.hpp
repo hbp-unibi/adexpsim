@@ -94,6 +94,8 @@ public:
 	NAMED_VECTOR_ELEMENT(w, 12);       // Synapse weight  [S]
 	NAMED_VECTOR_ELEMENT(eL, 13);      // Leak channel reversal potential [V]
 	NAMED_VECTOR_ELEMENT(cM, 14);      // Membrane capacitance [F]
+
+	Val tauM() const { return cM() / gL(); }
 };
 
 /**
