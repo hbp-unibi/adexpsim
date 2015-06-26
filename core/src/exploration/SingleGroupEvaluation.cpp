@@ -53,8 +53,8 @@ struct SingleGroupEvaluationController {
 
 SingleGroupEvaluation::SingleGroupEvaluation(
     const SingleGroupSpikeData &spikeData, bool useIfCondExp)
-    : sN(spikeData.spikes(0)),
-      sNM1(spikeData.spikes(-1)),
+    : sN(spikeData.spikes(spikeData.n)),
+      sNM1(spikeData.spikes(spikeData.nM1)),
       useIfCondExp(useIfCondExp),
       spikeData(spikeData)
 {

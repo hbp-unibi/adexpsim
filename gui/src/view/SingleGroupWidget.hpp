@@ -56,17 +56,21 @@ private:
 	/* Actions */
 	QAction *actCopyFromSpikeTrain;
 	QAction *actCopyToSpikeTrain;
+	QAction *actLockNM1;
 
 	/* Widgets */
 	QTimer *updateTimer;
 	QToolBar *toolbar;
 	ParameterWidget *paramN;
+	ParameterWidget *paramNM1;
 	ParameterWidget *paramDeltaT;
 	ParameterWidget *paramT;
 
 private slots:
 	void triggerUpdateParameters();
 	void handleParameterUpdate(Val value, const QVariant &data);
+	void copyFromSpikeTrain();
+	void copyToSpikeTrain();
 
 public slots:
 	/**

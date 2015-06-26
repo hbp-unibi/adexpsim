@@ -79,9 +79,16 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  */
 struct SingleGroupSpikeData {
 	/**
-	 * n is the number of input spikes. Should be larger or equal to one.
+	 * n is the number of input spikes that should cause an output spike.
+	 * Should be larger or equal to one.
 	 */
 	Val n;
+
+	/**
+	 * nM1 is the number of input spikes that should not cause an output spike.
+	 * Usually set to n - 1.
+	 */
+	Val nM1;
 
 	/**
 	 * t is the delay between the input spikes.
@@ -96,17 +103,28 @@ struct SingleGroupSpikeData {
 	/**
 	 * Default constructor. Initializes all members with sane values.
 	 */
-	SingleGroupSpikeData() : n(3), deltaT(1e-3_s), T(33e-3_s) {}
+	SingleGroupSpikeData() : n(3), nM1(2), deltaT(1e-3_s), T(33e-3_s) {}
 
 	/**
 	 * Constructor, sets each member to the given value.
 	 */
 	SingleGroupSpikeData(Val n, Time deltaT = 1e-3_s, Time T = 33e-3_s)
-	    : n(n), deltaT(deltaT), T(T)
+	    : SingleGroupSpikeData(n, n - 1, deltaT, T)
 	{
 	}
 
-	SpikeVec spikes(int offs = 0) const { return buildInputSpikes(n + offs, deltaT, 0_s, 1.0); }
+	/**
+	 * Constructor, sets each member to the given value.
+	 */
+	SingleGroupSpikeData(Val n, Val nM1, Time deltaT = 1e-3_s, Time T = 33e-3_s)
+	    : n(n), nM1(nM1), deltaT(deltaT), T(T)
+	{
+	}
+
+	SpikeVec spikes(Val n) const
+	{
+		return buildInputSpikes(n, deltaT, 0_s, 1.0);
+	}
 };
 
 /**
@@ -416,6 +434,18 @@ public:
 	 * Returns the number of expected output spikes.
 	 */
 	size_t getExpectedOutputSpikeCount() const;
+
+	/**
+	 * Constructs a new SingleGroupSpikeData instance according to the
+	 * parameters found in the SpikeTrain.
+	 */
+	SingleGroupSpikeData toSingleGroupSpikeData() const;
+
+	/**
+	 * Adapts this instance to the parameters found in the SingleGroupSpikeData
+	 * instance.
+	 */
+	void fromSingleGroupSpikeData(const SingleGroupSpikeData &data);
 };
 }
 

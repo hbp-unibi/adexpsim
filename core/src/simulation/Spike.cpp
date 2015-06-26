@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <random>
 #include <vector>
 
@@ -65,9 +66,9 @@ void SpikeTrain::rebuild(bool randomSeed)
 	// Random number generator
 	std::default_random_engine gen;
 	if (randomSeed) {
-		static int seed = 22294529; // Initial seed
+		static int seed = 22294529;  // Initial seed
 		gen.seed(seed);
-		seed += 4781536; // Advance the seed by some number
+		seed += 4781536;  // Advance the seed by some number
 	}
 
 	// Distribution used to fetch the descriptors
@@ -140,5 +141,67 @@ size_t SpikeTrain::getExpectedOutputSpikeCount() const
 	return res;
 }
 
+SingleGroupSpikeData SpikeTrain::toSingleGroupSpikeData() const
+{
+	static constexpr uint16_t NInit = std::numeric_limits<uint16_t>::max();
+	static constexpr uint16_t NM1Init = std::numeric_limits<uint16_t>::lowest();
+
+	// Find the threshold values n and nM1 in the descriptor list (note: this
+	// is not guaranteed to work -- the descriptors may not contain a clear
+	// threshold)
+	uint16_t n = std::numeric_limits<uint16_t>::max();
+	uint16_t nM1 = std::numeric_limits<uint16_t>::lowest();
+	Val sigmaT = 0;
+	Val sigmaTM1 = 0;
+	for (const auto &descr : descrs) {
+		if (descr.nOut == 0) {
+			if (descr.nE > nM1) {
+				nM1 = descr.nE;
+				sigmaTM1 = descr.sigmaT;
+			}
+		} else if (descr.nOut > 0) {
+			if (descr.nE < n) {
+				n = descr.nE;
+				sigmaT = descr.sigmaT;
+			}
+		}
+	}
+
+	// Make sure some sane values are set
+	if (n == NInit) {
+		if (nM1 != NM1Init) {
+			n = nM1 - 1;
+			sigmaT = sigmaTM1;
+		} else {
+			n = 3;
+			nM1 = 2;
+			sigmaT = 1e-3;
+			sigmaTM1 = 1e-3;
+		}
+	} else if (nM1 == NM1Init) {
+		nM1 = n;
+		sigmaTM1 = sigmaT;
+	}
+
+	// Create a new SingleGroupSpikeData instance
+	return SingleGroupSpikeData(
+	    n, nM1, Time::sec(2 * (sigmaT + sigmaTM1) / (n + nM1)), T);
+}
+
+void SpikeTrain::fromSingleGroupSpikeData(const SingleGroupSpikeData &data)
+{
+	// Copy T
+	T = data.T;
+
+	// Clear the current descriptor list and create three new descriptors
+	descrs.clear();
+	Val sigmaT = 0.25 * data.deltaT.sec() * (data.n + data.nM1);
+	descrs.emplace_back(data.n, 1, sigmaT);
+	descrs.emplace_back(data.nM1, 0, sigmaT);
+	descrs.emplace_back(0, 0, sigmaT);
+
+	// Rebuild
+	rebuild(false);
+}
 }
 
