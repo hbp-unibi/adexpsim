@@ -258,62 +258,30 @@ void ExplorationWidget::saveToPdf(const QString &filename)
 
 QPointF ExplorationWidget::workingParametersToPlot(Val x, Val y)
 {
-	size_t dimX = getDimX();
-	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::toParameter(x, dimX, params->params);
-	}
-
-	size_t dimY = getDimY();
-	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::toParameter(y, dimY, params->params);
-	}
-
-	return QPointF(x, y);
+	return QPointF(
+	    WorkingParameters::workingToPlot(x, getDimX(), params->params),
+	    WorkingParameters::workingToPlot(y, getDimY(), params->params));
 }
 
 QPointF ExplorationWidget::parametersToPlot(Val x, Val y)
 {
-	size_t dimX = getDimX();
-	if (!WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, params->params);
-	}
-
-	size_t dimY = getDimY();
-	if (!WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, params->params);
-	}
-
-	return QPointF(x, y);
+	return QPointF(
+	    WorkingParameters::parameterToPlot(x, getDimX(), params->params),
+	    WorkingParameters::parameterToPlot(y, getDimY(), params->params));
 }
 
 QPointF ExplorationWidget::plotToWorkingParameters(Val x, Val y)
 {
-	size_t dimX = getDimX();
-	if (WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::fromParameter(x, dimX, params->params);
-	}
-
-	size_t dimY = getDimY();
-	if (WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::fromParameter(y, dimY, params->params);
-	}
-
-	return QPointF(x, y);
+	return QPointF(
+	    WorkingParameters::plotToWorking(x, getDimX(), params->params),
+	    WorkingParameters::plotToWorking(y, getDimY(), params->params));
 }
 
 QPointF ExplorationWidget::plotToParameters(Val x, Val y)
 {
-	size_t dimX = getDimX();
-	if (!WorkingParameters::linear[dimX]) {
-		x = WorkingParameters::toParameter(x, dimX, params->params);
-	}
-
-	size_t dimY = getDimY();
-	if (!WorkingParameters::linear[dimY]) {
-		y = WorkingParameters::toParameter(y, dimY, params->params);
-	}
-
-	return QPointF(x, y);
+	return QPointF(
+	    WorkingParameters::plotToParameter(x, getDimX(), params->params),
+	    WorkingParameters::plotToParameter(y, getDimY(), params->params));
 }
 
 QString ExplorationWidget::axisName(size_t dim, bool unit)
