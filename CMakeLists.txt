@@ -27,10 +27,12 @@ SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
 
-# Include the core source directory as include directory
+# Include the core and io source directory as include directory
 INCLUDE_DIRECTORIES(core/src)
+INCLUDE_DIRECTORIES(io/src)
 
 # Add the subprojects
 ADD_SUBDIRECTORY(core)
 ADD_SUBDIRECTORY(cli)
 ADD_SUBDIRECTORY(gui)
+ADD_SUBDIRECTORY(io)
