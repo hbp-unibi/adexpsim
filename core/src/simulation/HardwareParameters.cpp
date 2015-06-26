@@ -127,6 +127,27 @@ bool HardwareParameters::clamp(Parameters &params, bool useIfCondExp) const
 	return true;
 }
 
+std::vector<Val> HardwareParameters::nextWeights(Val w) const
+{
+	// Search the two nearest weights
+	std::vector<Val>::const_iterator it1 =
+	    std::lower_bound(ws.begin(), ws.end(), w);
+	std::vector<Val>::const_iterator it2 = ws.end();
+	if (it1 != ws.begin()) {
+		it2 = it1 - 1;
+	}
+
+	// Add them to the result list (if they are valid)
+	std::vector<Val> res;
+	if (it1 != ws.end()) {
+		res.push_back(*it1);
+	}
+	if (it2 != ws.end()) {
+		res.push_back(*it2);
+	}
+	return res;
+}
+
 std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
                                                 bool useIfCondExp,
                                                 bool strict) const
@@ -169,27 +190,15 @@ std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
 			continue;
 		}
 
-		// Search the two nearest weights
-		std::vector<Val>::const_iterator it1 =
-		    std::lower_bound(ws.begin(), ws.end(), p.w());
-		std::vector<Val>::const_iterator it2 = ws.end();
-		if (it1 != ws.begin()) {
-			it2 = it1 - 1;
-		}
-
-		// Store the two parameter variants in the result list if they are valid
-		auto insert = [&](std::vector<Parameters> &list,
-		                  std::vector<Val>::const_iterator it) -> void {
-			if (it != ws.end()) {
-				Parameters cp = p;
-				cp.w() = *it;
-				if (valid(cp) || (!strict && clamp(cp))) {
-					list.emplace_back(cp);
-				}
+		// Fetch the next possible weights and store the two parameter variants
+		// in the result list if they are valid
+		for (Val w : nextWeights(p.w())) {
+			Parameters cp = p;
+			cp.w() = w;
+			if (valid(cp) || (!strict && clamp(cp))) {
+				res.emplace_back(cp);
 			}
-		};
-		insert(res, it1);
-		insert(res, it2);
+		}
 	}
 	return res;
 }
@@ -199,15 +208,16 @@ const BrainScaleSParameters BrainScaleSParameters::inst;
 BrainScaleSParameters::BrainScaleSParameters()
 {
 	// Possible capacities
-	/*cMs = {0.2e-9};*/  // TODO: This is only valid for a certain speedup factor,
-	                 // correct values are 2.165pF and 0.164pF -- this is all
-	                 // very confusing
-	//cMs = {2.165e-12, 0.164e-12};
+	/*cMs = {0.2e-9};*/  // TODO: This is only valid for a certain speedup
+	                     // factor,
+	// correct values are 2.165pF and 0.164pF -- this is all
+	// very confusing
+	// cMs = {2.165e-12, 0.164e-12};
 	cMs = {0.2e-9};
 
 	// Possible weights
-	for (Val i = 0; i < 15; i++) {
-		ws.push_back(0.3e-6 * 15.0 / i);
+	for (Val i = 0; i < 16; i++) {
+		ws.push_back(0.3e-6 / 15.0 * i);
 	}
 
 	// Copy the ranges

@@ -116,6 +116,11 @@ public:
 	bool clamp(Parameters &params, bool useIfCondExp = false) const;
 
 	/**
+	 * Returns the next valid weight values near the given weight.
+	 */
+	std::vector<Val> nextWeights(Val w) const;
+
+	/**
 	 * Maps the given working parameters to a list of possible hardware
 	 * configurations. Returns an empty list of no matching parameters have been
 	 * found.
