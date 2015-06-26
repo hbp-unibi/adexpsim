@@ -65,6 +65,7 @@ private:
 	QAction *actLockView;
 	QAction *actSavePDF;
 	QAction *actSaveExploration;
+	QAction *act3DSurfacePlot;
 
 	/* Widgets and model */
 	std::shared_ptr<Exploration> exploration;
@@ -115,6 +116,11 @@ private slots:
 	 * Called when the "save as pdf" button is pressed.
 	 */
 	void handleSavePdf();
+
+	/**
+	 * Handles generating a 3D surface plot.
+	 */
+	void handle3DSurfacePlot();
 
 public slots:
 	void lock();

@@ -17,9 +17,11 @@
  */
 
 #include <iostream>
+#include <fstream>
 
 #include <QAction>
 #include <QComboBox>
+#include <QFileDialog>
 #include <QMenu>
 #include <QMenuBar>
 #include <QToolBox>
@@ -30,6 +32,7 @@
 #include <QLabel>
 #include <QVBoxLayout>
 
+#include <io/JsonIo.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <utils/ParameterCollection.hpp>
@@ -66,20 +69,32 @@ MainWindow::~MainWindow() {}
 void MainWindow::createActions()
 {
 	actNewExplorationWnd = new QAction(QIcon::fromTheme("window-new"),
-	                                   tr("New Exploration Window..."), this);
+	                                   tr("New exploration window..."), this);
 	connect(actNewExplorationWnd, SIGNAL(triggered()), this,
 	        SLOT(newExploration()));
 
 	actNewSimulationWnd = new QAction(QIcon::fromTheme("document-new"),
-	                                  tr("New Simulation Window..."), this);
+	                                  tr("New simulation window..."), this);
 	connect(actNewSimulationWnd, SIGNAL(triggered()), this,
 	        SLOT(newSimulation()));
 
-	actOpenExploration = new QAction(QIcon::fromTheme("document-open"),
-	                                 tr("Open Exploration..."), this);
+	actOpen =
+	    new QAction(QIcon::fromTheme("document-open"), tr("Open..."), this);
+	connect(actOpen, SIGNAL(triggered()), this, SLOT(handleOpen()));
 
-	actSaveExploration = new QAction(QIcon::fromTheme("document-save"),
-	                                 tr("Save Current Exploration..."), this);
+	actSaveParameters = new QAction(QIcon::fromTheme("document-properties"),
+	                                tr("Save parameters..."), this);
+	actSaveExploration = new QAction(QIcon::fromTheme("document-save-as"),
+	                                 tr("Save exploration..."), this);
+
+	actExportPynnNest = new QAction(QIcon("data/pyNN_logo.png"),
+	                                tr("Export to PyNN for NEST"), this);
+	connect(actExportPynnNest, SIGNAL(triggered()), this,
+	        SLOT(handleExportPynnNest()));
+	actExportPynnESS = new QAction(QIcon("data/icon_hw.png"),
+	                               tr("Export to PyNN for ESS"), this);
+	connect(actExportPynnESS, SIGNAL(triggered()), this,
+	        SLOT(handleExportPynnESS()));
 
 	actExit = new QAction(tr("Exit"), this);
 	connect(actExit, SIGNAL(triggered()), this, SLOT(close()));
@@ -91,18 +106,26 @@ void MainWindow::createMenus()
 	fileMenu->addAction(actNewExplorationWnd);
 	fileMenu->addAction(actNewSimulationWnd);
 	fileMenu->addSeparator();
-	fileMenu->addAction(actOpenExploration);
+	fileMenu->addAction(actOpen);
+	fileMenu->addSeparator();
+	fileMenu->addAction(actSaveParameters);
 	fileMenu->addAction(actSaveExploration);
 	fileMenu->addSeparator();
 	fileMenu->addAction(actExit);
 
+	QMenu *exportMenu = new QMenu(tr("&Export"), this);
+	exportMenu->addAction(actExportPynnNest);
+	exportMenu->addAction(actExportPynnESS);
+
 	menuBar()->addMenu(fileMenu);
+	menuBar()->addMenu(exportMenu);
 }
 
 void MainWindow::createWidgets()
 {
-	// Create the toolbar
-	toolbar = new QToolBar(this);
+	// Create the toolbars
+	fileToolbar = new QToolBar(this);
+	simToolbar = new QToolBar(this);
 
 	// Create the model widget
 	modelComboBox = new QComboBox(this);
@@ -124,14 +147,23 @@ void MainWindow::createWidgets()
 	connect(evaluationComboBox, SIGNAL(currentIndexChanged(int)), this,
 	        SLOT(handleEvaluationUpdate(int)));
 
+	// Build the export toolbutton
+	fileToolbar->addAction(actOpen);
+	fileToolbar->addSeparator();
+	fileToolbar->addAction(actSaveParameters);
+	fileToolbar->addAction(actSaveExploration);
+	fileToolbar->addSeparator();
+	fileToolbar->addAction(actExportPynnNest);
+	fileToolbar->addAction(actExportPynnESS);
+
 	// Fill the toolbar
-	toolbar->addAction(actNewExplorationWnd);
-	toolbar->addAction(actNewSimulationWnd);
-	toolbar->addSeparator();
-	toolbar->addWidget(new QLabel("Model: "));
-	toolbar->addWidget(modelComboBox);
-	toolbar->addWidget(new QLabel(" Eval: "));
-	toolbar->addWidget(evaluationComboBox);
+	simToolbar->addAction(actNewExplorationWnd);
+	simToolbar->addAction(actNewSimulationWnd);
+	simToolbar->addSeparator();
+	simToolbar->addWidget(new QLabel("Model: "));
+	simToolbar->addWidget(modelComboBox);
+	simToolbar->addWidget(new QLabel(" Eval: "));
+	simToolbar->addWidget(evaluationComboBox);
 
 	// Create the tool box
 	QToolBox *tools = new QToolBox(this);
@@ -156,7 +188,9 @@ void MainWindow::createWidgets()
 
 	// Set the tool box as central widget
 	setCentralWidget(tools);
-	addToolBar(Qt::TopToolBarArea, toolbar);
+	addToolBar(Qt::TopToolBarArea, fileToolbar);
+	addToolBarBreak(Qt::TopToolBarArea);
+	addToolBar(Qt::TopToolBarArea, simToolbar);
 
 	// Refresh the view
 	handleUpdateParameters(std::set<size_t>{});
@@ -219,5 +253,40 @@ void MainWindow::handleEvaluationUpdate(int idx)
 	handleUpdateParameters(std::set<size_t>{});
 }
 
+void MainWindow::handleOpen()
+{
+	// TODO
+}
+
+static QString replaceFileExt(const QString &s, const QString &ext)
+{
+	int i = s.lastIndexOf(".");
+	if (i == -1) {
+		i = s.size();
+	}
+	return s.left(i) + "." + ext;
+}
+
+void MainWindow::handleExportPynn(bool nest)
+{
+	QString fileName = QFileDialog::getSaveFileName(
+	    this, QString("Export ") + (nest ? "NEST" : "ESS") + " PyNN parameters",
+	    QString(), "JSON Files (*.json)");
+	if (!fileName.isEmpty()) {
+		std::ofstream jsonStream(replaceFileExt(fileName, "json").toStdString());
+		std::ofstream pyStream(replaceFileExt(fileName, "py").toStdString());
+
+		JsonIo::storePyNNModel(jsonStream, params->params, params->model);
+		if (nest) {
+			JsonIo::storePyNNSetupNEST(pyStream, params->params, params->model);
+		} else {
+			JsonIo::storePyNNSetupESS(pyStream, params->params, params->model);
+		}
+	}
+}
+
+void MainWindow::handleExportPynnESS() { handleExportPynn(false); }
+
+void MainWindow::handleExportPynnNest() { handleExportPynn(true); }
 }
 

@@ -16,18 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-
 #include <QAction>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QVBoxLayout>
 #include <QToolBar>
 #include <QWidget>
+#include <QProcess>
 
 #include <view/ExplorationWidget.hpp>
 #include <utils/ParameterCollection.hpp>
 #include <model/IncrementalExploration.hpp>
+#include <io/SurfacePlotIo.hpp>
 
 #include "ExplorationWindow.hpp"
 
@@ -77,6 +77,9 @@ void ExplorationWindow::createWidgets()
 	    new QAction(QIcon::fromTheme("document-print"), "Save PDF", this);
 	actSaveExploration = new QAction(QIcon::fromTheme("document-save-as"),
 	                                 "Save Exploration", this);
+	act3DSurfacePlot =
+	    new QAction(QIcon("data/surface.png"), "Surface Plot", this);
+	act3DSurfacePlot->setToolTip("Show 3D Surface Plot (requires gnuplot)");
 
 	// Create the resolution chooser
 	resolutionComboBox = new QComboBox(this);
@@ -96,6 +99,7 @@ void ExplorationWindow::createWidgets()
 	toolbar->addAction(actLockView);
 	toolbar->addAction(actSavePDF);
 	toolbar->addAction(actSaveExploration);
+	toolbar->addAction(act3DSurfacePlot);
 	toolbar->addSeparator();
 	toolbar->addWidget(resolutionComboBox);
 	toolbar->addSeparator();
@@ -115,6 +119,8 @@ void ExplorationWindow::createWidgets()
 	connect(actLockView, SIGNAL(triggered(bool)), this,
 	        SLOT(handleLockView(bool)));
 	connect(actSavePDF, SIGNAL(triggered()), this, SLOT(handleSavePdf()));
+	connect(act3DSurfacePlot, SIGNAL(triggered()), this,
+	        SLOT(handle3DSurfacePlot()));
 
 	// Center the view of the ExplorationWidget to trigger an initial
 	// exploration
@@ -211,6 +217,12 @@ void ExplorationWindow::handleUpdateResolution(int index)
 {
 	QVariant data = resolutionComboBox->itemData(index);
 	incrementalExploration->setMaxLevel(data.toInt());
+}
+
+void ExplorationWindow::handle3DSurfacePlot()
+{
+	SurfacePlotIo::runGnuPlot(params->params, *exploration,
+	                                explorationWidget->getDimZ());
 }
 
 void ExplorationWindow::lock() { actLockView->setChecked(true); }

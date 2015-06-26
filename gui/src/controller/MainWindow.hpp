@@ -59,8 +59,11 @@ private:
 	/* Actions */
 	QAction *actNewExplorationWnd;
 	QAction *actNewSimulationWnd;
-	QAction *actOpenExploration;
+	QAction *actOpen;
 	QAction *actSaveExploration;
+	QAction *actSaveParameters;
+	QAction *actExportPynnNest;
+	QAction *actExportPynnESS;
 	QAction *actExit;
 
 	/* Experiment parameters */
@@ -73,7 +76,8 @@ private:
 	SingleGroupWidget *singleGroupWidget;
 	SpikeTrainWidget *spikeTrainWidget;
 	ParametersWidget *parametersWidget;
-	QToolBar *toolbar;
+	QToolBar *fileToolbar;
+	QToolBar *simToolbar;
 	QComboBox *modelComboBox;
 	QComboBox *evaluationComboBox;
 
@@ -87,6 +91,10 @@ private slots:
 	void handleUpdateParameters(std::set<size_t> dims);
 	void handleModelUpdate(int);
 	void handleEvaluationUpdate(int);
+	void handleOpen();
+	void handleExportPynnNest();
+	void handleExportPynnESS();
+	void handleExportPynn(bool nest);
 
 protected:
 	void closeEvent(QCloseEvent *event) override;
