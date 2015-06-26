@@ -25,6 +25,7 @@
 #include <QWidget>
 
 #include <common/Types.hpp>
+#include <exploration/EvaluationResult.hpp>
 
 class QAction;
 class QComboBox;
@@ -116,6 +117,11 @@ public:
 	 * Returns the current Y-dimension index.
 	 */
 	size_t getDimY();
+
+	/**
+	 * Returns the current function displayed on the Z-axis.
+	 */
+	EvaluationResultDimension getDimZ();
 
 	/**
 	 * Draws the current exploration as PDF.

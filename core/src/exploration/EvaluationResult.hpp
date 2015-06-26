@@ -31,6 +31,13 @@
 namespace AdExpSim {
 
 /**
+ * Available evaluation result dimensions.
+ */
+enum class EvaluationResultDimension {
+	 SOFT = 0, BINARY = 1, FALSE_POSITIVE = 2, FALSE_NEGATIVE = 3
+};
+
+/**
  * Structure containing the result of a call to the "evaluate" method of either
  * the SingleSpikeEvaluation class or the SpikeGroupEvaluation class.
  */

@@ -102,6 +102,24 @@ struct ExplorationMemory {
 		return EvaluationResult(pBinary(x, y), pFalsePositive(x, y),
 		                        pFalseNegative(x, y), pSoft(x, y));
 	}
+
+	/**
+	 * Returns a value for the corresponding evaluation result dimension.
+	 */
+	Val operator()(size_t x, size_t y, EvaluationResultDimension dim) const
+	{
+		switch (dim) {
+			case EvaluationResultDimension::BINARY:
+				return pBinary(x, y);
+			case EvaluationResultDimension::FALSE_POSITIVE:
+				return pFalsePositive(x, y);
+			case EvaluationResultDimension::FALSE_NEGATIVE:
+				return pFalseNegative(x, y);
+			case EvaluationResultDimension::SOFT:
+				return pSoft(x, y);
+		}
+		return 0.0;
+	}
 };
 
 /**

@@ -76,10 +76,10 @@ ExplorationWidget::ExplorationWidget(
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Soft Success", "pSoft");
-	comboFunction->addItem("Binary Success", "pBinary");
-	comboFunction->addItem("False Positive", "pFalsePositive");
-	comboFunction->addItem("False Negative", "pFalseNegative");
+	comboFunction->addItem("Soft Success", 0);
+	comboFunction->addItem("Binary Success", 1);
+	comboFunction->addItem("False Positive", 2);
+	comboFunction->addItem("False Negative", 3);
 
 	fillDimensionCombobox(comboDimX);
 	comboDimX->setCurrentIndex(0);
@@ -233,9 +233,16 @@ size_t ExplorationWidget::getDimX()
 {
 	return comboDimX->itemData(comboDimX->currentIndex()).toInt();
 }
+
 size_t ExplorationWidget::getDimY()
 {
 	return comboDimY->itemData(comboDimY->currentIndex()).toInt();
+}
+
+EvaluationResultDimension ExplorationWidget::getDimZ()
+{
+	return EvaluationResultDimension(
+	    comboFunction->itemData(comboFunction->currentIndex()).toInt());
 }
 
 void ExplorationWidget::saveToPdf(const QString &filename)
@@ -570,29 +577,34 @@ void ExplorationWidget::refresh()
 		                      QCPRange(min.y(), max.y()));
 
 		// Fill the plot data
-		const QString funStr =
-		    comboFunction->itemData(comboFunction->currentIndex()).toString();
 		const ExplorationMemory &mem = exploration->getMemory();
-		if (funStr == "pSoft") {
-			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
-				return mem.pSoft(x, y);
-			});
-			map->setGradient(ExplorationWidgetGradients::blue());
-		} else if (funStr == "pBinary") {
-			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
-				return mem.pBinary(x, y);
-			});
-			map->setGradient(ExplorationWidgetGradients::orange());
-		} else if (funStr == "pFalsePositive") {
-			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
-				return mem.pFalsePositive(x, y);
-			});
-			map->setGradient(ExplorationWidgetGradients::green());
-		} else if (funStr == "pFalseNegative") {
-			fillColorMap(map, rX.steps, rY.steps, [&mem](size_t x, size_t y) {
-				return mem.pFalseNegative(x, y);
-			});
-			map->setGradient(ExplorationWidgetGradients::green());
+		switch (getDimZ()) {
+			case EvaluationResultDimension::SOFT:
+				fillColorMap(
+				    map, rX.steps, rY.steps,
+				    [&mem](size_t x, size_t y) { return mem.pSoft(x, y); });
+				map->setGradient(ExplorationWidgetGradients::blue());
+				break;
+			case EvaluationResultDimension::BINARY:
+				fillColorMap(
+				    map, rX.steps, rY.steps,
+				    [&mem](size_t x, size_t y) { return mem.pBinary(x, y); });
+				map->setGradient(ExplorationWidgetGradients::orange());
+				break;
+			case EvaluationResultDimension::FALSE_POSITIVE:
+				fillColorMap(map, rX.steps, rY.steps,
+				             [&mem](size_t x, size_t y) {
+					return mem.pFalsePositive(x, y);
+				});
+				map->setGradient(ExplorationWidgetGradients::green());
+				break;
+			case EvaluationResultDimension::FALSE_NEGATIVE:
+				fillColorMap(map, rX.steps, rY.steps,
+				             [&mem](size_t x, size_t y) {
+					return mem.pFalseNegative(x, y);
+				});
+				map->setGradient(ExplorationWidgetGradients::green());
+				break;
 		}
 		map->setDataRange(QCPRange(0, 1));
 	}
