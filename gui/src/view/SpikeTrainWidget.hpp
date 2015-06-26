@@ -24,6 +24,9 @@
  * @author Andreas Stöckel
  */
 
+#ifndef _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_
+#define _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_
+
 #include <memory>
 #include <set>
 
@@ -96,4 +99,6 @@ signals:
 	void updateParameters(std::set<size_t> dims);
 };
 }
+
+#endif /* _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_ */
 
