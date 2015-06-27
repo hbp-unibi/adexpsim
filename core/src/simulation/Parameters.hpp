@@ -165,7 +165,7 @@ public:
 	NAMED_VECTOR_ELEMENT(deltaTh, 9);  // Spike slope factor [V]
 	NAMED_VECTOR_ELEMENT(lA, 10);      // Subthreshold adaptation [Hz]
 	NAMED_VECTOR_ELEMENT(lB, 11);      // Spike trig. adaptation cur. [V/s]
-	NAMED_VECTOR_ELEMENT(wSpike, 12);  // Mult. for spikes weights [Hz]
+	NAMED_VECTOR_ELEMENT(w, 12);       // Mult. for spikes weights [Hz]
 
 	/**
 	 * Vector containing the name of each component.

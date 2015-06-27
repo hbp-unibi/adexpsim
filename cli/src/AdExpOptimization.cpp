@@ -80,10 +80,10 @@ int main(int argc, char *argv[])
 	WorkingParameters params;
 
 	// Estimate a value for the weight w
-	params.wSpike() = estimateW(params, evaluation.getXi());
+	params.w() = estimateW(params, evaluation.getXi());
 
 	std::cout << "Initial value for w: "
-	          << printVal(1000.0 * 1000.0 * params.wSpike() * DefaultParameters::cM)
+	          << printVal(1000.0 * 1000.0 * params.w() * DefaultParameters::cM)
 	          << "µS" << std::endl;
 
 	// Define the cost function f
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
 			std::cout << " eE: " << printVal(x.eE() * 1000.0) << "mV";
 			std::cout << " eTh: " << printVal(x.eTh() * 1000.0) << "mV";
 			std::cout << " deltaTh: " << printVal(x.deltaTh() * 1000.0) << "mV";
-			std::cout << " w: " << printVal(1000.0 * 1000.0 * x.wSpike() *
+			std::cout << " w: " << printVal(1000.0 * 1000.0 * x.w() *
 			                                DefaultParameters::cM)
 			          << "µS        ";
 			std::cout << "\r";

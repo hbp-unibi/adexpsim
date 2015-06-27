@@ -183,7 +183,7 @@ public:
 
 				// Add the spike weight to either the excitatory or the
 				// inhibitory channel
-				const Val w = spikes[spikeIdx].w * p.wSpike();
+				const Val w = spikes[spikeIdx].w * p.w();
 				if (w > 0) {
 					s.lE() += w;
 				} else {
