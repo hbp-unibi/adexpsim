@@ -489,7 +489,7 @@ void ExplorationWidget::updateCrosshair()
 
 		// Decide which dimension the w-dimension is on
 		qreal &v =
-		    (getDimX() == WorkingParameters::idx_wSpike) ? pos.rx() : pos.ry();
+		    (getDimX() == WorkingParameters::idx_w) ? pos.rx() : pos.ry();
 		if (ws.size() >= 1) {
 			v = WorkingParameters::parameterToPlot(ws[0], Parameters::idx_w,
 			                                       params->params);
