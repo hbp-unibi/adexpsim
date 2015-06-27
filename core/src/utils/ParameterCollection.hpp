@@ -76,6 +76,15 @@ enum class EvaluationType: int {
  * parameters, the input spike train and information for explorations.
  */
 struct ParameterCollection {
+	static constexpr Val MIN_HZ = 1;
+	static constexpr Val MAX_HZ = 1000;
+	static constexpr Val MIN_S = 0;
+	static constexpr Val MAX_S = 1e-7;
+	static constexpr Val MIN_A = 0;
+	static constexpr Val MAX_A = 1e-9;
+	static constexpr Val MIN_V = -0.5;
+	static constexpr Val MAX_V = 0.5;
+
 	/**
 	 * String list containing the names of the available models. The indices
 	 * in the list correspond to the integer values of the ModelType enum.

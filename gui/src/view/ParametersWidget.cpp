@@ -30,15 +30,6 @@
 
 namespace AdExpSim {
 
-static constexpr Val MIN_HZ = 1;
-static constexpr Val MAX_HZ = 1000;
-static constexpr Val MIN_S = 0;
-static constexpr Val MAX_S = 1e-7;
-static constexpr Val MIN_A = 0;
-static constexpr Val MAX_A = 1e-9;
-static constexpr Val MIN_V = -0.5;
-static constexpr Val MAX_V = 0.5;
-
 ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
                                    QWidget *parent)
     : QWidget(parent), params(params)
@@ -51,9 +42,11 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Create the widgets for the parameters which are not in the working set
 	Parameters &p = params->params;
-	paramCM = new ParameterWidget(this, "cM", p.cM(), p.cM() * 0.1, p.cM() * 10,
-	                              "F", "cM");
-	paramEL = new ParameterWidget(this, "eL", p.eL(), MIN_V, MAX_V, "V", "eL");
+	paramCM =
+	    new ParameterWidget(this, "cM", p.cM(), 0.0, p.cM() * 10, "F", "cM");
+	paramEL =
+	    new ParameterWidget(this, "eL", p.eL(), ParameterCollection::MIN_V,
+	                        ParameterCollection::MAX_V, "V", "eL");
 	connect(paramCM, SIGNAL(update(Val, const QVariant &)), this,
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramEL, SIGNAL(update(Val, const QVariant &)), this,
@@ -68,35 +61,11 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Create the parameter widgets for all parameters in the working set
 	for (size_t i = 0; i < WorkingParameters::Size; i++) {
-		std::string name = WorkingParameters::names[i];
-		std::string unit = WorkingParameters::units[i];
-		Val value = p[i];
-		Val min = value * 0.1;
-		Val max = value * 10;
-		if (max < min) {
-			std::swap(min, max);
-		}
-		if (WorkingParameters::linear[i]) {
-			name = WorkingParameters::originalNames[i];
-			unit = WorkingParameters::originalUnits[i];
-		} else {
-			value = WorkingParameters::fromParameter(value, i, p);
-		}
-
-		if (unit == "Hz") {
-			min = MIN_HZ;
-			max = MAX_HZ;
-		} else if (unit == "S") {
-			min = MIN_S;
-			max = MAX_S;
-		} else if (unit == "A") {
-			min = MIN_A;
-			max = MAX_A;
-		} else if (unit == "V") {
-			min = MIN_V;
-			max = MAX_V;
-		}
-
+		const std::string name = WorkingParameters::names[i];
+		const std::string unit = WorkingParameters::units[i];
+		const Val value = p[i];
+		const Val min = params->min.workingToPlot(i, params->params);
+		const Val max = params->max.workingToPlot(i, params->params);
 		workingParams[i] =
 		    new ParameterWidget(this, QString::fromStdString(name), value, min,
 		                        max, QString::fromStdString(unit), uint(i));
@@ -107,6 +76,9 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 		connect(workingParams[i], SIGNAL(update(Val, const QVariant &)), this,
 		        SLOT(handleParameterUpdate(Val, const QVariant &)));
+		connect(workingParams[i],
+		        SIGNAL(updateRange(Val, Val, const QVariant &)), this,
+		        SLOT(handleParameterUpdateRange(Val, Val, const QVariant &)));
 		connect(workingParams[i], SIGNAL(updateExplore(bool, const QVariant &)),
 		        this,
 		        SLOT(handleParameterUpdateExplore(bool, const QVariant &)));
@@ -154,6 +126,13 @@ void ParametersWidget::handleParameterUpdate(Val value, const QVariant &data)
 void ParametersWidget::handleParameterUpdateRange(Val min, Val max,
                                                   const QVariant &data)
 {
+	if (data.type() == QVariant::UInt) {
+		size_t idx = data.toUInt();
+		params->min[idx] =
+		    WorkingParameters::plotToWorking(min, idx, params->params);
+		params->max[idx] =
+		    WorkingParameters::plotToWorking(min, idx, params->params);
+	}
 }
 
 void ParametersWidget::handleParameterUpdateOptimize(bool optimize,

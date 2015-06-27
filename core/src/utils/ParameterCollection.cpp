@@ -33,13 +33,24 @@ ParameterCollection::ParameterCollection()
              {3, 1, 1e-3}, {2, 0, 1e-3}, {0, 0, 1e-3},
             },
             3, true, 0.033_s),
-      singleGroup(train.toSingleGroupSpikeData())
+      singleGroup(train.toSingleGroupSpikeData()),
+      min({MIN_HZ, MIN_HZ, MIN_HZ, MIN_HZ, MIN_V, MIN_V, MIN_V, MIN_V, MIN_V,
+           MIN_V, MIN_HZ,
+           WorkingParameters::fromParameter(MIN_A, 11, DefaultParameters::cM,
+                                            DefaultParameters::eL),
+           WorkingParameters::fromParameter(MIN_S, 12, DefaultParameters::cM,
+                                            DefaultParameters::eL)}),
+      max({MAX_HZ, MAX_HZ, MAX_HZ, MAX_HZ, MAX_V, MAX_V, MAX_V, MAX_V, MAX_V,
+           MAX_V, MAX_HZ,
+           WorkingParameters::fromParameter(MAX_A, 11, DefaultParameters::cM,
+                                            DefaultParameters::eL),
+           WorkingParameters::fromParameter(MAX_S, 12, DefaultParameters::cM,
+                                            DefaultParameters::eL)})
 {
 	// Initialize the optimize/explore flags
 	optimize.fill(true);
 	explore.fill(false);
+}
 
-	// Initialize the minimum/maximum values
-	// TODO
 }
-}
+
