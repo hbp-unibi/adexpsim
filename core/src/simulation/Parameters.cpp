@@ -72,20 +72,10 @@ Parameters WorkingParameters::toParameters(Val cM, Val eL) const
 {
 	Parameters res;
 	res.cM() = cM;
-	res.gL() = lL() * cM;
 	res.eL() = eL;
-	res.eE() = eE() + eL;
-	res.eI() = eI() + eL;
-	res.eTh() = eTh() + eL;
-	res.eSpike() = eSpike() + eL;
-	res.eReset() = eReset() + eL;
-	res.deltaTh() = deltaTh();
-	res.tauI() = 1.0 / lI();
-	res.tauE() = 1.0 / lE();
-	res.tauW() = 1.0 / lW();
-	res.a() = lA() * cM;
-	res.b() = lB() * cM;
-	res.w() = wSpike() * cM;
+	for (size_t i = 0; i < WorkingParameters::Size; i++) {
+		res[i] = toParameter(i, cM, eL);
+	}
 	return res;
 }
 
