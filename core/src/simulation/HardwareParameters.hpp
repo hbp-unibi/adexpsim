@@ -143,10 +143,26 @@ public:
 class BrainScaleSParameters : public HardwareParameters {
 public:
 	/**
-	 * Creates an instance
+	 * Creates an instance of the BrainScaleSParameters class.
+	 *
+	 * TODO: Add parameter for speedup factor.
 	 */
 	BrainScaleSParameters();
 
 	static const BrainScaleSParameters inst;
 };
+
+/**
+ * HardwareParameters filled with no restrictions.
+ */
+class UnlimitedHardwareParameters : public HardwareParameters {
+public:
+	/**
+	 * Creates an instance of the UnlimitedHardwareParameters class.
+	 */
+	UnlimitedHardwareParameters();
+
+	static const UnlimitedHardwareParameters inst;
+};
+
 }

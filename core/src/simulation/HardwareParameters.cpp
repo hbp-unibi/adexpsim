@@ -54,6 +54,12 @@ static const std::vector<size_t> eDimIfCondExp = {
 template <typename T>
 static Val nearest(Val v, const T &vs)
 {
+	// Just return if v is given.
+	if (vs.empty()) {
+		return v;
+	}
+
+	// Search the nearest value
 	Val minDist = std::numeric_limits<Val>::max();
 	Val nearest = 0;
 	for (Val elem : vs) {
@@ -86,7 +92,8 @@ bool HardwareParameters::valid(const Parameters &params,
                                bool useIfCondExp) const
 {
 	// Check whether the discrete parameters are ok
-	bool ok = contains(params.cM(), cMs) && contains(params.w(), ws);
+	bool ok = (cMs.empty() || contains(params.cM(), cMs)) &&
+	          (ws.empty() || contains(params.w(), ws));
 
 	// Fetch pointers at all ranged available in this class and the correct
 	// mapping between these ranges and the parameter indices
@@ -231,4 +238,23 @@ BrainScaleSParameters::BrainScaleSParameters()
 	rDeltaTh = {0.4e-3, 3e-3};  // Slope range
 	rW = {0e-6, 0.3e-6};        // Weight range
 }
+
+const UnlimitedHardwareParameters UnlimitedHardwareParameters::inst;
+
+static const Range UNLIMITED_RANGE(std::numeric_limits<Val>::lowest(),
+                                   std::numeric_limits<Val>::max());
+
+UnlimitedHardwareParameters::UnlimitedHardwareParameters()
+    : rE(UNLIMITED_RANGE),
+      rGL(UNLIMITED_RANGE),
+      rTau(UNLIMITED_RANGE),
+      rTauW(UNLIMITED_RANGE),
+      rTRef(UNLIMITED_RANGE),
+      rA(UNLIMITED_RANGE),
+      rB(UNLIMITED_RANGE),
+      rDeltaTh(UNLIMITED_RANGE),
+      rW(UNLIMITED_RANGE)
+{
+}
+
 }
