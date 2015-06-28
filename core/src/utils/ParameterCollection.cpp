@@ -45,12 +45,13 @@ ParameterCollection::ParameterCollection()
            WorkingParameters::fromParameter(MAX_A, 11, DefaultParameters::cM,
                                             DefaultParameters::eL),
            WorkingParameters::fromParameter(MAX_S, 12, DefaultParameters::cM,
-                                            DefaultParameters::eL)})
+                                            DefaultParameters::eL)}),
+      optimize({true, true, false, true, true, false, true, true, true, true,
+                true, true,
+                true})  // Per default do not optimize the inhibitory channels
 {
 	// Initialize the optimize/explore flags
-	optimize.fill(true);
 	explore.fill(false);
 }
-
 }
 
