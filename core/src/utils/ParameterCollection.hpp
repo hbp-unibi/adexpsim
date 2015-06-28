@@ -32,45 +32,12 @@
 #include <string>
 #include <vector>
 
+#include <exploration/EvaluationResult.hpp>
+#include <simulation/Model.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 
 namespace AdExpSim {
-/**
- * The ModelType enum defines the model that should be used in the simulation.
- */
-enum class ModelType: int {
-	/**
-	 * Represents the simple IF_COND_EXP model (integrate & fire conductance
-	 * based with exponential decay).
-	 */
-	IF_COND_EXP = 0,
-
-	/**
-	 * Represents the simple AD_IF_COND_EXP model (integrate & fire conductance
-	 * based with exponential decay and adaptation mechanism).
-	 */
-	AD_IF_COND_EXP = 1
-};
-
-/**
- * The EvaluationType enum defines the evaluation method which is going to be
- * used in the simulation.
- */
-enum class EvaluationType: int {
-	/**
-	 * Uses a spike train template for the evaluation -- determines how well the
-	 * actual simulation matches a predefined spike train.
-	 */
-	SPIKE_TRAIN = 0,
-
-	/**
-	 * Only uses a single spike gorup for the evaluation and checks it for 
-	 * fulfilling the binary threshold and reset condition.
-	 */
-	SINGLE_GROUP = 1
-};
-
 /**
  * ParameterCollection contains parameters which describe both the neuron model
  * parameters, the input spike train and information for explorations.

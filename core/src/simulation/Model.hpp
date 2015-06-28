@@ -46,6 +46,23 @@
 
 namespace AdExpSim {
 /**
+ * The ModelType enum defines the model that should be used in the simulation.
+ */
+enum class ModelType: int {
+	/**
+	 * Represents the simple IF_COND_EXP model (integrate & fire conductance
+	 * based with exponential decay).
+	 */
+	IF_COND_EXP = 0,
+
+	/**
+	 * Represents the simple AD_IF_COND_EXP model (integrate & fire conductance
+	 * based with exponential decay and adaptation mechanism).
+	 */
+	AD_IF_COND_EXP = 1
+};
+
+/**
  * The Model class contains the static function "simulate" which performs the
  * actual simulation of the AdExp model.
  */

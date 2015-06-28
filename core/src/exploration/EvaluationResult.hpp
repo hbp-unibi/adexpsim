@@ -31,12 +31,32 @@
 #include <common/Types.hpp>
 
 namespace AdExpSim {
+/**
+ * The EvaluationType enum defines the evaluation method which is going to be
+ * used in the simulation.
+ */
+enum class EvaluationType : int {
+	/**
+     * Uses a spike train template for the evaluation -- determines how well the
+     * actual simulation matches a predefined spike train.
+     */
+	SPIKE_TRAIN = 0,
+
+	/**
+     * Only uses a single spike gorup for the evaluation and checks it for
+     * fulfilling the binary threshold and reset condition.
+     */
+	SINGLE_GROUP = 1
+};
 
 /**
  * Available evaluation result dimensions.
  */
 enum class EvaluationResultDimension {
-	 SOFT = 0, BINARY = 1, FALSE_POSITIVE = 2, FALSE_NEGATIVE = 3
+	SOFT = 0,
+	BINARY = 1,
+	FALSE_POSITIVE = 2,
+	FALSE_NEGATIVE = 3
 };
 
 /**
@@ -89,6 +109,24 @@ struct EvaluationResult {
 	      pFalseNegative(pFalseNegative),
 	      pSoft(pSoft)
 	{
+	}
+
+	/**
+	 * Selects the given evaluation result dimension.
+	 */
+	Val operator()(EvaluationResultDimension dim) const
+	{
+		switch (dim) {
+			case EvaluationResultDimension::BINARY:
+				return pBinary;
+			case EvaluationResultDimension::FALSE_POSITIVE:
+				return pFalsePositive;
+			case EvaluationResultDimension::FALSE_NEGATIVE:
+				return pFalseNegative;
+			case EvaluationResultDimension::SOFT:
+				return pSoft;
+		}
+		return 0.0;
 	}
 };
 }
