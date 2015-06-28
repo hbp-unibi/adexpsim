@@ -355,6 +355,11 @@ public:
 	 * Returns a reference at the internally used simplex.
 	 */
 	const std::vector<ValueVector> &getSimplex() const { return simplex; }
+
+	/**
+	 * Returns the currently best Vector in the simplex.
+	 */
+	const Vector& getBest() const {return simplex[0].x;}
 };
 }
 
