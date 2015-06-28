@@ -135,6 +135,13 @@ public:
 	std::vector<Parameters> map(const WorkingParameters &params,
 	                            bool useIfCondExp = false,
 	                            bool strict = true) const;
+
+	/**
+	 * Returns true if the map function returns at least one result for the
+	 * given parameters.
+	 */
+	bool possible(const WorkingParameters &params, bool useIfCondExp = false,
+	              bool strict = true) const;
 };
 
 /**

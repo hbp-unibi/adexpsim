@@ -528,11 +528,8 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 				wp[dimY] = rEY.value(y);
 				mask(x, y) = wp.valid();
 				if (showHWOverlay) {
-					maskHW(x, y) =
-					    BrainScaleSParameters::inst
-					        .map(wp, params->model == ModelType::IF_COND_EXP,
-					             true)
-					        .size() > 0;
+					maskHW(x, y) = BrainScaleSParameters::inst.possible(
+					    wp, params->model == ModelType::IF_COND_EXP);
 				}
 			}
 		}

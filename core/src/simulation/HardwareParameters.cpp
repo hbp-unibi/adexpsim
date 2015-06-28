@@ -210,6 +210,12 @@ std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
 	return res;
 }
 
+bool HardwareParameters::possible(const WorkingParameters &params,
+                                  bool useIfCondExp, bool strict) const
+{
+	return map(params, useIfCondExp, strict).size() > 0;
+}
+
 const BrainScaleSParameters BrainScaleSParameters::inst;
 
 BrainScaleSParameters::BrainScaleSParameters()
