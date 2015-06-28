@@ -28,6 +28,8 @@
 #ifndef _ADEXPSIM_EVALUATION_RESULT_HPP_
 #define _ADEXPSIM_EVALUATION_RESULT_HPP_
 
+#include <common/Types.hpp>
+
 namespace AdExpSim {
 
 /**

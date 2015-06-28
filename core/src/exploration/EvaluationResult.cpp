@@ -19,5 +19,5 @@
 #include "EvaluationResult.hpp"
 
 namespace AdExpSim {
-
+// Do nothing here, make sure the header compiles
 }

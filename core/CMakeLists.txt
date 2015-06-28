@@ -45,6 +45,7 @@ ADD_LIBRARY(AdExpSimCore
 	src/common/Timer
 	src/common/Types
 	src/common/Vector
+	src/exploration/EvaluationResult
 	src/exploration/Exploration
 	src/exploration/Simplex
 	src/exploration/SingleGroupEvaluation
