@@ -54,6 +54,8 @@ public:
 	using Arr = std::array<Val, N>;
 	static constexpr size_t Size = N;
 
+	Vector() {}
+
 	Vector(const Arr &arr) : arr(arr) {}
 
 	Val sqrL2Norm() const {
