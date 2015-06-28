@@ -30,8 +30,9 @@
 
 namespace AdExpSim {
 
-// Delta used as minimum difference in evaluation results and vector distances
-static constexpr Val MIN_DIST = 1e-4;
+// Minimum vector distance for two vectors to be considered disimilar
+static constexpr Val MIN_DIST_INPUT = 1e-4;
+static constexpr Val MIN_DIST_OUTPUT = 1e-2;
 
 // Maximum value that to-be-optimized inputs may be worse than the currently
 // best output
@@ -39,10 +40,10 @@ static constexpr Val MAX_WORSE = 0.1;
 
 // Maximum change that may occur in an optimization run to consider a parameter
 // set as stable
-static constexpr Val MAX_DIFF = 1e-3;
+static constexpr Val MIN_DIFF = 1e-3;
 
 // Maximum number of iterations in one pass
-static constexpr size_t MAX_IT = 2000;
+static constexpr size_t MAX_IT = 10000;
 
 // Step size of the mixFactor
 static constexpr Val MIX_STEP = 0.1;
@@ -56,24 +57,39 @@ private:
 	mutable std::mutex mutex;
 
 	/**
-	 * Pushes the given parameter p back onto the given list, but avoids having
-	 * highly similar values on the list.
+	 * Tries to find a duplicate of p in the given container, returns the
+	 * index of the duplicate if one is found, or -1 otherwise.
 	 */
 	template <typename T1, typename T2>
-	bool hasDuplicate(const T1 &list, const T2 &p)
+	static ssize_t findDuplicate(const T1 &list, const T2 &p, const Val thr)
 	{
 		// Calculate the minimum distance to any element already in the list
 		Val minDist = std::numeric_limits<Val>::max();
-		for (const T2 &q : list) {
-			minDist = (p.params - q.params).L2Norm();
+		size_t minIdx = -1;
+		for (size_t i = 0; i < list.size(); i++) {
+			const T2 &q = list[i];
+			const Val dist = (p.params - q.params).L2Norm();
+			if (dist < minDist) {
+				minDist = dist;
+				minIdx = i;
+			}
 		}
 
 		// Only add the element if the distance is larger than some small
 		// threshold
-		if (minDist < MIN_DIST) {
-			return true;
+		if (minDist < thr) {
+			return minIdx;
 		}
-		return false;
+		return -1;
+	}
+
+	/**
+	 * Returns the currently best evaluation result or zero of no such evaluation
+	 * result exists.
+	 */
+	Val bestEval() const
+	{
+		return output.empty() ? 0.0 : output.back().eval;
 	}
 
 public:
@@ -140,10 +156,9 @@ public:
 	void pushInput(const WorkingParameters &p, Val eval, bool clampDiscrete)
 	{
 		auto poolLock = lock();
-		const Val bestEval = output.empty() ? 0.0 : output.back().eval;
-		if (bestEval - eval < MAX_WORSE) {
+		if (bestEval() - eval < MAX_WORSE) {
 			const InputParameters ip(p, clampDiscrete);
-			if (!hasDuplicate(input, ip)) {
+			if (findDuplicate(input, ip, MIN_DIST_INPUT) == -1) {
 				input.emplace_back(ip);
 			}
 		}
@@ -158,11 +173,17 @@ public:
 		auto poolLock = lock();
 
 		// Make sure the evaluation measure is positive
-		if (eval > MIN_DIST) {
+		if (eval > MIN_DIFF) {
 			// Push it onto the output list without duplicates
 			const OptimizationResult opr(p, eval);
-			if (!hasDuplicate(output, opr)) {
-				output.push_back(opr);
+			const ssize_t dupIdx = findDuplicate(output, opr,
+				MIN_DIST_OUTPUT);
+			if (eval > bestEval() || dupIdx == -1) {
+				if (dupIdx == -1) {
+					output.push_back(opr);
+				} else {
+					output[dupIdx] = opr;
+				}
 				std::sort(output.begin(), output.end());
 			}
 		}
@@ -249,8 +270,8 @@ void Optimization::optimizationThread(const Optimization &optimization,
 		// Fetch the current and the next mix factor -- the mix factor is used
 		// to interploate between the forced hardware setup and the
 		// current parameters
-		Val curMf = in.second.mixFactor;
-		Val nextMf = curMf + MIX_STEP;
+		Val curMf = hasHw ? in.second.mixFactor : 0.0;
+		Val nextMf = hasHw ? curMf + MIX_STEP : 0.0;
 		if (hasHw && nextMf > 1.0f) {
 			curMf = 1.0f;
 			nextMf = 0.0f;
@@ -302,7 +323,7 @@ void Optimization::optimizationThread(const Optimization &optimization,
 			// next mix factor.
 			const Val eval = f(p);
 			const bool hasSubstantialChange =
-			    fabs(initialEval - eval) > MAX_DIFF;
+			    fabs(initialEval - eval) > MIN_DIFF;
 			if (!hasSubstantialChange && nextMf == 0.0f) {
 				pool.pushOutput(p, -eval);
 			} else {

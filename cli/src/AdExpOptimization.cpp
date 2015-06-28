@@ -77,10 +77,12 @@ int main(int argc, char *argv[])
 		});
 
 	std::cout << std::endl;
-	if (!res.empty()) {
-		std::cout << "Final pSoft: " << res.back().eval << std::endl;
+	for (ssize_t i = res.size() - 1; i >= 0; i--) {
+		const OptimizationResult ores = res[i];
+		std::cout << "Result #" << i << std::endl;
+		std::cout << "pSoft : " << ores.eval << std::endl;
 		JsonIo::storePyNNModel(
-		    std::cout, res.back().params.toParameters(DefaultParameters::cM,
+		    std::cout, ores.params.toParameters(DefaultParameters::cM,
 		                                          DefaultParameters::eL),
 		    model);
 	}
