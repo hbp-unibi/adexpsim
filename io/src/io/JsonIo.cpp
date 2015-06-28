@@ -56,7 +56,7 @@ void JsonIo::storePyNNModel(std::ostream &os, const Parameters &params,
 	ADEXP(o["delta_T"] = params.deltaTh() * PYNN_VOLT);
 	o["i_offset"] = 0.0 * PYNN_CURR;
 	o["syn_weight"] = params.w() * PYNN_COND;
-	os << o;
+	os << o << std::endl;;
 #undef ADEXP
 }
 
