@@ -25,6 +25,9 @@
  * @author Andreas Stöckel
  */
 
+#ifndef _ADEXPSIM_HARDWARE_PARAMETERS_HPP_
+#define _ADEXPSIM_HARDWARE_PARAMETERS_HPP_
+
 #include <limits>
 #include <vector>
 #include <unordered_set>
@@ -158,18 +161,7 @@ public:
 
 	static const BrainScaleSParameters inst;
 };
-
-/**
- * HardwareParameters filled with no restrictions.
- */
-class UnlimitedHardwareParameters : public HardwareParameters {
-public:
-	/**
-	 * Creates an instance of the UnlimitedHardwareParameters class.
-	 */
-	UnlimitedHardwareParameters();
-
-	static const UnlimitedHardwareParameters inst;
-};
-
 }
+
+#endif /* _ADEXPSIM_HARDWARE_PARAMETERS_HPP_ */
+
