@@ -87,8 +87,7 @@ bool HardwareParameters::valid(const Parameters &params,
                                bool useIfCondExp) const
 {
 	// Check whether the discrete parameters are ok
-	bool ok = contains(params.cM(), cMs)) &&
-	          contains(params.w(), ws);
+	bool ok = contains(params.cM(), cMs) && contains(params.w(), ws);
 
 	// Fetch pointers at all ranged available in this class and the correct
 	// mapping between these ranges and the parameter indices
