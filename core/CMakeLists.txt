@@ -47,6 +47,7 @@ ADD_LIBRARY(AdExpSimCore
 	src/common/Vector
 	src/exploration/EvaluationResult
 	src/exploration/Exploration
+	src/exploration/Optimization
 	src/exploration/Simplex
 	src/exploration/SingleGroupEvaluation
 	src/exploration/SpikeTrainEvaluation
