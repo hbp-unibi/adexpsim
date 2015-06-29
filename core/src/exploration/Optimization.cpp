@@ -366,7 +366,9 @@ std::vector<OptimizationResult> Optimization::optimize(
 			// or if the callback returns false
 			auto poolLock = pool.lock();
 			if ((nIdle.load() == nThreads && pool.input.empty()) ||
-			    !callback(nIt.load(), pool.input.size(), pool.output)) {
+			    !callback(nIt.load(),
+			              pool.input.size() + nThreads - nIdle.load(),
+			              pool.output)) {
 				abort.store(true);
 				break;
 			}
