@@ -15,24 +15,38 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #
-# This CMakeLists file builds the AdExpSimCore library, the CLI applications
-# and the GUI application
+# This CMakeLists file builds the AdExpSimIo library used by both GUI and CLI
 #
 
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
-PROJECT (AdExpSim)
+PROJECT (AdExpSimCore)
 
-# Place all binaries and libraries in the same folder
-SET(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-SET(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR})
+# Enable C++11 and all warnings, enable vector optimizations for this processor
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
+	-Wall -pedantic-errors -std=c++11 -march=native -ffast-math")
 
-# Include the core and io source directory as include directory
-INCLUDE_DIRECTORIES(core/src)
-INCLUDE_DIRECTORIES(io/src)
+# Add the src/ and lib/ directory as include directory
+INCLUDE_DIRECTORIES(
+	lib/
+	src/
+)
 
-# Add the subprojects
-ADD_SUBDIRECTORY(core)
-ADD_SUBDIRECTORY(cli)
-ADD_SUBDIRECTORY(gui)
-ADD_SUBDIRECTORY(io)
+# jsoncpp JSON parser
+ADD_LIBRARY(jsoncpp
+	lib/jsoncpp
+)
+
+
+# AdExpSimIo library
+ADD_LIBRARY(AdExpSimIo
+	src/io/JsonIo
+	src/io/SurfacePlotIo
+)
+
+# Link library
+TARGET_LINK_LIBRARIES(AdExpSimIo
+	jsoncpp
+	rt
+	pthread
+)
+
