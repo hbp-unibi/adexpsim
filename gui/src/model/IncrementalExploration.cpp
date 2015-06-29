@@ -78,6 +78,10 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
 /*
  * Class IncrementalExploration
  */
+ 
+constexpr int IncrementalExploration::MIN_LEVEL;
+constexpr int IncrementalExploration::MAX_LEVEL;
+constexpr int IncrementalExploration::MAX_LEVEL_INITIAL;
 
 IncrementalExploration::IncrementalExploration(
     std::shared_ptr<ParameterCollection> params, QObject *parent)
