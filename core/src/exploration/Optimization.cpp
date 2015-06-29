@@ -31,12 +31,12 @@
 namespace AdExpSim {
 
 // Minimum vector distance for two vectors to be considered disimilar
-static constexpr Val MIN_DIST_INPUT = 1e-4;
+static constexpr Val MIN_DIST_INPUT = 1e-2;
 static constexpr Val MIN_DIST_OUTPUT = 1e-2;
 
 // Maximum value that to-be-optimized inputs may be worse than the currently
 // best output
-static constexpr Val MAX_WORSE = 0.1;
+static constexpr Val MAX_WORSE = 0.02;
 
 // Maximum change that may occur in an optimization run to consider a parameter
 // set as stable
@@ -46,7 +46,7 @@ static constexpr Val MIN_DIFF = 1e-3;
 static constexpr size_t MAX_IT = 10000;
 
 // Step size of the mixFactor
-static constexpr Val MIX_STEP = 0.1;
+static constexpr Val MIX_STEP = 0.2;
 
 /**
  * The Pool class holds the input and output parameter pool and manages thread-
@@ -84,13 +84,11 @@ private:
 	}
 
 	/**
-	 * Returns the currently best evaluation result or zero of no such evaluation
+	 * Returns the currently best evaluation result or zero of no such
+	 * evaluation
 	 * result exists.
 	 */
-	Val bestEval() const
-	{
-		return output.empty() ? 0.0 : output.back().eval;
-	}
+	Val bestEval() const { return output.empty() ? 0.0 : output.back().eval; }
 
 public:
 	/**
@@ -153,11 +151,11 @@ public:
 	 * Pushes a new parameter onto the input pool, makes sure there are no
 	 * duplicated parameter pairs.
 	 */
-	void pushInput(const WorkingParameters &p, Val eval, bool clampDiscrete)
+	void pushInput(const WorkingParameters &p, Val eval, Val nextMf)
 	{
 		auto poolLock = lock();
 		if (bestEval() - eval < MAX_WORSE) {
-			const InputParameters ip(p, clampDiscrete);
+			const InputParameters ip(p, nextMf);
 			if (findDuplicate(input, ip, MIN_DIST_INPUT) == -1) {
 				input.emplace_back(ip);
 			}
@@ -176,8 +174,7 @@ public:
 		if (eval > MIN_DIFF) {
 			// Push it onto the output list without duplicates
 			const OptimizationResult opr(p, eval);
-			const ssize_t dupIdx = findDuplicate(output, opr,
-				MIN_DIST_OUTPUT);
+			const ssize_t dupIdx = findDuplicate(output, opr, MIN_DIST_OUTPUT);
 			if (eval > bestEval() || dupIdx == -1) {
 				if (dupIdx == -1) {
 					output.push_back(opr);
