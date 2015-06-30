@@ -85,7 +85,7 @@ void JsonIo::storePyNNSetupESS(std::ostream &os, const Parameters &params,
 	os << "        'hardware': sim.hardwareSetup[\"one-hicann\"]," << std::endl;
 	os << "        'useSystemSim': True," << std::endl;
 	os << "        'ignoreDatabase': True," << std::endl;
-	os << "        'ignoreHWParameterRanges': False," << std::endl;
+	os << "        'ignoreHWParameterRanges': True," << std::endl;
 	os << "        'speedupFactor': 10000," << std::endl;
 	os << "        'model': '"
 	   << (model == ModelType::IF_COND_EXP ? "IF_cond_exp"
