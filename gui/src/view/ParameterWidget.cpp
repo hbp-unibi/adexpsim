@@ -92,15 +92,14 @@ ParameterWidget::ParameterWidget(QWidget *parent, QString name, Val value,
 	btnOptimize->setIcon(QIcon::fromTheme("edit-find"));
 	btnOptimize->setCheckable(true);
 	btnOptimize->setToolTip(
-	    "Enable optimization when performing an optimization run");
+	    "Optimize this parameter");
 	btnOptimize->hide();
 
 	btnExplore = new QToolButton(cntRange);
 	btnExplore->setIcon(QIcon::fromTheme("camera-photo"));
 	btnExplore->setCheckable(true);
 	btnExplore->setToolTip(
-	    "Explore this dimension in the set parameter range when running an "
-	    "optimization");
+	    "Mark this parameter for exploration (in CLI)");
 	btnExplore->hide();
 
 	// Connect all events
