@@ -187,6 +187,26 @@ public:
 	}
 };
 
+Optimization::Optimization()
+    : model(ModelType::IF_COND_EXP),
+      evalDim(EvaluationResultDimension::SOFT),
+      hw(nullptr)
+{
+}
+
+Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
+                           const std::vector<size_t> &dims,
+                           const HardwareParameters &hw)
+    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(&hw)
+{
+}
+
+Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
+                           const std::vector<size_t> &dims)
+    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(nullptr)
+{
+}
+
 std::vector<size_t> Optimization::filterDims(ModelType model,
                                              const std::vector<size_t> &dims)
 {
@@ -204,19 +224,6 @@ std::vector<size_t> Optimization::filterDims(ModelType model,
 		}
 	}
 	return res;
-}
-
-Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
-                           const std::vector<size_t> &dims,
-                           const HardwareParameters &hw)
-    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(&hw)
-{
-}
-
-Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
-                           const std::vector<size_t> &dims)
-    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(nullptr)
-{
 }
 
 template <typename Evaluation>
@@ -335,6 +342,11 @@ std::vector<OptimizationResult> Optimization::optimize(
     const std::vector<WorkingParameters> &params, const Evaluation &eval,
     ProgressCallback callback) const
 {
+	// Abort if dims is empty or params is empty
+	if (dims.empty() || params.empty()) {
+		return std::vector<OptimizationResult>();
+	}
+
 	// Fetch the number of threads to be used
 	size_t nThreads = std::max<size_t>(1, std::thread::hardware_concurrency());
 

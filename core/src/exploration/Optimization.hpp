@@ -118,6 +118,12 @@ private:
 
 public:
 	/**
+	 * Default constructor. Contains an invalid optimization, calls to optimize
+	 * will return directly.
+	 */
+	Optimization();
+
+	/**
 	 * Constructor of the Optimization class. Initializes an optimization with
 	 * hardware restrictions.
 	 *
