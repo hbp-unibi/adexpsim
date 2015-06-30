@@ -58,6 +58,7 @@ class MainWindow: public QMainWindow {
 
 private:
 	/* Actions */
+	QAction *actReset;
 	QAction *actNewExplorationWnd;
 	QAction *actNewSimulationWnd;
 	QAction *actOpen;
@@ -88,6 +89,7 @@ private:
 	void createWidgets();
 
 private slots:
+	void reset();
 	void newExploration();
 	void newSimulation();
 	void handleUpdateParameters(std::set<size_t> dims);

@@ -69,6 +69,11 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::createActions()
 {
+	actReset = new QAction(QIcon::fromTheme("document-new"),
+	                                   tr("Reset parameters"), this);
+	connect(actReset, SIGNAL(triggered()), this,
+	        SLOT(reset()));
+
 	actNewExplorationWnd = new QAction(QIcon::fromTheme("window-new"),
 	                                   tr("New exploration window..."), this);
 	connect(actNewExplorationWnd, SIGNAL(triggered()), this,
@@ -106,6 +111,8 @@ void MainWindow::createMenus()
 	QMenu *fileMenu = new QMenu(tr("&File"), this);
 	fileMenu->addAction(actNewExplorationWnd);
 	fileMenu->addAction(actNewSimulationWnd);
+	fileMenu->addSeparator();
+	fileMenu->addAction(actReset);
 	fileMenu->addSeparator();
 	fileMenu->addAction(actOpen);
 	fileMenu->addSeparator();
@@ -219,6 +226,12 @@ void MainWindow::newSimulation()
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	windows.push_back(wnd);
 	wnd->show();
+}
+
+void MainWindow::reset()
+{
+	*params = ParameterCollection();
+	handleUpdateParameters(std::set<size_t>{});
 }
 
 void MainWindow::handleUpdateParameters(std::set<size_t> dims)
