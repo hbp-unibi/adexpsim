@@ -114,6 +114,16 @@ struct ParameterCollection {
 	 * Default constructor. Initializes all variables with sane default values.
 	 */
 	ParameterCollection();
+
+	/**
+	 * Returns the currently active optimization dimensions.
+	 */
+	std::vector<size_t> optimizationDims() const;
+
+	/**
+	 * Returns the currently active exploration dimensions.
+	 */
+	std::vector<size_t> explorationDims() const;
 };
 }
 
