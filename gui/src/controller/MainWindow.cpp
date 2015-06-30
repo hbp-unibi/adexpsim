@@ -36,6 +36,7 @@
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <utils/ParameterCollection.hpp>
+#include <view/OptimizationWidget.hpp>
 #include <view/ParametersWidget.hpp>
 #include <view/SingleGroupWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
@@ -179,6 +180,12 @@ void MainWindow::createWidgets()
 	connect(singleGroupWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(singleGroupWidget, "Single Group Parameters");
+
+	// Create the optimization widget and add it to the tool box
+	optimizationWidget = new OptimizationWidget(params, this);
+	connect(optimizationWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(optimizationWidget, "Optimization");
 
 	// Create the parameters panel and add it to the tool box
 	parametersWidget = new ParametersWidget(params, this);

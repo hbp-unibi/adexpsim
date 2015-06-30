@@ -42,6 +42,7 @@ class QMenu;
 
 namespace AdExpSim {
 
+class OptimizationWidget;
 class ParameterCollection;
 class ParametersWidget;
 class SingleGroupWidget;
@@ -75,6 +76,7 @@ private:
 	/* Parameter widgets */
 	SingleGroupWidget *singleGroupWidget;
 	SpikeTrainWidget *spikeTrainWidget;
+	OptimizationWidget *optimizationWidget;
 	ParametersWidget *parametersWidget;
 	QToolBar *fileToolbar;
 	QToolBar *simToolbar;
