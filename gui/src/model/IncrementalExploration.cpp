@@ -48,25 +48,21 @@ IncrementalExplorationRunner::~IncrementalExplorationRunner()
 
 void IncrementalExplorationRunner::run()
 {
-	// Run the exploration process
 	bool ok = false;
-
+	auto progressCallback = [&](float p) -> bool {
+		emit progress(p);
+		return !aborted.load();
+	};
 	if (params->evaluation == EvaluationType::SPIKE_TRAIN) {
 		ok = exploration.run(
 		    SpikeTrainEvaluation(params->train,
 		                         params->model == ModelType::IF_COND_EXP),
-		    [&](float p) -> bool {
-			    emit progress(p);
-			    return !aborted.load();
-			});
+		    progressCallback);
 	} else if (params->evaluation == EvaluationType::SINGLE_GROUP) {
 		ok = exploration.run(
 		    SingleGroupEvaluation(params->singleGroup,
 		                          params->model == ModelType::IF_COND_EXP),
-		    [&](float p) -> bool {
-			    emit progress(p);
-			    return !aborted.load();
-			});
+		    progressCallback);
 	}
 
 	// Emit the done event
@@ -82,6 +78,7 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
 IncrementalExploration::IncrementalExploration(
     std::shared_ptr<ParameterCollection> params, QObject *parent)
     : QObject(parent),
+      pool(new QThreadPool(this)),
       maxLevel(MAX_LEVEL_INITIAL),
       dimX(0),
       dimY(1),
@@ -111,8 +108,8 @@ IncrementalExploration::~IncrementalExploration()
 {
 	if (currentRunner != nullptr) {
 		currentRunner->abort();
-		QThreadPool::globalInstance()->waitForDone();
 	}
+	pool->waitForDone();
 }
 
 bool IncrementalExploration::isActive() const
@@ -162,7 +159,7 @@ void IncrementalExploration::start()
 	level++;
 
 	// Start the runner
-	QThreadPool::globalInstance()->start(currentRunner);
+	pool->start(currentRunner);
 }
 
 void IncrementalExploration::update()

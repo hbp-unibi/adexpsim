@@ -36,6 +36,7 @@
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <utils/ParameterCollection.hpp>
+#include <view/OptimizationWidget.hpp>
 #include <view/ParametersWidget.hpp>
 #include <view/SingleGroupWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
@@ -68,6 +69,11 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::createActions()
 {
+	actReset = new QAction(QIcon::fromTheme("document-new"),
+	                                   tr("Reset parameters"), this);
+	connect(actReset, SIGNAL(triggered()), this,
+	        SLOT(reset()));
+
 	actNewExplorationWnd = new QAction(QIcon::fromTheme("window-new"),
 	                                   tr("New exploration window..."), this);
 	connect(actNewExplorationWnd, SIGNAL(triggered()), this,
@@ -105,6 +111,8 @@ void MainWindow::createMenus()
 	QMenu *fileMenu = new QMenu(tr("&File"), this);
 	fileMenu->addAction(actNewExplorationWnd);
 	fileMenu->addAction(actNewSimulationWnd);
+	fileMenu->addSeparator();
+	fileMenu->addAction(actReset);
 	fileMenu->addSeparator();
 	fileMenu->addAction(actOpen);
 	fileMenu->addSeparator();
@@ -180,6 +188,12 @@ void MainWindow::createWidgets()
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(singleGroupWidget, "Single Group Parameters");
 
+	// Create the optimization widget and add it to the tool box
+	optimizationWidget = new OptimizationWidget(params, this);
+	connect(optimizationWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(optimizationWidget, "Optimization");
+
 	// Create the parameters panel and add it to the tool box
 	parametersWidget = new ParametersWidget(params, this);
 	connect(parametersWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
@@ -212,6 +226,12 @@ void MainWindow::newSimulation()
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	windows.push_back(wnd);
 	wnd->show();
+}
+
+void MainWindow::reset()
+{
+	*params = ParameterCollection();
+	handleUpdateParameters(std::set<size_t>{});
 }
 
 void MainWindow::handleUpdateParameters(std::set<size_t> dims)

@@ -39,6 +39,7 @@
 #include <QObject>
 
 class QTimer;
+class QThreadPool;
 
 namespace AdExpSim {
 
@@ -131,11 +132,15 @@ private:
 	static constexpr int MAX_LEVEL_INITIAL = 8;  // 256x256
 
 	/**
+	 * QThreadPool used to execute the runner.
+	 */
+	QThreadPool *pool;
+
+	/**
 	 * Memories for the resolution levels.
 	 */
 	std::vector<std::shared_ptr<ExplorationMemory>> mem;
 
-private:
 	/**
 	 * Timer used to defer the calls to "update".
 	 */

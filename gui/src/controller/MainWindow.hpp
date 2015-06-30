@@ -42,6 +42,7 @@ class QMenu;
 
 namespace AdExpSim {
 
+class OptimizationWidget;
 class ParameterCollection;
 class ParametersWidget;
 class SingleGroupWidget;
@@ -57,6 +58,7 @@ class MainWindow: public QMainWindow {
 
 private:
 	/* Actions */
+	QAction *actReset;
 	QAction *actNewExplorationWnd;
 	QAction *actNewSimulationWnd;
 	QAction *actOpen;
@@ -75,6 +77,7 @@ private:
 	/* Parameter widgets */
 	SingleGroupWidget *singleGroupWidget;
 	SpikeTrainWidget *spikeTrainWidget;
+	OptimizationWidget *optimizationWidget;
 	ParametersWidget *parametersWidget;
 	QToolBar *fileToolbar;
 	QToolBar *simToolbar;
@@ -86,6 +89,7 @@ private:
 	void createWidgets();
 
 private slots:
+	void reset();
 	void newExploration();
 	void newSimulation();
 	void handleUpdateParameters(std::set<size_t> dims);

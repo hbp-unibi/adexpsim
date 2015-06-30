@@ -46,12 +46,34 @@ ParameterCollection::ParameterCollection()
                                             DefaultParameters::eL),
            WorkingParameters::fromParameter(MAX_S, 12, DefaultParameters::cM,
                                             DefaultParameters::eL)}),
-      optimize({true, true, false, true, true, false, true, true, true, true,
+      optimize({true, true, false, true, true, false, true, false, true, true,
                 true, true,
-                true})  // Per default do not optimize the inhibitory channels
+                true})  // Do not optimize the inhibitory channels and eSpike
 {
 	// Initialize the optimize/explore flags
 	explore.fill(false);
+}
+
+template <typename T>
+static std::vector<size_t> activeElements(const T &list)
+{
+	std::vector<size_t> res;
+	for (size_t i = 0; i < list.size(); i++) {
+		if (list[i]) {
+			res.push_back(i);
+		}
+	}
+	return res;
+}
+
+std::vector<size_t> ParameterCollection::optimizationDims() const
+{
+	return activeElements(optimize);
+}
+
+std::vector<size_t> ParameterCollection::explorationDims() const
+{
+	return activeElements(explore);
 }
 }
 

@@ -58,12 +58,14 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/controller/SimulationWindow
 	src/model/NeuronSimulation
 	src/model/IncrementalExploration
+	src/model/OptimizationJob
 	src/view/Colors
 	src/view/ExplorationWidget
 	src/view/ExplorationWidgetInvalidOverlay
 	src/view/ExplorationWidgetGradients
 	src/view/ExplorationWidgetCrosshair
 	src/view/NeuronSimulationWidget
+	src/view/OptimizationWidget
 	src/view/ParameterWidget
 	src/view/ParametersWidget
 	src/view/SingleGroupWidget
