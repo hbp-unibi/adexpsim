@@ -31,8 +31,8 @@
 namespace AdExpSim {
 
 // Minimum vector distance for two vectors to be considered disimilar
-static constexpr Val MIN_DIST_INPUT = 1e-2;
-static constexpr Val MIN_DIST_OUTPUT = 1e-2;
+static constexpr Val MIN_DIST_INPUT = 0.1;
+static constexpr Val MIN_DIST_OUTPUT = 0.1;
 
 // Maximum value that to-be-optimized inputs may be worse than the currently
 // best output
@@ -40,7 +40,7 @@ static constexpr Val MAX_WORSE = 0.02;
 
 // Maximum change that may occur in an optimization run to consider a parameter
 // set as stable
-static constexpr Val MIN_DIFF = 1e-3;
+static constexpr Val MIN_DIFF = 0.1;
 
 // Maximum number of iterations in one pass
 static constexpr size_t MAX_IT = 10000;
@@ -269,7 +269,7 @@ void Optimization::optimizationThread(const Optimization &optimization,
 		// current parameters
 		Val curMf = hasHw ? in.second.mixFactor : 0.0;
 		Val nextMf = hasHw ? curMf + MIX_STEP : 0.0;
-		if (hasHw && nextMf > 1.0f) {
+		if (nextMf > 1.0f) {
 			curMf = 1.0f;
 			nextMf = 0.0f;
 		}
@@ -292,20 +292,17 @@ void Optimization::optimizationThread(const Optimization &optimization,
 			nIt++;
 		} while (!res.done && !abort.load() && it < MAX_IT);
 
-		// Check whether the optimization actually changed the cost -- if yes,
-		// perform hardware parameter clamping and try again
-		const WorkingParameters optimizedParams = simplex.getBest();
-
 		// If a hardware limitation is present, map the optimized values to the
 		// hardware -- then remap them to WorkingParameters. If there is no
 		// HW limitation just add the optimized params.
+		const WorkingParameters optimizedParams = simplex.getBest();
 		std::vector<WorkingParameters> finalParams;
 		if (hasHw) {
 			std::vector<Parameters> mapped =
 			    optimization.hw->map(optimizedParams, useIfCondExp);
 			for (const Parameters &p : mapped) {
-				finalParams.push_back((optimizedParams * curMf) +
-				                      (WorkingParameters(p) * (1.0f - curMf)));
+				finalParams.push_back((optimizedParams * (1.0f - curMf)) +
+				                      (WorkingParameters(p) * curMf));
 			}
 		} else {
 			finalParams.push_back(optimizedParams);
