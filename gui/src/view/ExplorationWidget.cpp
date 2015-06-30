@@ -484,21 +484,24 @@ void ExplorationWidget::updateCrosshair()
 	// Show the next possible HW parameters for the weight dimension
 	if ((getDimX() == Parameters::idx_w || getDimY() == Parameters::idx_w) &&
 	    actShowHWLimits->isChecked()) {
-		// Fetch the next possible weights
-		auto ws = BrainScaleSParameters::inst.nextWeights(p[Parameters::idx_w]);
+		// Map the parameters to hardware parameters
+		const auto ms = BrainScaleSParameters::inst.map(
+		    p, params->model == ModelType::IF_COND_EXP);
 
 		// Decide which dimension the w-dimension is on
 		qreal &v =
 		    (getDimX() == WorkingParameters::idx_w) ? pos.rx() : pos.ry();
-		if (ws.size() >= 1) {
-			v = WorkingParameters::parameterToPlot(ws[0], Parameters::idx_w,
-			                                       params->params);
+		if (ms.size() >= 1) {
+			v = WorkingParameters::workingToPlot(WorkingParameters(ms[0]).w(),
+			                                     Parameters::idx_w,
+			                                     params->params);
 			crosshairHW1->setCoords(pos);
 			crosshairHW1->setVisible(true);
 		}
-		if (ws.size() >= 2) {
-			v = WorkingParameters::parameterToPlot(ws[1], Parameters::idx_w,
-			                                       params->params);
+		if (ms.size() >= 2) {
+			v = WorkingParameters::workingToPlot(WorkingParameters(ms[1]).w(),
+			                                     Parameters::idx_w,
+			                                     params->params);
 			crosshairHW2->setCoords(pos);
 			crosshairHW2->setVisible(true);
 		}
