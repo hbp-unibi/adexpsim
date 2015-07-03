@@ -61,8 +61,10 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Create the parameter widgets for all parameters in the working set
 	for (size_t i = 0; i < WorkingParameters::Size; i++) {
-		const std::string name = WorkingParameters::names[i];
-		const std::string unit = WorkingParameters::units[i];
+		const std::string name = WorkingParameters::linear[i] ?
+			WorkingParameters::originalNames[i] : WorkingParameters::names[i];
+		const std::string unit = WorkingParameters::linear[i] ?
+			WorkingParameters::originalUnits[i] : WorkingParameters::units[i];
 		const Val value = p[i];
 		const Val min = params->min.workingToPlot(i, params->params);
 		const Val max = params->max.workingToPlot(i, params->params);
