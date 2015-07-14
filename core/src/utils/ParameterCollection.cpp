@@ -20,11 +20,11 @@
 
 namespace AdExpSim {
 
-std::vector<std::string> ParameterCollection::modelNames = {"IfCondExp",
-                                                            "AdIfCondExp"};
+const std::vector<std::string> ParameterCollection::modelNames = {
+    "IfCondExp", "AdIfCondExp"};
 
-std::vector<std::string> ParameterCollection::evaluationNames = {"Train",
-                                                                 "Single"};
+const std::vector<std::string> ParameterCollection::evaluationNames = {
+    "Train", "Single"};
 
 ParameterCollection::ParameterCollection()
     : model(ModelType::IF_COND_EXP),

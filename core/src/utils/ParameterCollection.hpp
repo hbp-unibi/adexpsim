@@ -56,14 +56,14 @@ struct ParameterCollection {
 	 * String list containing the names of the available models. The indices
 	 * in the list correspond to the integer values of the ModelType enum.
 	 */
-	static std::vector<std::string> modelNames;
+	static const std::vector<std::string> modelNames;
 
 	/**
 	 * String list containing the names of the available evaluation methods. The
 	 * indices in the list correspond to the integer values of the
 	 * EvaluationType enum.
 	 */
-	static std::vector<std::string> evaluationNames;
+	static const std::vector<std::string> evaluationNames;
 
 	/**
 	 * Enum describing the currently used model.
