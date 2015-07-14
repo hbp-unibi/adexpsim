@@ -24,6 +24,7 @@
 #include <QFileDialog>
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 #include <QToolBox>
 #include <QToolBar>
 #include <QScrollArea>
@@ -70,9 +71,8 @@ MainWindow::~MainWindow() {}
 void MainWindow::createActions()
 {
 	actReset = new QAction(QIcon::fromTheme("document-new"),
-	                                   tr("Reset parameters"), this);
-	connect(actReset, SIGNAL(triggered()), this,
-	        SLOT(reset()));
+	                       tr("Reset parameters"), this);
+	connect(actReset, SIGNAL(triggered()), this, SLOT(reset()));
 
 	actNewExplorationWnd = new QAction(QIcon::fromTheme("window-new"),
 	                                   tr("New exploration window..."), this);
@@ -90,17 +90,21 @@ void MainWindow::createActions()
 
 	actSaveParameters = new QAction(QIcon::fromTheme("document-properties"),
 	                                tr("Save parameters..."), this);
+	connect(actSaveParameters, SIGNAL(triggered()), this,
+	        SLOT(handleSaveParameters()));
+
 	actSaveExploration = new QAction(QIcon::fromTheme("document-save-as"),
 	                                 tr("Save exploration..."), this);
 
-	actExportPynnNest = new QAction(QIcon("data/pyNN_logo.png"),
+	actExportPyNNNest = new QAction(QIcon("data/PyNN_logo.png"),
 	                                tr("Export to PyNN for NEST"), this);
-	connect(actExportPynnNest, SIGNAL(triggered()), this,
-	        SLOT(handleExportPynnNest()));
-	actExportPynnESS = new QAction(QIcon("data/icon_hw.png"),
+	connect(actExportPyNNNest, SIGNAL(triggered()), this,
+	        SLOT(handleExportPyNNNest()));
+
+	actExportPyNNESS = new QAction(QIcon("data/icon_hw.png"),
 	                               tr("Export to PyNN for ESS"), this);
-	connect(actExportPynnESS, SIGNAL(triggered()), this,
-	        SLOT(handleExportPynnESS()));
+	connect(actExportPyNNESS, SIGNAL(triggered()), this,
+	        SLOT(handleExportPyNNESS()));
 
 	actExit = new QAction(tr("Exit"), this);
 	connect(actExit, SIGNAL(triggered()), this, SLOT(close()));
@@ -122,8 +126,8 @@ void MainWindow::createMenus()
 	fileMenu->addAction(actExit);
 
 	QMenu *exportMenu = new QMenu(tr("&Export"), this);
-	exportMenu->addAction(actExportPynnNest);
-	exportMenu->addAction(actExportPynnESS);
+	exportMenu->addAction(actExportPyNNNest);
+	exportMenu->addAction(actExportPyNNESS);
 
 	menuBar()->addMenu(fileMenu);
 	menuBar()->addMenu(exportMenu);
@@ -161,8 +165,8 @@ void MainWindow::createWidgets()
 	fileToolbar->addAction(actSaveParameters);
 	fileToolbar->addAction(actSaveExploration);
 	fileToolbar->addSeparator();
-	fileToolbar->addAction(actExportPynnNest);
-	fileToolbar->addAction(actExportPynnESS);
+	fileToolbar->addAction(actExportPyNNNest);
+	fileToolbar->addAction(actExportPyNNESS);
 
 	// Fill the toolbar
 	simToolbar->addAction(actNewExplorationWnd);
@@ -190,8 +194,8 @@ void MainWindow::createWidgets()
 
 	// Create the optimization widget and add it to the tool box
 	optimizationWidget = new OptimizationWidget(params, this);
-	connect(optimizationWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
-	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	connect(optimizationWidget, SIGNAL(updateParameters(std::set<size_t>)),
+	        this, SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(optimizationWidget, "Optimization");
 
 	// Create the parameters panel and add it to the tool box
@@ -275,7 +279,19 @@ void MainWindow::handleEvaluationUpdate(int idx)
 
 void MainWindow::handleOpen()
 {
-	// TODO
+	QString fileName = QFileDialog::getOpenFileName(
+	    this, QString("Load parameters"), QString(), "JSON Files (*.json)");
+	if (!fileName.isEmpty()) {
+		std::ifstream jsonStream(fileName.toStdString());
+		if (JsonIo::loadGenericParameters(jsonStream, *params)) {
+			handleUpdateParameters(std::set<size_t>{});
+		} else {
+			QMessageBox::critical(this, "Error while loading file",
+			                      "The given file could not be opened - either "
+			                      "due to syntax errors or an incompatible "
+			                      "file format.");
+		}
+	}
 }
 
 static QString replaceFileExt(const QString &s, const QString &ext)
@@ -287,13 +303,25 @@ static QString replaceFileExt(const QString &s, const QString &ext)
 	return s.left(i) + "." + ext;
 }
 
-void MainWindow::handleExportPynn(bool nest)
+void MainWindow::handleSaveParameters()
+{
+	QString fileName = QFileDialog::getSaveFileName(
+	    this, QString("Save parameters"), QString(), "JSON Files (*.json)");
+	if (!fileName.isEmpty()) {
+		std::ofstream jsonStream(
+		    replaceFileExt(fileName, "json").toStdString());
+		JsonIo::storeParameters(jsonStream, *params);
+	}
+}
+
+void MainWindow::handleExportPyNN(bool nest)
 {
 	QString fileName = QFileDialog::getSaveFileName(
 	    this, QString("Export ") + (nest ? "NEST" : "ESS") + " PyNN parameters",
 	    QString(), "JSON Files (*.json)");
 	if (!fileName.isEmpty()) {
-		std::ofstream jsonStream(replaceFileExt(fileName, "json").toStdString());
+		std::ofstream jsonStream(
+		    replaceFileExt(fileName, "json").toStdString());
 		std::ofstream pyStream(replaceFileExt(fileName, "py").toStdString());
 
 		JsonIo::storePyNNModel(jsonStream, params->params, params->model);
@@ -305,8 +333,8 @@ void MainWindow::handleExportPynn(bool nest)
 	}
 }
 
-void MainWindow::handleExportPynnESS() { handleExportPynn(false); }
+void MainWindow::handleExportPyNNESS() { handleExportPyNN(false); }
 
-void MainWindow::handleExportPynnNest() { handleExportPynn(true); }
+void MainWindow::handleExportPyNNNest() { handleExportPyNN(true); }
 }
 

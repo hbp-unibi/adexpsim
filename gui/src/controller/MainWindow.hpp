@@ -64,8 +64,8 @@ private:
 	QAction *actOpen;
 	QAction *actSaveExploration;
 	QAction *actSaveParameters;
-	QAction *actExportPynnNest;
-	QAction *actExportPynnESS;
+	QAction *actExportPyNNNest;
+	QAction *actExportPyNNESS;
 	QAction *actExit;
 
 	/* Experiment parameters */
@@ -96,9 +96,10 @@ private slots:
 	void handleModelUpdate(int);
 	void handleEvaluationUpdate(int);
 	void handleOpen();
-	void handleExportPynnNest();
-	void handleExportPynnESS();
-	void handleExportPynn(bool nest);
+	void handleSaveParameters();
+	void handleExportPyNNNest();
+	void handleExportPyNNESS();
+	void handleExportPyNN(bool nest);
 
 protected:
 	void closeEvent(QCloseEvent *event) override;
