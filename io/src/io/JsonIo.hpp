@@ -46,7 +46,7 @@ public:
 	 * model.
 	 */
 	static void storePyNNModel(std::ostream &os, const Parameters &params,
-	                                ModelType model);
+	                           ModelType model);
 
 	/**
 	 * Generates a setup for PyNN using the NEST software simulator.
@@ -63,13 +63,26 @@ public:
 	/**
 	 * Stores the complete parameter collection as a JSON file.
 	 */
-//	static void storeParameters(std::istream &os,
-//	                                const ParameterCollection &params);
+	static void storeParameters(std::ostream &os,
+	                            const ParameterCollection &params);
 
 	/**
-	 * Loads the complete parameter collection back from a JSON file.
+	 * Loads a PyNN model back into the ParameterCollection.
 	 */
-//	static bool loadParameters(std::istream &is, ParameterCollection &params);
+	static bool loadPyNNParameters(std::istream &is,
+	                               Parameters &params);
+
+	/**
+	 * Loads a complete parameter collection back.
+	 */
+	static bool loadParameters(std::istream &is, ParameterCollection &params);
+
+	/**
+	 * Loads either a PyNN model or the complete parameter collection back from
+	 * a JSON file. Auto detects which type of file is given.
+	 */
+	static bool loadGenericParameters(std::istream &is,
+	                                  ParameterCollection &params);
 };
 }
 

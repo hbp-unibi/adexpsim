@@ -36,7 +36,6 @@ ADD_LIBRARY(jsoncpp
 	lib/jsoncpp
 )
 
-
 # AdExpSimIo library
 ADD_LIBRARY(AdExpSimIo
 	src/io/JsonIo
@@ -48,5 +47,6 @@ TARGET_LINK_LIBRARIES(AdExpSimIo
 	jsoncpp
 	rt
 	pthread
+	AdExpSimCore
 )
 
