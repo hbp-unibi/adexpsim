@@ -31,6 +31,32 @@ static constexpr Val PYNN_CURR = 1e9;
 static constexpr Val PYNN_COND = 1e6;
 static constexpr Val PYNN_CAP = 1e9;
 
+template <typename Trafo>
+static void read(const Json::Value &value, const char *key, Parameters &params,
+                 size_t idx, double scale, Trafo t)
+{
+	if (value.isMember(key)) {
+		params[idx] = t(value[key].asDouble() / scale);
+	}
+}
+
+static void read(const Json::Value &value, const char *key, Parameters &params,
+                 size_t idx, double scale = 1.0)
+{
+	read(value, key, params, idx, scale, [](double v) -> double { return v; });
+}
+
+template <typename Enum>
+static void readEnum(const std::string &s,
+                     const std::vector<std::string> &names, Enum &val)
+{
+	for (size_t i = 0; i < names.size(); i++) {
+		if (s == names[i]) {
+			val = Enum(i);
+		}
+	}
+}
+
 void JsonIo::storePyNNModel(std::ostream &os, const Parameters &params,
                             ModelType model)
 {
@@ -105,14 +131,35 @@ static Json::Value serializeSpikeTrainDescriptors(
 		Json::Value descr;
 		descr["nE"] = descrs[i].nE;
 		descr["nI"] = descrs[i].nI;
+		descr["nOut"] = descrs[i].nOut;
+		descr["sigmaT"] = descrs[i].sigmaT;
 		descr["wE"] = descrs[i].wE;
 		descr["wI"] = descrs[i].wI;
-		descr["sigmaT"] = descrs[i].sigmaT;
 		descr["sigmaW"] = descrs[i].sigmaW;
-		descr["nOut"] = descrs[i].nOut;
 		res[i] = descr;
 	}
 	return res;
+}
+
+static std::vector<SpikeTrain::Descriptor> deserializeSpikeTrainDescriptors(
+    const Json::Value &value)
+{
+	const SpikeTrain::Descriptor DEFAULT_DESCR;
+
+	std::vector<SpikeTrain::Descriptor> descrs;
+	if (value.isArray()) {
+		for (int i = 0; i < int(value.size()); i++) {
+			descrs.emplace_back(
+			    value[i].get("nE", int(DEFAULT_DESCR.nE)).asUInt(),
+			    value[i].get("nI", int(DEFAULT_DESCR.nI)).asUInt(),
+			    value[i].get("nOut", int(DEFAULT_DESCR.nOut)).asUInt(),
+			    value[i].get("sigmaT", DEFAULT_DESCR.sigmaT).asDouble(),
+			    value[i].get("wE", DEFAULT_DESCR.wE).asDouble(),
+			    value[i].get("wI", DEFAULT_DESCR.wI).asDouble(),
+			    value[i].get("sigmaW", DEFAULT_DESCR.sigmaW).asDouble());
+		}
+	}
+	return descrs;
 }
 
 static Json::Value serializeSpikeTrain(const SpikeTrain &train)
@@ -124,6 +171,19 @@ static Json::Value serializeSpikeTrain(const SpikeTrain &train)
 	res["T"] = train.getT().sec();
 	res["sigmaT"] = train.getSigmaT();
 	return res;
+}
+
+static SpikeTrain deserializeSpikeTrain(const Json::Value &value)
+{
+	std::vector<SpikeTrain::Descriptor> descrs =
+	    deserializeSpikeTrainDescriptors(value["descrs"]);
+	const SpikeTrain DEFAULT_TRAIN(descrs);
+
+	return SpikeTrain(
+	    descrs, value.get("n", int(DEFAULT_TRAIN.getN())).asUInt(),
+	    value.get("sorted", DEFAULT_TRAIN.isSorted()).asBool(),
+	    Time::sec(value.get("T", DEFAULT_TRAIN.getT().sec()).asDouble()),
+	    value.get("sigmaT", DEFAULT_TRAIN.getSigmaT()).asDouble());
 }
 
 static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)
@@ -185,26 +245,32 @@ void JsonIo::storeParameters(std::ostream &os,
 	os << res << std::endl;
 }
 
-template <typename Trafo>
-static void read(const Json::Value &value, const char *key, Parameters &params,
-                 size_t idx, double scale, Trafo t)
-{
-	if (value.isMember(key)) {
-		params[idx] = t(value[key].asDouble() / scale);
-	}
-}
-
-static void read(const Json::Value &value, const char *key, Parameters &params,
-                 size_t idx, double scale = 1.0)
-{
-	read(value, key, params, idx, scale,
-	    [](double v) -> double { return v; });
-}
-
 static void loadParametersFromValue(const Json::Value &value,
                                     ParameterCollection &params)
 {
-	// TODO
+	Json::Value res;
+
+	// Read the model and evaluation enum
+	if (value.isMember("model")) {
+		readEnum(value["model"].asString(), ParameterCollection::modelNames,
+		         params.model);
+	}
+	if (value.isMember("evaluation")) {
+		readEnum(value["evaluation"].asString(),
+		         ParameterCollection::evaluationNames, params.evaluation);
+	}
+
+	// Read the spike train setup
+	if (value.isMember("spikeTrain")) {
+		params.train = deserializeSpikeTrain(value["spikeTrain"]);
+	}
+
+	/*	res["singleGroup"] = serializeSingleGroup(params.singleGroup);
+	    res["parameters"] = serializeParameters(params.params);
+	    res["min"] = serializeArray(params.min);
+	    res["max"] = serializeArray(params.max);
+	    res["optimize"] = serializeArray(params.optimize);
+	    res["explore"] = serializeArray(params.explore);*/
 }
 
 static void loadPyNNParametersFromValue(const Json::Value &value,
@@ -293,7 +359,7 @@ bool JsonIo::loadGenericParameters(std::istream &is,
 			if (sPyNN > sParams) {
 				loadPyNNParametersFromValue(o, params.params);
 			} else {
-				params = ParameterCollection(); // Start with empty collection
+				params = ParameterCollection();  // Start with empty collection
 				loadParametersFromValue(o, params);
 			}
 		}
