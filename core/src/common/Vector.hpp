@@ -58,7 +58,8 @@ public:
 
 	Vector(const Arr &arr) : arr(arr) {}
 
-	Val sqrL2Norm() const {
+	Val sqrL2Norm() const
+	{
 		Val res = 0;
 		for (size_t i = 0; i < N; i++) {
 			res += arr[i] * arr[i];
@@ -66,9 +67,17 @@ public:
 		return res * Val(1.0 / double(N));
 	}
 
-	Val L2Norm() const {
-		return sqrtf(sqrL2Norm());
-	}
+	Val L2Norm() const { return sqrtf(sqrL2Norm()); }
+
+	constexpr size_t size() const { return N; }
+
+	Val *begin() { return &arr[0]; }
+
+	Val *end() { return &arr[N]; }
+
+	const Val *begin() const { return &arr[0]; }
+
+	const Val *end() const { return &arr[N]; }
 
 	template <typename Func>
 	friend Impl map(const T &v1, const T &v2, Func f)
@@ -168,16 +177,13 @@ class Vec4 : public Vector<Impl, 4> {
 public:
 	using Vector<Impl, 4>::Vector;
 
-	Vec4(Val v0, Val v1, Val v2, Val v3)
-	    : Vector<Impl, 4>({v0, v1, v2, v3})
-	{
-	}
+	Vec4(Val v0, Val v1, Val v2, Val v3) : Vector<Impl, 4>({v0, v1, v2, v3}) {}
 };
 
-#define NAMED_VECTOR_ELEMENT(NAME, IDX) \
-	static constexpr size_t idx_ ## NAME = IDX; \
-	void NAME(Val x) { arr[IDX] = x; }  \
-	Val &NAME() { return arr[IDX]; }    \
+#define NAMED_VECTOR_ELEMENT(NAME, IDX)       \
+	static constexpr size_t idx_##NAME = IDX; \
+	void NAME(Val x) { arr[IDX] = x; }        \
+	Val &NAME() { return arr[IDX]; }          \
 	Val NAME() const { return arr[IDX]; }
 }
 
