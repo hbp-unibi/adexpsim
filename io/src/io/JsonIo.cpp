@@ -46,17 +46,6 @@ static void read(const Json::Value &value, const char *key, Parameters &params,
 	read(value, key, params, idx, scale, [](double v) -> double { return v; });
 }
 
-template <typename Enum>
-static void readEnum(const std::string &s,
-                     const std::vector<std::string> &names, Enum &val)
-{
-	for (size_t i = 0; i < names.size(); i++) {
-		if (s == names[i]) {
-			val = Enum(i);
-		}
-	}
-}
-
 void JsonIo::storePyNNModel(std::ostream &os, const Parameters &params,
                             ModelType model)
 {
@@ -121,6 +110,24 @@ void JsonIo::storePyNNSetupESS(std::ostream &os, const Parameters &params,
 	os << "    }" << std::endl;
 }
 
+template <typename Enum>
+static const std::string &serializeEnum(const Enum &val,
+                                        const std::vector<std::string> &names)
+{
+	return names[size_t(val)];
+}
+
+template <typename Enum>
+static void deserializeEnum(const std::string &s,
+                            const std::vector<std::string> &names, Enum &val)
+{
+	for (size_t i = 0; i < names.size(); i++) {
+		if (s == names[i]) {
+			val = Enum(i);
+		}
+	}
+}
+
 static Json::Value serializeSpikeTrainDescriptors(
     const std::vector<SpikeTrain::Descriptor> &descrs)
 {
@@ -175,7 +182,7 @@ static Json::Value serializeSpikeTrain(const SpikeTrain &train)
 
 static SpikeTrain deserializeSpikeTrain(const Json::Value &value)
 {
-	std::vector<SpikeTrain::Descriptor> descrs =
+	const std::vector<SpikeTrain::Descriptor> descrs =
 	    deserializeSpikeTrainDescriptors(value["descrs"]);
 	const SpikeTrain DEFAULT_TRAIN(descrs);
 
@@ -196,34 +203,40 @@ static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)
 	return res;
 }
 
-static Json::Value serializeParameters(const Parameters &params)
+static SingleGroupSpikeData deserializeSingleGroup(const Json::Value &value)
 {
-	Json::Value res;
-	res["gL"] = params.gL();
-	res["tauE"] = params.tauE();
-	res["tauI"] = params.tauI();
-	res["tauW"] = params.tauW();
-	res["eE"] = params.eE();
-	res["eI"] = params.eI();
-	res["eTh"] = params.eTh();
-	res["eSpike"] = params.eSpike();
-	res["eReset"] = params.eReset();
-	res["deltaTh"] = params.deltaTh();
-	res["a"] = params.a();
-	res["b"] = params.b();
-	res["eL"] = params.eL();
-	res["cM"] = params.cM();
-	return res;
+	const SingleGroupSpikeData DEFAULT_SINGLE_GROUP;
+
+	return SingleGroupSpikeData(
+	    value.get("n", DEFAULT_SINGLE_GROUP.n).asDouble(),
+	    value.get("nM1", DEFAULT_SINGLE_GROUP.nM1).asDouble(),
+	    Time::sec(
+	        value.get("deltaT", DEFAULT_SINGLE_GROUP.deltaT.sec()).asDouble()),
+	    Time::sec(value.get("T", DEFAULT_SINGLE_GROUP.T.sec()).asDouble()));
 }
 
 template <typename Arr>
-static Json::Value serializeArray(const Arr &arr)
+static Json::Value serializeArray(const Arr &arr,
+                                  const std::vector<std::string> &nameIds)
 {
-	Json::Value res(Json::arrayValue);
-	res.resize(arr.size());
-	int i = 0;
+	Json::Value res;
+	size_t i = 0;
 	for (const auto &v : arr) {
-		res[i++] = v;
+		res[nameIds[i++]] = v;
+	}
+	return res;
+}
+
+template <typename Arr, typename Acc>
+static Arr deserializeArray(const Arr &defaultValues, const Json::Value &value,
+                            const std::vector<std::string> &nameIds, Acc acc)
+{
+	Arr res = defaultValues;
+	for (size_t i = 0; i < nameIds.size(); i++) {
+		const std::string &id = nameIds[i];
+		if (value.isMember(id)) {
+			res[i] = acc(value[id]);
+		}
 	}
 	return res;
 }
@@ -232,45 +245,78 @@ void JsonIo::storeParameters(std::ostream &os,
                              const ParameterCollection &params)
 {
 	Json::Value res;
-	res["model"] = ParameterCollection::modelNames[size_t(params.model)];
+	res["model"] = serializeEnum(params.model, ParameterCollection::modelNames);
 	res["evaluation"] =
-	    ParameterCollection::evaluationNames[size_t(params.evaluation)];
+	    serializeEnum(params.evaluation, ParameterCollection::evaluationNames);
 	res["spikeTrain"] = serializeSpikeTrain(params.train);
 	res["singleGroup"] = serializeSingleGroup(params.singleGroup);
-	res["parameters"] = serializeParameters(params.params);
-	res["min"] = serializeArray(params.min);
-	res["max"] = serializeArray(params.max);
-	res["optimize"] = serializeArray(params.optimize);
-	res["explore"] = serializeArray(params.explore);
+	res["parameters"] = serializeArray(params.params, Parameters::nameIds);
+	res["min"] = serializeArray(params.min, WorkingParameters::nameIds);
+	res["max"] = serializeArray(params.max, WorkingParameters::nameIds);
+	res["optimize"] =
+	    serializeArray(params.optimize, WorkingParameters::nameIds);
+	res["explore"] = serializeArray(params.explore, WorkingParameters::nameIds);
 	os << res << std::endl;
 }
 
 static void loadParametersFromValue(const Json::Value &value,
                                     ParameterCollection &params)
 {
+	const ParameterCollection DEFAULT_COLLECTION;
+
 	Json::Value res;
 
-	// Read the model and evaluation enum
 	if (value.isMember("model")) {
-		readEnum(value["model"].asString(), ParameterCollection::modelNames,
-		         params.model);
-	}
-	if (value.isMember("evaluation")) {
-		readEnum(value["evaluation"].asString(),
-		         ParameterCollection::evaluationNames, params.evaluation);
+		deserializeEnum(value["model"].asString(),
+		                ParameterCollection::modelNames, params.model);
 	}
 
-	// Read the spike train setup
+	if (value.isMember("evaluation")) {
+		deserializeEnum(value["evaluation"].asString(),
+		                ParameterCollection::evaluationNames,
+		                params.evaluation);
+	}
+
 	if (value.isMember("spikeTrain")) {
 		params.train = deserializeSpikeTrain(value["spikeTrain"]);
 	}
 
-	/*	res["singleGroup"] = serializeSingleGroup(params.singleGroup);
-	    res["parameters"] = serializeParameters(params.params);
-	    res["min"] = serializeArray(params.min);
-	    res["max"] = serializeArray(params.max);
-	    res["optimize"] = serializeArray(params.optimize);
-	    res["explore"] = serializeArray(params.explore);*/
+	if (value.isMember("singleGroup")) {
+		params.singleGroup = deserializeSingleGroup(value["singleGroup"]);
+	}
+
+	if (value.isMember("parameters")) {
+		params.params = deserializeArray(
+		    DEFAULT_COLLECTION.params, value["parameters"], Parameters::nameIds,
+		    [](const Json::Value &v) { return v.asDouble(); });
+	}
+
+	if (value.isMember("min")) {
+		params.min =
+		    deserializeArray(WorkingParameters(DEFAULT_COLLECTION.params),
+		                     value["min"], WorkingParameters::nameIds,
+		                     [](const Json::Value &v) { return v.asDouble(); });
+	}
+
+	if (value.isMember("max")) {
+		params.max = deserializeArray(
+		    DEFAULT_COLLECTION.max, value["max"], WorkingParameters::nameIds,
+		    [](const Json::Value &v) { return v.asDouble(); });
+	}
+
+	if (value.isMember("explore")) {
+		params.explore =
+		    deserializeArray(DEFAULT_COLLECTION.explore, value["explore"],
+		                     WorkingParameters::nameIds,
+		                     [](const Json::Value &v) { return v.asBool(); });
+	}
+
+	if (value.isMember("optimize")) {
+		params.optimize =
+		    deserializeArray(DEFAULT_COLLECTION.optimize, value["optimize"],
+		                     WorkingParameters::nameIds,
+		                     [](const Json::Value &v) { return v.asBool(); });
+	}
 }
 
 static void loadPyNNParametersFromValue(const Json::Value &value,
