@@ -64,6 +64,16 @@ public:
 	using Vector<Parameters, 15>::Vector;
 
 	/**
+	 * Names of the corresponding vector component (human readable name)
+	 */
+	static const std::vector<std::string> names;
+
+	/**
+	 * Internal name ids.
+	 */
+	static const std::vector<std::string> nameIds;
+
+	/**
 	 * Default constructor, uses the values defined in the DefaultParameters
 	 * namespace as default parameters.
 	 */
@@ -171,6 +181,11 @@ public:
 	 * Vector containing the name of each component.
 	 */
 	static const std::vector<std::string> names;
+
+	/**
+	 * Internal name ids.
+	 */
+	static const std::vector<std::string> nameIds;
 
 	/**
 	 * Vector containing a description of each component.

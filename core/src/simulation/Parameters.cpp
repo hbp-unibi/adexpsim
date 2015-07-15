@@ -22,9 +22,25 @@
 
 namespace AdExpSim {
 
+/* Class Parameters */
+
+const std::vector<std::string> Parameters::names = {
+    "gL",     "τE",      "τI", "τW", "eE", "eI", "eTh", "eSpike",
+    "eReset", "deltaTh", "a",  "b",  "w",  "eL", "cM"};
+
+const std::vector<std::string> Parameters::nameIds = {
+    "gL",     "tauE",    "tauI", "tauW", "eE", "eI", "eTh", "eSpike",
+    "eReset", "deltaTh", "a",    "b",    "w",  "eL", "cM"};
+
+/* Class WorkingParameters */
+
 const std::vector<std::string> WorkingParameters::names = {
     "λL",     "λE",     "λI",  "λW", "eE", "eI", "eTh",
     "eSpike", "eReset", "ΔTh", "λA", "λB", "w"};
+
+const std::vector<std::string> WorkingParameters::nameIds = {
+    "lL",     "lE",     "lI",      "lW", "eE", "eI", "eTh",
+    "eSpike", "eReset", "deltaTh", "lA", "lB", "w"};
 
 const std::vector<std::string> WorkingParameters::descriptions = {
     "Membrane leak rate",            "Excitatory channel decay rate",
