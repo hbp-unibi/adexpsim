@@ -61,10 +61,12 @@ ParametersWidget::ParametersWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Create the parameter widgets for all parameters in the working set
 	for (size_t i = 0; i < WorkingParameters::Size; i++) {
-		const std::string name = WorkingParameters::linear[i] ?
-			WorkingParameters::originalNames[i] : WorkingParameters::names[i];
-		const std::string unit = WorkingParameters::linear[i] ?
-			WorkingParameters::originalUnits[i] : WorkingParameters::units[i];
+		const std::string name = WorkingParameters::linear[i]
+		                             ? WorkingParameters::originalNames[i]
+		                             : WorkingParameters::names[i];
+		const std::string unit = WorkingParameters::linear[i]
+		                             ? WorkingParameters::originalUnits[i]
+		                             : WorkingParameters::units[i];
 		const Val value = p[i];
 		const Val min = params->min.workingToPlot(i, params->params);
 		const Val max = params->max.workingToPlot(i, params->params);
@@ -133,7 +135,7 @@ void ParametersWidget::handleParameterUpdateRange(Val min, Val max,
 		params->min[idx] =
 		    WorkingParameters::plotToWorking(min, idx, params->params);
 		params->max[idx] =
-		    WorkingParameters::plotToWorking(min, idx, params->params);
+		    WorkingParameters::plotToWorking(max, idx, params->params);
 	}
 }
 
@@ -156,7 +158,9 @@ void ParametersWidget::handleParameterUpdateExplore(bool explore,
 void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 {
 	blockSignals(true);
-	Parameters &p = params->params;
+	const Parameters &p = params->params;
+	const WorkingParameters &min = params->min;
+	const WorkingParameters &max = params->max;
 	if (dims.empty()) {
 		paramCM->setValue(p.cM());
 		paramEL->setValue(p.eL());
@@ -168,11 +172,12 @@ void ParametersWidget::handleUpdateParameters(std::set<size_t> dims)
 		}
 	}
 	for (size_t d : dims) {
-		Val value = p[d];
-		if (!WorkingParameters::linear[d]) {
-			value = WorkingParameters::fromParameter(value, d, p);
-		}
-		workingParams[d]->setValue(value);
+		workingParams[d]->setValue(
+		    WorkingParameters::parameterToPlot(p[d], d, p));
+		workingParams[d]->setMin(min.workingToPlot(d, p));
+		workingParams[d]->setMax(max.workingToPlot(d, p));
+		workingParams[d]->setOptimize(params->optimize[d]);
+		workingParams[d]->setExplore(params->explore[d]);
 	}
 
 	blockSignals(false);
