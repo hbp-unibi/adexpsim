@@ -246,6 +246,7 @@ void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 
 	// Forward the event to the SpikeTrain and ParametersWidget instance
 	spikeTrainWidget->refresh();
+	singleGroupWidget->refresh();
 	parametersWidget->handleUpdateParameters(dims);
 
 	// Forward the event to all exploration and simulation windows
