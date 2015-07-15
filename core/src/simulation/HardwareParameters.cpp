@@ -25,8 +25,10 @@ namespace AdExpSim {
 
 // Maps from index in the ranges list at corresponding parameter indices
 static const std::vector<std::vector<size_t>> adExpRangeParamMap = {
-    {Parameters::idx_eL, Parameters::idx_eE, Parameters::idx_eI,
-     Parameters::idx_eTh, Parameters::idx_eSpike, Parameters::idx_eReset},
+    {Parameters::idx_eTh, Parameters::idx_eSpike, Parameters::idx_eReset},
+    {Parameters::idx_eL},
+    {Parameters::idx_eE},
+    {Parameters::idx_eI},
     {Parameters::idx_gL},
     {Parameters::idx_tauE, Parameters::idx_tauI},
     {Parameters::idx_tauW},
@@ -35,8 +37,10 @@ static const std::vector<std::vector<size_t>> adExpRangeParamMap = {
     {Parameters::idx_b},
     {Parameters::idx_deltaTh}};
 static const std::vector<std::vector<size_t>> ifCondExpRangeParamMap = {
-    {Parameters::idx_eL, Parameters::idx_eE, Parameters::idx_eI,
-     Parameters::idx_eTh, Parameters::idx_eReset},
+    {Parameters::idx_eTh, Parameters::idx_eReset},
+    {Parameters::idx_eL},
+    {Parameters::idx_eE},
+    {Parameters::idx_eI},
     {Parameters::idx_gL},
     {Parameters::idx_tauE, Parameters::idx_tauI},
     {Parameters::idx_tauW}};
@@ -80,7 +84,8 @@ static bool contains(Val v, const T &vs)
 
 const std::vector<const Range *> HardwareParameters::ranges() const
 {
-	return {&rE, &rGL, &rTau, &rTauW, &rTRef, &rA, &rB, &rDeltaTh, &rW};
+	return {&rE,    &rEL,   &rEE, &rEI, &rGL,      &rTau,
+	        &rTauW, &rTRef, &rA,  &rB,  &rDeltaTh, &rW};
 }
 
 bool HardwareParameters::valid(const Parameters &params,
@@ -157,27 +162,29 @@ std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
 	std::vector<Parameters> res;
 
 	// First step: Set the voltage offset correctly
-	Val eMin = std::numeric_limits<Val>::max(),
-	    eMax = std::numeric_limits<Val>::lowest();
+	/*	Val eMin = std::numeric_limits<Val>::max(),
+	        eMax = std::numeric_limits<Val>::lowest();
 
-	// List containing the relevant parameters for the IfCondExp/AdExp model
-	const std::vector<size_t> &eDims = useIfCondExp ? eDimIfCondExp : eDimAdExp;
-	for (size_t i = 0; i < eDims.size(); i++) {
-		eMin = std::min(eMin, params[eDims[i]]);
-		eMax = std::max(eMax, params[eDims[i]]);
-	}
+	    // List containing the relevant parameters for the IfCondExp/AdExp model
+	    const std::vector<size_t> &eDims = useIfCondExp ? eDimIfCondExp :
+	   eDimAdExp;
+	    for (size_t i = 0; i < eDims.size(); i++) {
+	        eMin = std::min(eMin, params[eDims[i]]);
+	        eMax = std::max(eMax, params[eDims[i]]);
+	    }
 
-	// Check for voltage range being too large -- abort if in strict mode
-	const Val lRE1 = rE.max - rE.min;
-	const Val lRE2 = eMax - eMin;
-	if (lRE2 > lRE1 && strict) {
-		return res;
-	}
+	    // Check for voltage range being too large -- abort if in strict mode
+	    const Val lRE1 = rE.max - rE.min;
+	    const Val lRE2 = eMax - eMin;
+	    if (lRE2 > lRE1 && strict) {
+	        return res;
+	    }
 
-	// Center the leak potential in the middle of the available range
-	const Val cRE1 = (rE.max + rE.min) / 2.0;
-	const Val cRE2 = (eMax + eMin) / 2.0;
-	const Val eL = cRE1 - cRE2;
+	    // Center the leak potential in the middle of the available range
+	    const Val cRE1 = (rE.max + rE.min) / 2.0;
+	    const Val cRE2 = (eMax + eMin) / 2.0;
+	    const Val eL = cRE1 - cRE2;*/
+	const Val eL = -50e-3;
 
 	// Calculate parameters for the membrane potentials and select the two
 	// nearest available weights
@@ -196,7 +203,8 @@ std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
 		for (Val w : nextWeights(p.w())) {
 			Parameters cp = p;
 			cp.w() = w;
-			if (valid(cp) || (!strict && clamp(cp))) {
+			if (valid(cp, useIfCondExp) ||
+			    (!strict && clamp(cp, useIfCondExp))) {
 				res.emplace_back(cp);
 			}
 		}
@@ -215,11 +223,6 @@ const BrainScaleSParameters BrainScaleSParameters::inst;
 BrainScaleSParameters::BrainScaleSParameters()
 {
 	// Possible capacities
-	/*cMs = {0.2e-9};*/  // TODO: This is only valid for a certain speedup
-	                     // factor,
-	// correct values are 2.165pF and 0.164pF -- this is all
-	// very confusing
-	// cMs = {2.165e-12, 0.164e-12};
 	cMs = {0.2e-9};
 
 	// Possible weights
@@ -228,14 +231,19 @@ BrainScaleSParameters::BrainScaleSParameters()
 	}
 
 	// Copy the ranges
-	rE = {-125e-3, 45e-3};      // Voltage range
-	rGL = {1.9e-9, 22.2e-9};    // Membrane leak conductance range
-	rTau = {1e-3, 100e-3};      // Time constant range
-	rTauW = {20e-3, 780e-3};    // w decay time constant range
-	rTRef = {0.16e-3, 10e-3};   // Refactory time range (currently not used)
-	rA = {0e-6, 10e-6};         // Subthreshold adaptation range
-	rB = {0e-12, 86e-12};       // Spike triggered adaptation range
-	rDeltaTh = {0.4e-3, 3e-3};  // Slope range
-	rW = {0e-6, 0.3e-6};        // Weight range
+	rE = {-100e-3, 0e-3};          // Voltage range
+	rEL = {-50e-3, -50e-3};        // Fixed leak potential
+	rEE = {0.0e-3, 0.0e-3};        // Fixed excitatory reversal potential
+	rEI = {-100.0e-3, -100.0e-3};  // Fixed inhibitory reversal potential
+	rGL = {cMs[0] / 110.001e-3f,
+	       cMs[0] / 9e-3f};  // Membrane leak conductance range
+	rTau = {0.5e-3, 5e-3};         // Time constant range
+	rTauW = {20e-3, 780e-3};       // w decay time constant range
+	rTRef = {0.0e-3, 10e-3};       // Refactory time range (currently not used)
+	rA = {0e-6, 0.108228e-9};      // Subthreshold adaptation range
+	rB = {0e-12, 86e-12};          // Spike triggered adaptation range
+	rDeltaTh = {0.0e-3, 1.35e-3};  // Slope range
+	rW = {0e-6, 0.3e-6};           // Weight range
 }
 }
+

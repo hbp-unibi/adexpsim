@@ -59,6 +59,21 @@ protected:
 	Range rE;
 
 	/**
+	 * Leak potential range.
+	 */
+	Range rEL;
+
+	/**
+	 * Excitatory reversal potential range.
+	 */
+	Range rEE;
+
+	/**
+	 * Inhibitory reversal potential range.
+	 */
+	Range rEI;
+
+	/**
 	 * Range for the leak conductance.
 	 */
 	Range rGL;
