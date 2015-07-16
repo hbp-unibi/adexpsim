@@ -119,6 +119,12 @@ protected:
 	 */
 	const std::vector<const Range *> ranges() const;
 
+	/**
+	 * Makes sure parameters with empty range do not deviate from their value
+	 * due to numerical insufficiencies.
+	 */
+	Parameters fixParameters(const Parameters &p, bool useIfCondExp) const;
+
 	// No public constructor
 	HardwareParameters(){};
 

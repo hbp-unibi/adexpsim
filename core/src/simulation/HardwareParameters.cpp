@@ -154,6 +154,24 @@ std::vector<Val> HardwareParameters::nextWeights(Val w) const
 	return res;
 }
 
+Parameters HardwareParameters::fixParameters(const Parameters &p,
+                                             bool useIfCondExp) const
+{
+	const std::vector<const Range *> rs = ranges();
+	const std::vector<std::vector<size_t>> &rangeParamMap =
+	    useIfCondExp ? ifCondExpRangeParamMap : adExpRangeParamMap;
+
+	Parameters res = p;
+	for (size_t i = 0; i < rangeParamMap.size(); i++) {
+		if (rs[i]->max == rs[i]->min) {
+			for (size_t j = 0; j < rangeParamMap[i].size(); j++) {
+				res[rangeParamMap[i][j]] = rs[i]->min;
+			}
+		}
+	}
+	return res;
+}
+
 std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
                                                 bool useIfCondExp,
                                                 bool strict) const
@@ -191,7 +209,7 @@ std::vector<Parameters> HardwareParameters::map(const WorkingParameters &params,
 	for (Val cM : cMs) {
 		// Convert from the reduced parameter space to the parameter space with
 		// the selected cM and eL
-		Parameters p = params.toParameters(cM, eL);
+		Parameters p = fixParameters(params.toParameters(cM, eL), useIfCondExp);
 
 		// Check whether the weight is in range -- abort if it is too large
 		if (strict && !rW.contains(p.w())) {
@@ -236,7 +254,7 @@ BrainScaleSParameters::BrainScaleSParameters()
 	rEE = {0.0e-3, 0.0e-3};        // Fixed excitatory reversal potential
 	rEI = {-100.0e-3, -100.0e-3};  // Fixed inhibitory reversal potential
 	rGL = {cMs[0] / 110.001e-3f,
-	       cMs[0] / 9e-3f};  // Membrane leak conductance range
+	       cMs[0] / 9e-3f};        // Membrane leak conductance range
 	rTau = {0.5e-3, 5e-3};         // Time constant range
 	rTauW = {20e-3, 780e-3};       // w decay time constant range
 	rTRef = {0.0e-3, 10e-3};       // Refactory time range (currently not used)
