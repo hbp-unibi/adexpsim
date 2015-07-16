@@ -180,17 +180,18 @@ static Json::Value serializeSpikeTrain(const SpikeTrain &train)
 	return res;
 }
 
-static SpikeTrain deserializeSpikeTrain(const Json::Value &value)
+static SpikeTrain deserializeSpikeTrain(
+    const Json::Value &value, const SpikeTrain &defaultValues = SpikeTrain(
+                                  std::vector<SpikeTrain::Descriptor>{}))
 {
-	const std::vector<SpikeTrain::Descriptor> descrs =
-	    deserializeSpikeTrainDescriptors(value["descrs"]);
-	const SpikeTrain DEFAULT_TRAIN(descrs);
-
 	return SpikeTrain(
-	    descrs, value.get("n", int(DEFAULT_TRAIN.getN())).asUInt(),
-	    value.get("sorted", DEFAULT_TRAIN.isSorted()).asBool(),
-	    Time::sec(value.get("T", DEFAULT_TRAIN.getT().sec()).asDouble()),
-	    value.get("sigmaT", DEFAULT_TRAIN.getSigmaT()).asDouble());
+	    value.isMember("descrs")
+	        ? deserializeSpikeTrainDescriptors(value["descrs"])
+	        : defaultValues.getDescrs(),
+	    value.get("n", int(defaultValues.getN())).asUInt(),
+	    value.get("sorted", defaultValues.isSorted()).asBool(),
+	    Time::sec(value.get("T", defaultValues.getT().sec()).asDouble()),
+	    value.get("sigmaT", defaultValues.getSigmaT()).asDouble());
 }
 
 static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)
@@ -203,16 +204,15 @@ static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)
 	return res;
 }
 
-static SingleGroupSpikeData deserializeSingleGroup(const Json::Value &value)
+static SingleGroupSpikeData deserializeSingleGroup(
+    const Json::Value &value,
+    const SingleGroupSpikeData &defaultValues = SingleGroupSpikeData())
 {
-	const SingleGroupSpikeData DEFAULT_SINGLE_GROUP;
-
 	return SingleGroupSpikeData(
-	    value.get("n", DEFAULT_SINGLE_GROUP.n).asDouble(),
-	    value.get("nM1", DEFAULT_SINGLE_GROUP.nM1).asDouble(),
-	    Time::sec(
-	        value.get("deltaT", DEFAULT_SINGLE_GROUP.deltaT.sec()).asDouble()),
-	    Time::sec(value.get("T", DEFAULT_SINGLE_GROUP.T.sec()).asDouble()));
+	    value.get("n", defaultValues.n).asDouble(),
+	    value.get("nM1", defaultValues.nM1).asDouble(),
+	    Time::sec(value.get("deltaT", defaultValues.deltaT.sec()).asDouble()),
+	    Time::sec(value.get("T", defaultValues.T.sec()).asDouble()));
 }
 
 template <typename Arr>
@@ -278,11 +278,13 @@ static void loadParametersFromValue(const Json::Value &value,
 	}
 
 	if (value.isMember("spikeTrain")) {
-		params.train = deserializeSpikeTrain(value["spikeTrain"]);
+		params.train = deserializeSpikeTrain(value["spikeTrain"],
+		                                     DEFAULT_COLLECTION.train);
 	}
 
 	if (value.isMember("singleGroup")) {
-		params.singleGroup = deserializeSingleGroup(value["singleGroup"]);
+		params.singleGroup = deserializeSingleGroup(
+		    value["singleGroup"], DEFAULT_COLLECTION.singleGroup);
 	}
 
 	if (value.isMember("parameters")) {
@@ -292,10 +294,9 @@ static void loadParametersFromValue(const Json::Value &value,
 	}
 
 	if (value.isMember("min")) {
-		params.min =
-		    deserializeArray(WorkingParameters(DEFAULT_COLLECTION.params),
-		                     value["min"], WorkingParameters::nameIds,
-		                     [](const Json::Value &v) { return v.asDouble(); });
+		params.min = deserializeArray(
+		    DEFAULT_COLLECTION.min, value["min"], WorkingParameters::nameIds,
+		    [](const Json::Value &v) { return v.asDouble(); });
 	}
 
 	if (value.isMember("max")) {
@@ -405,7 +406,6 @@ bool JsonIo::loadGenericParameters(std::istream &is,
 			if (sPyNN > sParams) {
 				loadPyNNParametersFromValue(o, params.params);
 			} else {
-				params = ParameterCollection();  // Start with empty collection
 				loadParametersFromValue(o, params);
 			}
 		}
