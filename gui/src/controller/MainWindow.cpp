@@ -39,6 +39,7 @@
 #include <utils/ParameterCollection.hpp>
 #include <view/OptimizationWidget.hpp>
 #include <view/ParametersWidget.hpp>
+#include <view/PresetsWidget.hpp>
 #include <view/SingleGroupWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
 
@@ -180,25 +181,31 @@ void MainWindow::createWidgets()
 	// Create the tool box
 	QToolBox *tools = new QToolBox(this);
 
-	// Create the spike train panel and add it to the tool box
+	// Create the presets widget and add it to the toolbox
+	presetsWidget = new PresetsWidget(params, this);
+	connect(presetsWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(presetsWidget, "Parameter Presets");
+
+	// Create the spike train panel and add it to the toolbox
 	spikeTrainWidget = new SpikeTrainWidget(params, this);
 	connect(spikeTrainWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(spikeTrainWidget, "Spike Train");
 
-	// Create the spike train panel and add it to the tool box
+	// Create the spike train panel and add it to the toolbox
 	singleGroupWidget = new SingleGroupWidget(params, this);
 	connect(singleGroupWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(singleGroupWidget, "Single Group Parameters");
 
-	// Create the optimization widget and add it to the tool box
+	// Create the optimization widget and add it to the toolbox
 	optimizationWidget = new OptimizationWidget(params, this);
 	connect(optimizationWidget, SIGNAL(updateParameters(std::set<size_t>)),
 	        this, SLOT(handleUpdateParameters(std::set<size_t>)));
 	tools->addItem(optimizationWidget, "Optimization");
 
-	// Create the parameters panel and add it to the tool box
+	// Create the parameters panel and add it to the toolbox
 	parametersWidget = new ParametersWidget(params, this);
 	connect(parametersWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));

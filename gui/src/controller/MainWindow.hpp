@@ -45,6 +45,7 @@ namespace AdExpSim {
 class OptimizationWidget;
 class ParameterCollection;
 class ParametersWidget;
+class PresetsWidget;
 class SingleGroupWidget;
 class SpikeTrainWidget;
 class AbstractViewerWindow;
@@ -79,6 +80,7 @@ private:
 	SpikeTrainWidget *spikeTrainWidget;
 	OptimizationWidget *optimizationWidget;
 	ParametersWidget *parametersWidget;
+	PresetsWidget *presetsWidget;
 	QToolBar *fileToolbar;
 	QToolBar *simToolbar;
 	QComboBox *modelComboBox;
