@@ -68,6 +68,7 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/OptimizationWidget
 	src/view/ParameterWidget
 	src/view/ParametersWidget
+	src/view/PresetsWidget
 	src/view/SingleGroupWidget
 	src/view/SpikeTrainWidget
 	src/view/SpikeWidget
@@ -84,3 +85,4 @@ TARGET_LINK_LIBRARIES(AdExpSimGui
 
 # Copy the data directory to the bin directory
 FILE(COPY data/ DESTINATION ${CMAKE_BINARY_DIR}/data/)
+FILE(COPY presets/ DESTINATION ${CMAKE_BINARY_DIR}/presets/)
