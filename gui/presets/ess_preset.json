@@ -1,0 +1,84 @@
+{
+	"explore" : 
+	{
+		"deltaTh" : false,
+		"eE" : false,
+		"eI" : false,
+		"eReset" : false,
+		"eSpike" : false,
+		"eTh" : false,
+		"lA" : false,
+		"lB" : false,
+		"lE" : false,
+		"lI" : false,
+		"lL" : false,
+		"lW" : false,
+		"w" : false
+	},
+	"optimize" : 
+	{
+		"deltaTh" : true,
+		"eE" : false,
+		"eI" : false,
+		"eReset" : true,
+		"eSpike" : false,
+		"eTh" : true,
+		"lA" : true,
+		"lB" : true,
+		"lE" : true,
+		"lI" : false,
+		"lL" : true,
+		"lW" : true,
+		"w" : true
+	},
+	"max" : 
+	{
+		"deltaTh" : 1.35e-3,
+		"eE" : 0.05,
+		"eI" : -0.05,
+		"eReset" : 0.05,
+		"eSpike" : 0.05,
+		"eTh" : 0.05,
+		"lA" : 0.54114,
+		"lB" : 0.43,
+		"lE" : 2000,
+		"lI" : 2000,
+		"lL" : 111.1111,
+		"lW" : 50,
+		"w" : 1500
+	},
+	"min" : 
+	{
+		"deltaTh" : 0,
+		"eE" : 0.05,
+		"eI" : -0.05,
+		"eReset" : -0.05,
+		"eSpike" : -0.05,
+		"eTh" : -0.05,
+		"lA" : 0,
+		"lB" : 0,
+		"lE" : 200,
+		"lI" : 200,
+		"lL" : 9.0908,
+		"lW" : 1.2821,
+		"w" : 0
+	},
+	"parameters" : 
+	{
+		"a" : 0.05e-09,
+		"b" : 43e-12,
+		"cM" : 2e-10,
+		"deltaTh" : 0.5e-3,
+		"eE" : 0,
+		"eI" : -0.1,
+		"eL" : -0.05,
+		"eReset" : -0.08,
+		"eSpike" : 0,
+		"eTh" : -0.0254529,
+		"gL" : 1.24586e-08,
+		"tauE" : 0.00351262,
+		"tauI" : 0.005,
+		"tauW" : 0.144,
+		"w" : 3e-08
+	}
+}
