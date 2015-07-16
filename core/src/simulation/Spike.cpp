@@ -198,7 +198,6 @@ void SpikeTrain::fromSingleGroupSpikeData(const SingleGroupSpikeData &data)
 	Val sigmaT = 0.25 * data.deltaT.sec() * (data.n + data.nM1);
 	descrs.emplace_back(data.n, 1, sigmaT);
 	descrs.emplace_back(data.nM1, 0, sigmaT);
-	descrs.emplace_back(0, 0, sigmaT);
 
 	// Rebuild
 	rebuild(false);

@@ -29,11 +29,7 @@ const std::vector<std::string> ParameterCollection::evaluationNames = {
 ParameterCollection::ParameterCollection()
     : model(ModelType::IF_COND_EXP),
       evaluation(EvaluationType::SPIKE_TRAIN),
-      train({
-             {3, 1, 1e-3}, {2, 0, 1e-3}, {0, 0, 1e-3},
-            },
-            3, true, 0.033_s),
-      singleGroup(train.toSingleGroupSpikeData()),
+      singleGroup(),
       min({MIN_HZ, MIN_HZ, MIN_HZ, MIN_HZ, MIN_V, MIN_V, MIN_V, MIN_V, MIN_V,
            MIN_V, MIN_HZ,
            WorkingParameters::fromParameter(MIN_A, 11, DefaultParameters::cM,
@@ -52,6 +48,9 @@ ParameterCollection::ParameterCollection()
 {
 	// Initialize the optimize/explore flags
 	explore.fill(false);
+
+	// Initialize the spike train
+	train.fromSingleGroupSpikeData(singleGroup);
 }
 
 template <typename T>
