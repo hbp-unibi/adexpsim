@@ -25,6 +25,9 @@
  * @author Andreas Stöckel
  */
 
+#ifndef _ADEXPSIM_SINGLE_GROUP_WIDGET_HPP_
+#define _ADEXPSIM_SINGLE_GROUP_WIDGET_HPP_
+
 #include <memory>
 #include <set>
 
@@ -95,4 +98,6 @@ signals:
 	void updateParameters(std::set<size_t> dims);
 };
 }
+
+#endif /* _ADEXPSIM_SINGLE_GROUP_WIDGET_HPP_ */
 
