@@ -25,55 +25,56 @@ namespace AdExpSim {
 /* Class Parameters */
 
 const std::vector<std::string> Parameters::names = {
-    "gL",     "τE",      "τI", "τW", "eE", "eI", "eTh", "eSpike",
-    "eReset", "deltaTh", "a",  "b",  "w",  "eL", "cM"};
+    "gL",     "τE",     "τI",      "τW", "τRef", "eE", "eI", "eTh",
+    "eSpike", "eReset", "deltaTh", "a",  "b",    "w",  "eL", "cM"};
 
 const std::vector<std::string> Parameters::nameIds = {
-    "gL",     "tauE",    "tauI", "tauW", "eE", "eI", "eTh", "eSpike",
-    "eReset", "deltaTh", "a",    "b",    "w",  "eL", "cM"};
+    "gL",     "tauE",   "tauI",    "tauW", "tauRef", "eE", "eI", "eTh",
+    "eSpike", "eReset", "deltaTh", "a",    "b",      "w",  "eL", "cM"};
 
 /* Class WorkingParameters */
 
 const std::vector<std::string> WorkingParameters::names = {
-    "λL",     "λE",     "λI",  "λW", "eE", "eI", "eTh",
-    "eSpike", "eReset", "ΔTh", "λA", "λB", "w"};
+    "λL",  "λE",     "λI",     "λW",  "τRef", "eE", "eI",
+    "eTh", "eSpike", "eReset", "ΔTh", "λA",   "λB", "w"};
 
 const std::vector<std::string> WorkingParameters::nameIds = {
-    "lL",     "lE",     "lI",      "lW", "eE", "eI", "eTh",
-    "eSpike", "eReset", "deltaTh", "lA", "lB", "w"};
+    "lL",  "lE",     "lI",     "lW",      "tauRef", "eE", "eI",
+    "eTh", "eSpike", "eReset", "deltaTh", "lA",     "lB", "w"};
 
 const std::vector<std::string> WorkingParameters::descriptions = {
     "Membrane leak rate",            "Excitatory channel decay rate",
     "Inhibitory channel decay rate", "Adaptation current decay rate",
-    "Excitatory reversal potential", "Inhibitory reveral potential",
-    "Spike threshold potential",     "Spike generation potential",
-    "Reset potential",               "Spike slope factor",
-    "Subthreshold adaptation rate",  "Spike adaptation current",
-    "Synapse weight multiplicator"};
+    "Refractory period",             "Excitatory reversal potential",
+    "Inhibitory reveral potential",  "Spike threshold potential",
+    "Spike generation potential",    "Reset potential",
+    "Spike slope factor",            "Subthreshold adaptation rate",
+    "Spike adaptation current",      "Synapse weight multiplicator"};
 
 const std::vector<std::string> WorkingParameters::units = {
     "Hz", "Hz", "Hz", "Hz", "V", "V", "V", "V", "V", "V", "Hz", "V/s", "V/As"};
 
 const std::vector<bool> WorkingParameters::linear = {
-    true, false, false, false, true, true, true,
+    true, false, false, false, true, true, true, true,
     true, true,  true,  true,  true, true};
 
 const std::vector<bool> WorkingParameters::inIfCondExp = {
-    true, true, true,  false, true,  true, true,
+    true, true, true,  false, true, true,  true, true,
     true, true, false, false, false, true};
 
 const std::vector<std::string> WorkingParameters::originalNames = {
-    "gL",     "τE",     "τI",  "τW", "eE", "eI", "eTh",
+    "gL",     "τE",     "τI",  "τW", "τRef", "eE", "eI", "eTh",
     "eSpike", "eReset", "ΔTh", "gA", "iB", "w"};
 
 const std::vector<std::string> WorkingParameters::originalUnits = {
-    "S", "s", "s", "s", "V", "V", "V", "V", "V", "V", "S", "A", "S"};
+    "S", "s", "s", "s", "s", "V", "V", "V", "V", "V", "V", "S", "A", "S"};
 
 const std::vector<std::string> WorkingParameters::originalDescriptions = {
     "Membrane leak conductance",
     "Excitatory channel decay time const.",
     "Inhibitory channel decay time const.",
     "Adaptation current decay time const.",
+    "Refractory period",
     "Excitatory reversal potential",
     "Inhibitory reveral potential",
     "Spike threshold potential",
@@ -99,21 +100,22 @@ Val WorkingParameters::toParameter(Val v, size_t idx, Val cM, Val eL)
 {
 	switch (idx) {
 		case 0:
-		case 10:
 		case 11:
 		case 12:
+		case 13:
 			return v * cM;
 		case 1:
 		case 2:
 		case 3:
 			return 1.0 / v;
-		case 4:
 		case 5:
 		case 6:
 		case 7:
 		case 8:
-			return v + eL;
 		case 9:
+			return v + eL;
+		case 4:
+		case 10:
 			return v;
 	}
 	return v;
@@ -123,21 +125,22 @@ Val WorkingParameters::fromParameter(Val v, size_t idx, Val cM, Val eL)
 {
 	switch (idx) {
 		case 0:
-		case 10:
 		case 11:
 		case 12:
+		case 13:
 			return v / cM;
 		case 1:
 		case 2:
 		case 3:
 			return 1.0 / v;
-		case 4:
 		case 5:
 		case 6:
 		case 7:
 		case 8:
-			return v - eL;
 		case 9:
+			return v - eL;
+		case 4:
+		case 10:
 			return v;
 	}
 	return v;

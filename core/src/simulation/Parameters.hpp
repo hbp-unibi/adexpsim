@@ -48,9 +48,10 @@ constexpr Val eTh = -54.0e-3;   // Threshold potential [V]
 constexpr Val eSpike = 20e-3;   // Spike potential [V]
 constexpr Val eReset = -80e-3;  // Reset potential [V]
 constexpr Val deltaTh = 2e-3;   // Slope factor [V]
-constexpr Val tauI = 5e-3;      // Time constant for exponential decay of gI
-constexpr Val tauE = 5e-3;      // Time constant for exponential decay of gE
-constexpr Val tauW = 144e-3;    // Time constant for exponential decay of w
+constexpr Val tauI = 5e-3;      // Time constant for exponential decay of gI [s]
+constexpr Val tauE = 5e-3;      // Time constant for exponential decay of gE [s]
+constexpr Val tauW = 144e-3;    // Time constant for exponential decay of w [s]
+constexpr Val tauRef = 0e-3;    // Refractory period [s]
 constexpr Val a = 4e-9;         // Subthreshold adaptation [S]
 constexpr Val b = 0.0805e-9;    // Spike triggered adaptation [A]
 constexpr Val w = 0.03e-6;      // Default synapse weight [S]
@@ -59,9 +60,9 @@ constexpr Val w = 0.03e-6;      // Default synapse weight [S]
 /**
  * Structure holding the parameters of a single AdExp neuron.
  */
-class Parameters : public Vector<Parameters, 15> {
+class Parameters : public Vector<Parameters, 16> {
 public:
-	using Vector<Parameters, 15>::Vector;
+	using Vector<Parameters, 16>::Vector;
 
 	/**
 	 * Names of the corresponding vector component (human readable name)
@@ -78,32 +79,34 @@ public:
 	 * namespace as default parameters.
 	 */
 	Parameters()
-	    : Vector<Parameters, 15>(
+	    : Vector<Parameters, 16>(
 	          {DefaultParameters::gL, DefaultParameters::tauE,
 	           DefaultParameters::tauI, DefaultParameters::tauW,
-	           DefaultParameters::eE, DefaultParameters::eI,
-	           DefaultParameters::eTh, DefaultParameters::eSpike,
-	           DefaultParameters::eReset, DefaultParameters::deltaTh,
-	           DefaultParameters::a, DefaultParameters::b, DefaultParameters::w,
+	           DefaultParameters::tauRef, DefaultParameters::eE,
+	           DefaultParameters::eI, DefaultParameters::eTh,
+	           DefaultParameters::eSpike, DefaultParameters::eReset,
+	           DefaultParameters::deltaTh, DefaultParameters::a,
+	           DefaultParameters::b, DefaultParameters::w,
 	           DefaultParameters::eL, DefaultParameters::cM})
 	{
 	}
 
-	NAMED_VECTOR_ELEMENT(gL, 0);       // Membrane leak conductance [S]
-	NAMED_VECTOR_ELEMENT(tauE, 1);     // Time constant for decay of gE
-	NAMED_VECTOR_ELEMENT(tauI, 2);     // Time constant for decay of gI
-	NAMED_VECTOR_ELEMENT(tauW, 3);     // Time constant for decay of w
-	NAMED_VECTOR_ELEMENT(eE, 4);       // Excitatory reversal potential [V]
-	NAMED_VECTOR_ELEMENT(eI, 5);       // Inhibitory reversal potential [V]
-	NAMED_VECTOR_ELEMENT(eTh, 6);      // Threshold potential [V]
-	NAMED_VECTOR_ELEMENT(eSpike, 7);   // Spike potential [V]
-	NAMED_VECTOR_ELEMENT(eReset, 8);   // Reset potential [V]
-	NAMED_VECTOR_ELEMENT(deltaTh, 9);  // Slope factor [V]
-	NAMED_VECTOR_ELEMENT(a, 10);       // Subthreshold adaptation [S]
-	NAMED_VECTOR_ELEMENT(b, 11);       // Spike triggered adaptation [A]
-	NAMED_VECTOR_ELEMENT(w, 12);       // Synapse weight  [S]
-	NAMED_VECTOR_ELEMENT(eL, 13);      // Leak channel reversal potential [V]
-	NAMED_VECTOR_ELEMENT(cM, 14);      // Membrane capacitance [F]
+	NAMED_VECTOR_ELEMENT(gL, 0);        // Membrane leak conductance [S]
+	NAMED_VECTOR_ELEMENT(tauE, 1);      // Time constant for decay of gE [s]
+	NAMED_VECTOR_ELEMENT(tauI, 2);      // Time constant for decay of gI [s]
+	NAMED_VECTOR_ELEMENT(tauW, 3);      // Time constant for decay of w [s]
+	NAMED_VECTOR_ELEMENT(tauRef, 4);    // Refractory period [s]
+	NAMED_VECTOR_ELEMENT(eE, 5);        // Excitatory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eI, 6);        // Inhibitory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eTh, 7);       // Threshold potential [V]
+	NAMED_VECTOR_ELEMENT(eSpike, 8);    // Spike potential [V]
+	NAMED_VECTOR_ELEMENT(eReset, 9);    // Reset potential [V]
+	NAMED_VECTOR_ELEMENT(deltaTh, 10);  // Slope factor [V]
+	NAMED_VECTOR_ELEMENT(a, 11);        // Subthreshold adaptation [S]
+	NAMED_VECTOR_ELEMENT(b, 12);        // Spike triggered adaptation [A]
+	NAMED_VECTOR_ELEMENT(w, 13);        // Synapse weight  [S]
+	NAMED_VECTOR_ELEMENT(eL, 14);       // Leak channel reversal potential [V]
+	NAMED_VECTOR_ELEMENT(cM, 15);       // Membrane capacitance [F]
 
 	Val tauM() const { return cM() / gL(); }
 };
@@ -112,7 +115,7 @@ public:
  * Structure holding the reduced parameter set which is actually used for the
  * calculations as well as some pre-calculated values
  */
-class WorkingParameters : public Vector<WorkingParameters, 13> {
+class WorkingParameters : public Vector<WorkingParameters, 14> {
 private:
 	/**
 	 * Inverse spike slope factor [1/V].
@@ -141,7 +144,7 @@ private:
 	mutable Val mTDelta;
 
 public:
-	using Vector<WorkingParameters, 13>::Vector;
+	using Vector<WorkingParameters, 14>::Vector;
 
 	static constexpr Val MIN_DELTA_T =
 	    0.1e-6;  // 0.1 µS -- used for the calculation of maxIThExponent
@@ -153,29 +156,30 @@ public:
 	 * should be created.
 	 */
 	WorkingParameters(const Parameters &p = Parameters())
-	    : Vector<WorkingParameters, 13>(
+	    : Vector<WorkingParameters, 14>(
 	          {fromParameter(0, p), fromParameter(1, p), fromParameter(2, p),
 	           fromParameter(3, p), fromParameter(4, p), fromParameter(5, p),
 	           fromParameter(6, p), fromParameter(7, p), fromParameter(8, p),
 	           fromParameter(9, p), fromParameter(10, p), fromParameter(11, p),
-	           fromParameter(12, p)})
+	           fromParameter(12, p), fromParameter(13, p)})
 	{
 		update();
 	}
 
-	NAMED_VECTOR_ELEMENT(lL, 0);       // Membrane leak rate [Hz]
-	NAMED_VECTOR_ELEMENT(lE, 1);       // Excitatory decay rate [Hz]
-	NAMED_VECTOR_ELEMENT(lI, 2);       // Inhibitory decay rate [Hz]
-	NAMED_VECTOR_ELEMENT(lW, 3);       // Adaptation cur. decay rate [Hz]
-	NAMED_VECTOR_ELEMENT(eE, 4);       // Excitatory reversal potential [V]
-	NAMED_VECTOR_ELEMENT(eI, 5);       // Inhibitory reversal potential [V]
-	NAMED_VECTOR_ELEMENT(eTh, 6);      // Spike threshold potential [V]
-	NAMED_VECTOR_ELEMENT(eSpike, 7);   // Spike generation potential [V]
-	NAMED_VECTOR_ELEMENT(eReset, 8);   // Membrane reset potential [V]
-	NAMED_VECTOR_ELEMENT(deltaTh, 9);  // Spike slope factor [V]
-	NAMED_VECTOR_ELEMENT(lA, 10);      // Subthreshold adaptation [Hz]
-	NAMED_VECTOR_ELEMENT(lB, 11);      // Spike trig. adaptation cur. [V/s]
-	NAMED_VECTOR_ELEMENT(w, 12);       // Mult. for spikes weights [Hz]
+	NAMED_VECTOR_ELEMENT(lL, 0);        // Membrane leak rate [Hz]
+	NAMED_VECTOR_ELEMENT(lE, 1);        // Excitatory decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(lI, 2);        // Inhibitory decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(lW, 3);        // Adaptation cur. decay rate [Hz]
+	NAMED_VECTOR_ELEMENT(tauRef, 4);    // Refractory period [s]
+	NAMED_VECTOR_ELEMENT(eE, 5);        // Excitatory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eI, 6);        // Inhibitory reversal potential [V]
+	NAMED_VECTOR_ELEMENT(eTh, 7);       // Spike threshold potential [V]
+	NAMED_VECTOR_ELEMENT(eSpike, 8);    // Spike generation potential [V]
+	NAMED_VECTOR_ELEMENT(eReset, 9);    // Membrane reset potential [V]
+	NAMED_VECTOR_ELEMENT(deltaTh, 10);  // Spike slope factor [V]
+	NAMED_VECTOR_ELEMENT(lA, 11);       // Subthreshold adaptation [Hz]
+	NAMED_VECTOR_ELEMENT(lB, 12);       // Spike trig. adaptation cur. [V/s]
+	NAMED_VECTOR_ELEMENT(w, 13);        // Mult. for spikes weights [Hz]
 
 	/**
 	 * Vector containing the name of each component.
@@ -479,9 +483,10 @@ public:
 	 */
 	bool valid() const
 	{
-		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && deltaTh() > 0 &&
-		       lA() >= 0 && lB() >= 0 && eE() > eI() && eE() > eTh() &&
-		       eE() > 0 && eSpike() > eReset() && eSpike() > eTh();
+		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && tauRef() >= 0 &&
+		       deltaTh() > 0 && lA() >= 0 && lB() >= 0 && eE() > eI() &&
+		       eE() > eTh() && eE() > 0 && eSpike() > eReset() &&
+		       eSpike() > eTh();
 	}
 
 	/**

@@ -32,7 +32,7 @@ static const std::vector<std::vector<size_t>> adExpRangeParamMap = {
     {Parameters::idx_gL},
     {Parameters::idx_tauE, Parameters::idx_tauI},
     {Parameters::idx_tauW},
-    {},
+    {Parameters::idx_tauRef},
     {Parameters::idx_a},
     {Parameters::idx_b},
     {Parameters::idx_deltaTh}};
@@ -43,7 +43,8 @@ static const std::vector<std::vector<size_t>> ifCondExpRangeParamMap = {
     {Parameters::idx_eI},
     {Parameters::idx_gL},
     {Parameters::idx_tauE, Parameters::idx_tauI},
-    {Parameters::idx_tauW}};
+    {Parameters::idx_tauW},
+    {Parameters::idx_tauRef}};
 
 // Maps containing the indices of the parameters storing potentials in the
 // WorkingParameters vector.
@@ -85,7 +86,7 @@ static bool contains(Val v, const T &vs)
 const std::vector<const Range *> HardwareParameters::ranges() const
 {
 	return {&rE,    &rEL,   &rEE, &rEI, &rGL,      &rTau,
-	        &rTauW, &rTRef, &rA,  &rB,  &rDeltaTh, &rW};
+	        &rTauW, &rTauRef, &rA,  &rB,  &rDeltaTh, &rW};
 }
 
 bool HardwareParameters::valid(const Parameters &params,
@@ -257,7 +258,7 @@ BrainScaleSParameters::BrainScaleSParameters()
 	       cMs[0] / 9e-3f};        // Membrane leak conductance range
 	rTau = {0.5e-3, 5e-3};         // Time constant range
 	rTauW = {20e-3, 780e-3};       // w decay time constant range
-	rTRef = {0.0e-3, 10e-3};       // Refactory time range (currently not used)
+	rTauRef = {0.0e-3, 10e-3};     // Refactory time range
 	rA = {0e-6, 0.108228e-9};      // Subthreshold adaptation range
 	rB = {0e-12, 86e-12};          // Spike triggered adaptation range
 	rDeltaTh = {0.0e-3, 1.35e-3};  // Slope range

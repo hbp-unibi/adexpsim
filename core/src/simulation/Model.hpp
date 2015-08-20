@@ -48,17 +48,17 @@ namespace AdExpSim {
 /**
  * The ModelType enum defines the model that should be used in the simulation.
  */
-enum class ModelType: int {
+enum class ModelType : int {
 	/**
-	 * Represents the simple IF_COND_EXP model (integrate & fire conductance
-	 * based with exponential decay).
-	 */
+     * Represents the simple IF_COND_EXP model (integrate & fire conductance
+     * based with exponential decay).
+     */
 	IF_COND_EXP = 0,
 
 	/**
-	 * Represents the simple AD_IF_COND_EXP model (integrate & fire conductance
-	 * based with exponential decay and adaptation mechanism).
-	 */
+     * Represents the simple AD_IF_COND_EXP model (integrate & fire conductance
+     * based with exponential decay and adaptation mechanism).
+     */
 	AD_IF_COND_EXP = 1
 };
 
@@ -88,18 +88,24 @@ public:
 	static constexpr uint8_t DISABLE_SPIKING = (1 << 2);
 
 	/**
+	 * Set this flag if the refractory period of the neuron should be switched
+	 * off.
+	 */
+	static constexpr uint8_t DISABLE_REFRACTORY = (1 << 3);
+
+	/**
 	 * Set this flag if a fast approximation of the exponential function should
 	 * be used. This approximation is less accurate, however is significantly
 	 * faster. An exponential function is only used if ITH is not disabled.
 	 */
-	static constexpr uint8_t FAST_EXP = (1 << 3);
+	static constexpr uint8_t FAST_EXP = (1 << 4);
 
 	/**
 	 * Downgrades the model to the simpler IF_COND_EXP model. This flag includes
 	 * DISABLE_ITH and causes the spiking potential to be set to eTh instead of
 	 * eSpike.
 	 */
-	static constexpr uint8_t IF_COND_EXP = (1 << 4);
+	static constexpr uint8_t IF_COND_EXP = (1 << 5);
 
 private:
 	/**
@@ -116,7 +122,7 @@ private:
 	template <uint8_t Flags>
 	static AuxiliaryState aux(const State &s, const WorkingParameters &p)
 	{
-		// Calculate dvTh, but only if iTh is not disabled, either be the
+		// Calculate dvTh, but only if iTh is not disabled, either by the
 		// DISABLE_ITH or the IF_COND_EXP flag
 		Val dvTh = 0.0;
 		if (!((Flags & DISABLE_ITH) || (Flags & IF_COND_EXP))) {
@@ -152,15 +158,21 @@ private:
 	 */
 	template <uint8_t Flags>
 	static State df(const State &s, const AuxiliaryState &as,
-	                const WorkingParameters &p)
+	                const WorkingParameters &p, bool inRefrac)
 	{
-		return State(
-		    -(as.dvL() + as.dvE() + as.dvI() + as.dvTh() + s.dvW()),  // [V/s]
-		    -s.lE() * p.lE(),                                         // [1/s^2]
-		    -s.lI() * p.lI(),                                         // [1/s^2]
-		    (Flags & IF_COND_EXP) ? 0.0 : -(s.dvW() - p.lA() * s.v()) *
-		                                      p.lW()  // [V/s^2]
-		    );
+		// Do not change membrane potential while in refractory period,
+		// otherwise sum the currents.
+		const Val dv =
+		    ((Flags & DISABLE_REFRACTORY) || !inRefrac)
+		        ? -(as.dvL() + as.dvE() + as.dvI() + as.dvTh() + s.dvW())
+		        : 0;
+
+		return State(dv,                // [V/s]
+		             -s.lE() * p.lE(),  // [1/s^2]
+		             -s.lI() * p.lI(),  // [1/s^2]
+		             (Flags & IF_COND_EXP) ? 0.0 : -(s.dvW() - p.lA() * s.v()) *
+		                                               p.lW()  // [V/s^2]
+		             );
 	}
 
 public:
@@ -188,6 +200,8 @@ public:
 
 		// Iterate over all time slices
 		Time t;
+		Time tRefrac = Time::sec(p.tauRef());
+		Time tLastSpike = -tRefrac;
 		while (t < tEnd) {
 			// Fetch the next spike time
 			Time nextSpikeTime =
@@ -218,14 +232,23 @@ public:
 
 			// Fetch the currently allowed maximum tDelta -- we'll limit this to
 			// the time needed to reach the next spike (otherwise the ODE would
-			// not be autonomous).
-			const Time tDeltaMax = nextSpikeTime - t;
+			// not be autonomous) and the time until the refractory periof has
+			// passed.
+			const bool inRefrac =
+			    (!(Flags & DISABLE_REFRACTORY)) && t - tLastSpike < tRefrac;
+			Time tDeltaMax = nextSpikeTime - t;
+			if (!(Flags & DISABLE_REFRACTORY) && inRefrac) {
+				const Time tRefLeft = tLastSpike + tRefrac - t;
+				if (tRefLeft < tDeltaMax) {
+					tDeltaMax = tRefLeft;
+				}
+			}
 
 			// Perform the actual integration
 			std::pair<State, Time> res =
 			    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax, s,
-			                         [&p](const State &s) {
-				    return df<Flags>(s, aux<Flags>(s, p), p);
+			                         [&p, inRefrac](const State &s) {
+				    return df<Flags>(s, aux<Flags>(s, p), p, inRefrac);
 				});
 
 			// Copy the result and advance the time by the performed timestep
@@ -251,6 +274,11 @@ public:
 					as = aux<Flags>(s, p);
 					recorder.outputSpike(t, s);
 					recorder.record(t, s, as, true);
+
+					// Set tLastSpike in order to start the refractory period
+					if (!(Flags & DISABLE_REFRACTORY)) {
+						tLastSpike = t;
+					}
 				}
 			}
 

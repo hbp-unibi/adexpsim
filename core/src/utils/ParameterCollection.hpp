@@ -45,6 +45,8 @@ namespace AdExpSim {
 struct ParameterCollection {
 	static constexpr Val MIN_HZ = 1;
 	static constexpr Val MAX_HZ = 1000;
+	static constexpr Val MIN_SEC = 0e-3;
+	static constexpr Val MAX_SEC = 100e-3;
 	static constexpr Val MIN_S = 0;
 	static constexpr Val MAX_S = 1e-7;
 	static constexpr Val MIN_A = 0;

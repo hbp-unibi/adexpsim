@@ -91,7 +91,7 @@ protected:
 	/**
 	 * Range for the refactory time.
 	 */
-	Range rTRef;
+	Range rTauRef;
 
 	/**
 	 * Range for the adaptation mechanism subthreshold adaptation conductance.
