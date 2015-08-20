@@ -30,10 +30,8 @@
 #ifndef _ADEXPSIM_MODEL_HPP_
 #define _ADEXPSIM_MODEL_HPP_
 
-#include <array>
 #include <cmath>
 #include <cstdint>
-#include <iostream>
 
 #include <common/FastMath.hpp>
 
@@ -176,6 +174,40 @@ private:
 	}
 
 public:
+	/**
+	 * Performs a single neuron simulation. Allows to customize the simulation
+	 * by disabling certain parts of the model using the template parameter and
+	 * customizing the differential equation integrator, the data recorder and
+	 * the controller.
+	 *
+	 * @param spikes is a vector containing the input spikes.
+	 * @param recorder is an object to which the current simulation state and
+	 * output spikes are passed. Use an instance of the NullRecorder class
+	 * to disable recording.
+	 * @param controller is the object which determines when the simulation
+	 * will end.
+	 * @param integrator is the object responsible for integrating the
+	 * differential equation. The best integrator to use is the
+	 * DormandPrincIntegrator (which has an adaptive stepsize) or the
+	 * RungeKuttaIntegrator with small timestep if a fixed timestep is required.
+	 * @param p contains the neuron model parameters. The WorkingParameters
+	 * contains the rescaled original parameter required for an efficient
+	 * implementation.
+	 * @param tDelta is the timestep that should be used. If set to a value
+	 * smaller or equal to zero, the timestep is chosen automatically. If an
+	 * adaptive stepsize controller is used tDelta represents the initial
+	 * stepsize the controller tries to use.
+	 * @param tEnd is the time at which the simulation will end independent of
+	 * the current state of the controller. Set to MAX_TIME to let the
+	 * controller decide when to end the simulation.
+	 * @param s0 is the initial state of the neuron. It is recommended to set
+	 * the initial membrane potential to the resting potential.
+	 * @param tLastSpike is the time at which the last spike was issued by the
+	 * neuron. This variable is used by the refractory mechanism. Values smaller
+	 * than zero correspond to "there has been no last spike". This parameter is
+	 * important if a neuron simulation is restarted from a certain point in
+	 * time.
+	 */
 	template <uint8_t Flags = 0, typename Recorder = NullRecorder,
 	          typename Integrator = RungeKuttaIntegrator,
 	          typename Controller = DefaultController>
@@ -183,7 +215,7 @@ public:
 	                     Controller &controller, Integrator &integrator,
 	                     const WorkingParameters &p = WorkingParameters(),
 	                     Time tDelta = Time(-1), Time tEnd = MAX_TIME,
-	                     const State &s0 = State())
+	                     const State &s0 = State(), Time tLastSpike = Time(-1))
 	{
 		// Use the automatically calculated tDelta if no user-defined value is
 		// given
@@ -195,13 +227,20 @@ public:
 		const size_t nSpikes = spikes.size();
 		size_t spikeIdx = 0;
 
+		// Convert the refractory period from the parameters into the internal
+		// time measure. Initialize tLastSpike with -tRefrac if no valid value
+		// for tLastSpike has been given by the user in order make sure that
+		// t - tLastSpike > tRefrac always evaluates to false.
+		const Time tRefrac = Time::sec(p.tauRef());
+		if (tLastSpike < Time(0)) {
+			tLastSpike = -tRefrac;
+		}
+
 		// Start with state s0
 		State s = s0;
 
 		// Iterate over all time slices
 		Time t;
-		Time tRefrac = Time::sec(p.tauRef());
-		Time tLastSpike = -tRefrac;
 		while (t < tEnd) {
 			// Fetch the next spike time
 			Time nextSpikeTime =
