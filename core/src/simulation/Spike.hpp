@@ -74,7 +74,7 @@ using SpikeVec = std::vector<Spike>;
 SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
 
 /**
- * The SingleGroupSpikeData class represents the data needed for the
+ * The SingleGroupSpikeData class contains the arguments needed for the
  * SingleGroupEvaluation.
  */
 struct SingleGroupSpikeData {
@@ -121,12 +121,52 @@ struct SingleGroupSpikeData {
 	{
 	}
 
+	/**
+	 * Constructs an input spike vector according to the parameters stored in
+	 * this class.
+	 *
+	 * @param n is the number of input spikes. Might be set to n or nM1.
+	 */
 	SpikeVec spikes(Val n) const
 	{
 		return buildInputSpikes(n, deltaT, 0_s, 1.0);
 	}
 };
 
+/**
+ * The SingleGroupMultiOutSpikeData class contains the arguments required by the
+ * SingleGroupMultiOutEvaluation class.
+ */
+struct SingleGroupMultiOutSpikeData : public SingleGroupSpikeData {
+	/**
+	 * Number of expected output spikes.
+	 */
+	Val nOut;
+
+	/**
+	 * Default constructor. Initializes all members with sane values, expects
+	 * a single output spike.
+	 */
+	SingleGroupMultiOutSpikeData() : SingleGroupSpikeData(), nOut(1) {}
+
+	/**
+	 * Constructor, sets each member to the given value.
+	 */
+	SingleGroupMultiOutSpikeData(Val n, Val nOut, Time deltaT = 1e-3_s,
+	                             Time T = 33e-3_s)
+	    : SingleGroupMultiOutSpikeData(n, n - 1, nOut, deltaT, T)
+	{
+	}
+
+	/**
+	 * Constructor, sets each member to the given value.
+	 */
+	SingleGroupMultiOutSpikeData(Val n, Val nM1, Val nOut, Time deltaT = 1e-3_s,
+	                     Time T = 33e-3_s)
+	    : SingleGroupSpikeData(n, nM1, deltaT, T), nOut(nOut)
+	{
+	}
+};
 /**
  * The SpikeTrain class is used to construct input spikes as a set of random
  * spike trains which are generated from spike train descriptirs. The SpikeTrain

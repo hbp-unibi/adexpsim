@@ -17,75 +17,34 @@
  */
 
 /**
- * @file SingleGroupEvaluation.hpp
+ * @file SingleGroupMultiOutEvaluation.hpp
  *
- * Contains the implementation of the SingleGroupEvaluation which evaluates the
- * ability of the neuron to fulfill the heaviside condition and the reset
- * condition.
+ * Variant of the SingleGroupEvaluation method which additionally allows the
+ * specification of the number of output spikes.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_
-#define _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_
+#ifndef _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_
+#define _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_
 
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
 #include <common/Types.hpp>
 
 #include "EvaluationResult.hpp"
+#include "SingleGroupEvaluation.hpp"
 
 namespace AdExpSim {
-
-template <typename SpikeData>
-class SingleGroupEvaluationBase {
-protected:
-	/**
-	 * Vector containing the spikes for n input spikes.
-	 */
-	SpikeVec sN;
-
-	/**
-	 * Vector containing the spikes for n - 1 input spikes.
-	 */
-	SpikeVec sNM1;
-
-	/**
-	 * Flag used to indicate whether to use the reduced IF_COND_EXP model.
-	 */
-	bool useIfCondExp;
-
-	/**
-	 * Arguments passed to the evaluation describing
-	 */
-	SpikeData spikeData;
-
-public:
-	/**
-	 * Constructor of the evaluation class.
-	 *
-	 * @param spikeData contains the information about the spikes used for the
-	 * single group experiment.
-	 */
-	SingleGroupEvaluationBase(const SpikeData &spikeData,
-	                          bool useIfCondExp = false)
-	    : sN(spikeData.spikes(spikeData.n)),
-	      sNM1(spikeData.spikes(spikeData.nM1)),
-	      useIfCondExp(useIfCondExp),
-	      spikeData(spikeData)
-	{
-	}
-};
-
 /**
  * The evaluation class can be used for the evalutation of the behaviour of a
  * single neuron for the given SpikeTrain.
  */
-class SingleGroupEvaluation
-    : public SingleGroupEvaluationBase<SingleGroupSpikeData> {
+class SingleGroupMultiOutEvaluation
+    : public SingleGroupEvaluationBase<SingleGroupMultiOutSpikeData> {
 public:
 	using SingleGroupEvaluationBase<
-	    SingleGroupSpikeData>::SingleGroupEvaluationBase;
+	    SingleGroupMultiOutSpikeData>::SingleGroupEvaluationBase;
 
 	/**
 	 * Evaluates the given parameter set.
@@ -99,5 +58,5 @@ public:
 };
 }
 
-#endif /* _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_ */
+#endif /* _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_ */
 

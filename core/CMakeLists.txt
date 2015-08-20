@@ -41,6 +41,7 @@ CONFIGURE_FILE(
 # AdExpSimCore library
 ADD_LIBRARY(AdExpSimCore
 	src/common/Matrix
+	src/common/ProbabilityUtils
 	src/common/Terminal
 	src/common/Timer
 	src/common/Types
@@ -50,6 +51,7 @@ ADD_LIBRARY(AdExpSimCore
 	src/exploration/Optimization
 	src/exploration/Simplex
 	src/exploration/SingleGroupEvaluation
+	src/exploration/SingleGroupMultiOutEvaluation
 	src/exploration/SpikeTrainEvaluation
 	src/simulation/Controller
 	src/simulation/DormandPrinceIntegrator

@@ -18,6 +18,7 @@
 
 #include <limits>
 
+#include <common/ProbabilityUtils.hpp>
 #include <simulation/DormandPrinceIntegrator.hpp>
 #include <simulation/Model.hpp>
 
@@ -51,25 +52,11 @@ struct SingleGroupEvaluationController {
 
 /* Class SingleGroupEvaluation */
 
-SingleGroupEvaluation::SingleGroupEvaluation(
-    const SingleGroupSpikeData &spikeData, bool useIfCondExp)
-    : sN(spikeData.spikes(spikeData.n)),
-      sNM1(spikeData.spikes(spikeData.nM1)),
-      useIfCondExp(useIfCondExp),
-      spikeData(spikeData)
-{
-}
-
 // Roughly spoken TAU_RANGE is the voltage difference from eSpikeEff
 // needed to get a "good" result in the SOFT measurement
-static constexpr double TAU_RANGE = 0.002;    // 2mV
-static constexpr double TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
-static constexpr double TAU = log(1.0 / TAU_RANGE_VAL - 1.0) / TAU_RANGE;
-Val SingleGroupEvaluation::sigmaV(Val x, Val th, bool invert) const
-{
-	const double res = 1.0 / (1.0 + exp(-TAU * (x - th)));
-	return invert ? 1.0 - res : res;
-}
+static constexpr Val TAU_RANGE = 0.002;    // 2mV
+static constexpr Val TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
+static const LogisticFunction<true> sigmaV(TAU_RANGE, TAU_RANGE_VAL);
 
 EvaluationResult SingleGroupEvaluation::evaluate(
     const WorkingParameters &params, Val eTar) const
@@ -114,9 +101,9 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 
 	const Val th = params.eSpikeEff(useIfCondExp);
 	const bool ok = cN.vMax > th && cNM1.vMax < th && cNS.vMax < th;
-	const Val pFalseNegative = sigmaV(cN.vMax, th, true);
+	const Val pFalseNegative = sigmaV(cN.vMax, th);
 	const Val pFalsePositive =
-	    1.0 - sigmaV(cNM1.vMax, th, true) * sigmaV(cNS.vMax, th, true);
+	    1.0 - sigmaV(cNM1.vMax, th) * sigmaV(cNS.vMax, th);
 	const State sInit = State(0.0, 0.0, 0.0, 0.0);
 	const State sRescale = State(100.0, 0.1, 0.1, 0.1);
 	const Val eDiff = ((sInit - cN.state) * sRescale).sqrL2Norm();
