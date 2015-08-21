@@ -61,12 +61,12 @@ public:
 	/**
 	 * Minimum neuron voltage at which the simulation can be aborted.
 	 */
-	static constexpr Val MIN_VOLTAGE = 1e-5;
+	static constexpr Val MIN_VOLTAGE = 1e-4;
 
 	/**
 	 * Minimum excitatory plus inhibitory channel rate.
 	 */
-	static constexpr Val MIN_RATE = 1e-4;
+	static constexpr Val MIN_RATE = 1e-3;
 
 	/**
 	 * The control function is responsible for aborting the simulation. The
