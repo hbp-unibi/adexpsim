@@ -26,6 +26,17 @@
 
 namespace AdExpSim {
 
+SpikeVec extractSpikesFrom(const SpikeVec &spikes, Time t)
+{
+	SpikeVec res;
+	for (const Spike &spike: spikes) {
+		if (spike.t > t) {
+			res.emplace_back(spike.t - t, spike.w);
+		}
+	}
+	return res;
+}
+
 SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 {
 	// Calculate the number of spikes

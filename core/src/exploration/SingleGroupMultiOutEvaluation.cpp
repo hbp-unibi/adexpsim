@@ -54,13 +54,15 @@ Val SingleGroupMultiOutEvaluation::maximumPotential(
 	RungeKuttaIntegrator integrator;
 	MaxValueController controller;
 
+	// Extract a sub-list of spikes starting at the given t0
+	SpikeVec subSpikes = extractSpikesFrom(spikes, t0);
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
-		    spikes, recorder, controller, integrator, params, tDelta, MAX_TIME,
-		    state, lastSpikeTime);
+		    subSpikes, recorder, controller, integrator, params, tDelta,
+		    MAX_TIME, state, lastSpikeTime);
 	} else {
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
-		                Model::FAST_EXP>(spikes, recorder, controller,
+		                Model::FAST_EXP>(subSpikes, recorder, controller,
 		                                 integrator, params, tDelta, MAX_TIME,
 		                                 state, lastSpikeTime);
 	}

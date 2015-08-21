@@ -62,6 +62,17 @@ struct Spike {
 using SpikeVec = std::vector<Spike>;
 
 /**
+ * Returns a subset of spikes from the given spikes list containing those whose
+ * spike time is larger than the given t. The spike times in the resulting list
+ * are shifted back by t.
+ *
+ * @param spikes is the list from which a subset of spikes should be extracted.
+ * @param t is the lower, non-inclusive boundary the spikes have to surpass and
+ * the time by which the spike times are shifted back in the resulting list.
+ */
+SpikeVec extractSpikesFrom(const SpikeVec &spikes, Time t);
+
+/**
  * Method used to build a set of n input spikes with uniform spacing.
  *
  * @param n is the number of input spikes. If a fractional number is given, an
