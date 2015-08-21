@@ -41,7 +41,7 @@ public:
 }
 
 // static Time tDelta(-1);
-static Time tDelta = 0.01e-3_s;
+static Time tDelta = 0.1e-3_s;
 
 /* Class SingleGroupMultiOutEvaluation */
 
@@ -98,12 +98,12 @@ SingleGroupMultiOutEvaluation::spikeCount(const SpikeVec &spikes,
 	if (res.spikeCount >= 1) {
 		const State &s0 = recorder.spikes[res.spikeCount - 1].second;
 		const Time t0 = recorder.spikes[res.spikeCount - 1].first;
-		res.vMax1 = maximumPotential(spikes, params, s0, t0, t0);
+		res.vMax1 = maximumPotential(spikes, params, s0, t0, Time(0));
 	}
 	if (res.spikeCount >= 2) {
 		const State &s0 = recorder.spikes[res.spikeCount - 2].second;
 		const Time t0 = recorder.spikes[res.spikeCount - 2].first;
-		res.vMax0 = maximumPotential(spikes, params, s0, t0, t0);
+		res.vMax0 = maximumPotential(spikes, params, s0, t0, Time(0));
 	}
 	return res;
 }
