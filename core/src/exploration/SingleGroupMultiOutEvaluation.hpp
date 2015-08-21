@@ -74,7 +74,7 @@ public:
 	 */
 	Val maximumPotential(const SpikeVec &spikes,
 	                     const WorkingParameters &params,
-	                     const State &state = State(),
+	                     const State &state = State(), const Time t0 = Time(0),
 	                     const Time lastSpikeTime = Time(-1)) const;
 
 	/**

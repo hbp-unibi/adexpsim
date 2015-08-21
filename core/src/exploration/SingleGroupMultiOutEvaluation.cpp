@@ -40,27 +40,29 @@ public:
 };
 }
 
-static Time tDelta(-1);// = 0.001e-3_s;
+// static Time tDelta(-1);
+static Time tDelta = 0.01e-3_s;
 
 /* Class SingleGroupMultiOutEvaluation */
 
 Val SingleGroupMultiOutEvaluation::maximumPotential(
     const SpikeVec &spikes, const WorkingParameters &params, const State &state,
-    const Time lastSpikeTime) const
+    const Time t0, const Time lastSpikeTime) const
 {
 	NullRecorder recorder;
-	DormandPrinceIntegrator integrator(eTar);
+	//	DormandPrinceIntegrator integrator(eTar);
+	RungeKuttaIntegrator integrator;
 	MaxValueController controller;
 
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
-		    spikes, recorder, controller, integrator, params, tDelta,
-		    spikeData.T, state, lastSpikeTime);
+		    spikes, recorder, controller, integrator, params, tDelta, MAX_TIME,
+		    state, lastSpikeTime);
 	} else {
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(spikes, recorder, controller,
-		                                 integrator, params, tDelta,
-		                                 spikeData.T, state, lastSpikeTime);
+		                                 integrator, params, tDelta, MAX_TIME,
+		                                 state, lastSpikeTime);
 	}
 
 	return controller.vMax;
@@ -72,16 +74,15 @@ SingleGroupMultiOutEvaluation::spikeCount(const SpikeVec &spikes,
 {
 	// First pass: Record all output spikes
 	SpikeRecorder recorder;
-	DormandPrinceIntegrator integrator(eTar);
-	NullController controller;
+	//	DormandPrinceIntegrator integrator(eTar);
+	RungeKuttaIntegrator integrator;
+	DefaultController controller;
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP>(spikes, recorder, controller,
-		                                    integrator, params, tDelta,
-		                                    spikeData.T);
+		                                    integrator, params, tDelta);
 	} else {
 		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller,
-		                                 integrator, params, tDelta,
-		                                 spikeData.T);
+		                                 integrator, params, tDelta);
 	}
 
 	// Second pass: Record the potentially reachable potential before and after
@@ -95,12 +96,12 @@ SingleGroupMultiOutEvaluation::spikeCount(const SpikeVec &spikes,
 	if (res.spikeCount >= 1) {
 		const State &s0 = recorder.spikes[res.spikeCount - 1].second;
 		const Time t0 = recorder.spikes[res.spikeCount - 1].first;
-		res.vMax1 = maximumPotential(spikes, params, s0, t0);
+		res.vMax1 = maximumPotential(spikes, params, s0, t0, t0);
 	}
 	if (res.spikeCount >= 2) {
 		const State &s0 = recorder.spikes[res.spikeCount - 2].second;
 		const Time t0 = recorder.spikes[res.spikeCount - 2].first;
-		res.vMax0 = maximumPotential(spikes, params, s0, t0);
+		res.vMax0 = maximumPotential(spikes, params, s0, t0, t0);
 	}
 	return res;
 }
@@ -112,4 +113,3 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 	return EvaluationResult();
 }
 }
-

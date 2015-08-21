@@ -31,30 +31,38 @@ int main(int argc, char *argv[])
 	// Setup the input spike train
 	SingleGroupMultiOutSpikeData spikeData(5, 1, 5e-3_s, 100e-3_s);
 
-	bool useIfCondExp = false;
+	bool useIfCondExp = true;
 
 	SingleGroupMultiOutEvaluation eval(spikeData, useIfCondExp, 0.1e-3);
 
+	std::cerr << "AdExpEvaluationMetric: Performing sweep..." << std::endl;
+
 	// Vary the eTh parameter and record the results
-/*	for (Val eTh = params.eL() + 2.1e-3; eTh < 0.0; eTh += 0.01e-3) {
-		params.eTh() = eTh;
-		const WorkingParameters p(params);
-		if (p.valid()) {
-			auto res = eval.spikeCount(eval.getSpikesN(), p);
-			std::cout << p.eTh() << "\t" << res.spikeCount << "\t" << res.vMax0
-			          << "\t" << res.vMax1 << "\t" << p.eSpikeEff(useIfCondExp)
-			          << std::endl;
-		}
-	}*/
-	for (Val tauE = 1e-3; tauE < 100e-3; tauE += 0.01e-3) {
+	/*	for (Val eTh = params.eL() + 2.1e-3; eTh < 0.0; eTh += 0.01e-3) {
+	        params.eTh() = eTh;
+	        const WorkingParameters p(params);
+	        if (p.valid()) {
+	            auto res = eval.spikeCount(eval.getSpikesN(), p);
+	            std::cout << p.eTh() << "\t" << res.spikeCount << "\t" <<
+	   res.vMax0
+	                      << "\t" << res.vMax1 << "\t" <<
+	   p.eSpikeEff(useIfCondExp)
+	                      << std::endl;
+	        }
+	    }*/
+	for (Val tauE = 1e-3; tauE < 100e-3; tauE += 0.1e-3) {
 		params.tauE() = tauE;
 		const WorkingParameters p(params);
 		if (p.valid()) {
 			auto res = eval.spikeCount(eval.getSpikesN(), p);
-			std::cout << params.tauE() << "\t" << res.spikeCount << "\t" << res.vMax0
-			          << "\t" << res.vMax1 << "\t" << p.eSpikeEff(useIfCondExp)
-			          << std::endl;
+			Val th = p.eSpikeEff(useIfCondExp);
+			std::cout << params.tauE() << "\t" << res.spikeCount << "\t"
+			          << res.vMax0 << "\t" << res.vMax1 << "\t" << th << "\t"
+			          << 1.0 - (th - res.vMax1) / th << std::endl;
 		}
 	}
+
+	std::cerr << "Done!" << std::endl;
+	return 0;
 }
 
