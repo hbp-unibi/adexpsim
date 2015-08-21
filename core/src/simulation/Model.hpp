@@ -230,7 +230,7 @@ public:
 		// Convert the refractory period from the parameters into the internal
 		// time measure. Initialize tLastSpike with -tRefrac if no valid value
 		// for tLastSpike has been given by the user in order make sure that
-		// t - tLastSpike > tRefrac always evaluates to false.
+		// t - tLastSpike > tRefrac evaluates to false.
 		const Time tRefrac = Time::sec(p.tauRef());
 		if (tLastSpike < Time(0)) {
 			tLastSpike = -tRefrac;
