@@ -79,7 +79,7 @@ bool Exploration::run(const Evaluation &evaluation,
 				params.update();
 
 				// Run the evaluation for these parameters
-				EvaluationResult result = evaluation.evaluate(p);
+				result = evaluation.evaluate(p);
 			}
 
 			// Store the evaluation result in the matrices
