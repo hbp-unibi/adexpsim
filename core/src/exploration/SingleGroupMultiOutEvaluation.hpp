@@ -36,6 +36,7 @@
 #include "SingleGroupEvaluation.hpp"
 
 namespace AdExpSim {
+
 /**
  * The evaluation class can be used for the evalutation of the behaviour of a
  * single neuron for the given SpikeTrain.
@@ -47,14 +48,28 @@ public:
 	    SingleGroupMultiOutSpikeData>::SingleGroupEvaluationBase;
 
 	/**
+	 * Calculates the maximum potential for the given parameters starting from
+	 * the specified state with disabled spiking.
+	 */
+	Val maximumPotential(const SpikeVec &spikes,
+	                     const WorkingParameters &params,
+	                     const State &state) const;
+
+	/**
+	 * Calculates the fractional number of output spikes for the given
+	 * parameters.
+	 */
+	Val fractionalNumberOfOutputSpikes(const SpikeVec &spikes,
+	                                   const WorkingParameters &params) const;
+
+	/**
 	 * Evaluates the given parameter set.
 	 *
 	 * @param params is a reference at the parameter set that should be
 	 * evaluated. Automatically updates the derived values of the parameter set.
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
-	EvaluationResult evaluate(const WorkingParameters &params,
-	                          Val eTar = 1e-3) const;
+	EvaluationResult evaluate(const WorkingParameters &params) const;
 };
 }
 

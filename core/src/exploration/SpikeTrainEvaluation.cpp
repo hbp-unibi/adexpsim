@@ -227,13 +227,10 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
     const WorkingParameters &params, Val eTar, F1 recordOutputSpike,
     F2 recordOutputGroup) const
 {
-	// Abort if the given parameters are invalid
-	if (!params.valid() || train.getRanges().empty()) {
+	// Return an empty result if the input spike train contains no spikes
+	if (train.getRanges().empty()) {
 		return EvaluationResult();
 	}
-
-	// Update the parameters
-	params.update();
 
 	// Run the simulation on the spike train with the given parameters and
 	// collect all spikes

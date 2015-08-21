@@ -17,6 +17,7 @@
  */
 
 #include <limits>
+#include <vector>
 
 #include <common/ProbabilityUtils.hpp>
 #include <simulation/DormandPrinceIntegrator.hpp>
@@ -26,19 +27,64 @@
 
 namespace AdExpSim {
 
+namespace {
+/**
+ * Class used internally to record the number of output spikes and the state
+ * after the spikes occured.
+ */
+class SpikeRecorder : public NullRecorder {
+public:
+	std::vector<std::pair<Time, State>> spikes;
+
+	void outputSpike(Time t, const State &s) { spikes.emplace_back(t, s); }
+};
+}
+
 /* Class SingleGroupMultiOutEvaluation */
+
+Val SingleGroupMultiOutEvaluation::maximumPotential(const SpikeVec &spikes,
+    const WorkingParameters &params, const State &state) const
+{
+	NullRecorder recorder;
+	DormandPrinceIntegrator integrator(eTar);
+	MaxValueController controller;
+
+	if (useIfCondExp) {
+		Model::simulate<Model::IF_COND_EXP>(spikes, recorder, controller,
+		                                    integrator, params, Time(-1),
+		                                    spikeData.T);
+	} else {
+		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller, integrator,
+		                                 params, Time(-1), spikeData.T);
+	}
+
+	
+}
+
+Val SingleGroupMultiOutEvaluation::fractionalNumberOfOutputSpikes(const SpikeVec &spikes,
+    const WorkingParameters &params) const
+{
+	// First pass: Record all output spikes
+	SpikeRecorder recorder;
+	DormandPrinceIntegrator integrator(eTar);
+	NullController controller;
+
+	if (useIfCondExp) {
+		Model::simulate<Model::IF_COND_EXP>(spikes, recorder, controller,
+		                                    integrator, params, Time(-1),
+		                                    spikeData.T);
+	} else {
+		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller, integrator,
+		                                 params, Time(-1), spikeData.T);
+	}
+
+	// Second pass: Record the potentially reachable potential after the last
+	// the reachable potential before the last spike when spiking is disabled
+}
 
 EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
     const WorkingParameters &params, Val eTar) const
 {
-	// Make sure the parameters are inside the valid range, otherwise abort
-	if (!params.valid()) {
-		return EvaluationResult();
-	}
-
-	// Make sure all derived parameters have been calculated correctly
-	params.update();
-
 	// TODO
 	return EvaluationResult();
 }

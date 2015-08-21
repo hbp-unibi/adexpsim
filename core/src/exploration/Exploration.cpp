@@ -72,8 +72,15 @@ bool Exploration::run(const Evaluation &evaluation,
 			p[dimX] = rangeX.value(x);
 			p[dimY] = rangeY.value(y);
 
-			// Run the evaluation for these parameters
-			EvaluationResult result = evaluation.evaluate(p);
+			// Do nothing if the given parameters are invalid
+			EvaluationResult result;
+			if (params.valid()) {
+				// Update the parameters
+				params.update();
+
+				// Run the evaluation for these parameters
+				EvaluationResult result = evaluation.evaluate(p);
+			}
 
 			// Store the evaluation result in the matrices
 			mem->pBinary(x, y) = result.pBinary;

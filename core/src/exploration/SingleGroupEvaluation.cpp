@@ -59,16 +59,8 @@ static constexpr Val TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
 static const LogisticFunction<true> sigmaV(TAU_RANGE, TAU_RANGE_VAL);
 
 EvaluationResult SingleGroupEvaluation::evaluate(
-    const WorkingParameters &params, Val eTar) const
+    const WorkingParameters &params) const
 {
-	// Make sure the parameters are inside the valid range, otherwise abort
-	if (!params.valid()) {
-		return EvaluationResult();
-	}
-
-	// Make sure all derived parameters have been calculated correctly
-	params.update();
-
 	// Do not record any result
 	NullRecorder n;
 
@@ -76,7 +68,7 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 	SingleGroupEvaluationController cN, cNM1, cNS;
 
 	// Use the DormandPrinceIntegrator
-	DormandPrinceIntegrator iN, iNM1, iNS;
+	DormandPrinceIntegrator iN(eTar), iNM1(eTar), iNS(eTar);
 
 	// Simulate for both the sXi and the sXiM1 input spike train
 	if (useIfCondExp) {

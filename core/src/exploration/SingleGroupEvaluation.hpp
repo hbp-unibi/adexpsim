@@ -60,19 +60,28 @@ protected:
 	 */
 	SpikeData spikeData;
 
+	/**
+	 * Target error to be used for the adaptive stepsize controller.
+	 */
+	Val eTar;
+
 public:
 	/**
 	 * Constructor of the evaluation class.
 	 *
 	 * @param spikeData contains the information about the spikes used for the
 	 * single group experiment.
+	 * @param useIfCondExp allows to degrade the simulation to the simpler
+	 * linear integrate and fire model with conductive synapses.
+	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
 	SingleGroupEvaluationBase(const SpikeData &spikeData,
-	                          bool useIfCondExp = false)
+	                          bool useIfCondExp = false, Val eTar = 1e-3)
 	    : sN(spikeData.spikes(spikeData.n)),
 	      sNM1(spikeData.spikes(spikeData.nM1)),
 	      useIfCondExp(useIfCondExp),
-	      spikeData(spikeData)
+	      spikeData(spikeData),
+	      eTar(eTar)
 	{
 	}
 };
@@ -92,10 +101,8 @@ public:
 	 *
 	 * @param params is a reference at the parameter set that should be
 	 * evaluated. Automatically updates the derived values of the parameter set.
-	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
-	EvaluationResult evaluate(const WorkingParameters &params,
-	                          Val eTar = 1e-3) const;
+	EvaluationResult evaluate(const WorkingParameters &params) const;
 };
 }
 
