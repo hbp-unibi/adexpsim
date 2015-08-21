@@ -132,7 +132,7 @@ public:
 	 */
 	void reset()
 	{
-		vMax = std::numeric_limits<Val>::min();
+		vMax = std::numeric_limits<Val>::lowest();
 		tVMax = MAX_TIME;
 		tSpike = MAX_TIME;
 	}
