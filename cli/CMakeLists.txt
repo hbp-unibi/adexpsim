@@ -62,3 +62,12 @@ TARGET_LINK_LIBRARIES(AdExpOptimization
 	AdExpSimCore
 	AdExpSimIo
 )
+
+# AdExpOptimization executable
+ADD_EXECUTABLE(AdExpEvaluationMetric
+	src/AdExpEvaluationMetric
+)
+
+TARGET_LINK_LIBRARIES(AdExpEvaluationMetric
+	AdExpSimCore
+)

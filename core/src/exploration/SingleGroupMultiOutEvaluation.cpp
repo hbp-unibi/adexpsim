@@ -40,50 +40,73 @@ public:
 };
 }
 
+static Time tDelta(-1);// = 0.001e-3_s;
+
 /* Class SingleGroupMultiOutEvaluation */
 
-Val SingleGroupMultiOutEvaluation::maximumPotential(const SpikeVec &spikes,
-    const WorkingParameters &params, const State &state) const
+Val SingleGroupMultiOutEvaluation::maximumPotential(
+    const SpikeVec &spikes, const WorkingParameters &params, const State &state,
+    const Time lastSpikeTime) const
 {
 	NullRecorder recorder;
 	DormandPrinceIntegrator integrator(eTar);
 	MaxValueController controller;
 
 	if (useIfCondExp) {
-		Model::simulate<Model::IF_COND_EXP>(spikes, recorder, controller,
-		                                    integrator, params, Time(-1),
-		                                    spikeData.T);
+		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
+		    spikes, recorder, controller, integrator, params, tDelta,
+		    spikeData.T, state, lastSpikeTime);
 	} else {
-		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller, integrator,
-		                                 params, Time(-1), spikeData.T);
+		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
+		                Model::FAST_EXP>(spikes, recorder, controller,
+		                                 integrator, params, tDelta,
+		                                 spikeData.T, state, lastSpikeTime);
 	}
 
-	
+	return controller.vMax;
 }
 
-Val SingleGroupMultiOutEvaluation::fractionalNumberOfOutputSpikes(const SpikeVec &spikes,
-    const WorkingParameters &params) const
+SingleGroupMultiOutEvaluation::SpikeCountResult
+SingleGroupMultiOutEvaluation::spikeCount(const SpikeVec &spikes,
+                                          const WorkingParameters &params) const
 {
 	// First pass: Record all output spikes
 	SpikeRecorder recorder;
 	DormandPrinceIntegrator integrator(eTar);
 	NullController controller;
-
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP>(spikes, recorder, controller,
-		                                    integrator, params, Time(-1),
+		                                    integrator, params, tDelta,
 		                                    spikeData.T);
 	} else {
-		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller, integrator,
-		                                 params, Time(-1), spikeData.T);
+		Model::simulate<Model::FAST_EXP>(spikes, recorder, controller,
+		                                 integrator, params, tDelta,
+		                                 spikeData.T);
 	}
 
-	// Second pass: Record the potentially reachable potential after the last
-	// the reachable potential before the last spike when spiking is disabled
+	// Second pass: Record the potentially reachable potential before and after
+	// the last spike.
+	SpikeCountResult res(recorder.spikes.size());
+	if (res.spikeCount <= 1) {
+		const Val vMax = maximumPotential(spikes, params);
+		res.vMax0 = vMax;
+		res.vMax1 = vMax;
+	}
+	if (res.spikeCount >= 1) {
+		const State &s0 = recorder.spikes[res.spikeCount - 1].second;
+		const Time t0 = recorder.spikes[res.spikeCount - 1].first;
+		res.vMax1 = maximumPotential(spikes, params, s0, t0);
+	}
+	if (res.spikeCount >= 2) {
+		const State &s0 = recorder.spikes[res.spikeCount - 2].second;
+		const Time t0 = recorder.spikes[res.spikeCount - 2].first;
+		res.vMax0 = maximumPotential(spikes, params, s0, t0);
+	}
+	return res;
 }
 
 EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
-    const WorkingParameters &params, Val eTar) const
+    const WorkingParameters &params) const
 {
 	// TODO
 	return EvaluationResult();

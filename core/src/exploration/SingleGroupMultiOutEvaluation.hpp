@@ -30,6 +30,7 @@
 
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
+#include <simulation/State.hpp>
 #include <common/Types.hpp>
 
 #include "EvaluationResult.hpp"
@@ -48,19 +49,40 @@ public:
 	    SingleGroupMultiOutSpikeData>::SingleGroupEvaluationBase;
 
 	/**
+	 * Structure used internally by the spikeCount method.
+	 */
+	struct SpikeCountResult {
+		size_t spikeCount;
+		Val fracSpikeCount;
+		Val vMax0;
+		Val vMax1;
+
+		SpikeCountResult(size_t spikeCount)
+		    : spikeCount(spikeCount),
+		      fracSpikeCount(0.0),
+		      vMax0(0.0),
+		      vMax1(0.0)
+		{
+		}
+
+		Val totalSpikeCount() { return spikeCount + fracSpikeCount; }
+	};
+
+	/**
 	 * Calculates the maximum potential for the given parameters starting from
 	 * the specified state with disabled spiking.
 	 */
 	Val maximumPotential(const SpikeVec &spikes,
 	                     const WorkingParameters &params,
-	                     const State &state) const;
+	                     const State &state = State(),
+	                     const Time lastSpikeTime = Time(-1)) const;
 
 	/**
 	 * Calculates the fractional number of output spikes for the given
 	 * parameters.
 	 */
-	Val fractionalNumberOfOutputSpikes(const SpikeVec &spikes,
-	                                   const WorkingParameters &params) const;
+	SpikeCountResult spikeCount(const SpikeVec &spikes,
+	                            const WorkingParameters &params) const;
 
 	/**
 	 * Evaluates the given parameter set.
