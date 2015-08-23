@@ -79,7 +79,13 @@ public:
 	     * Tells the neuron simulation to generate an output spike. Triggers
 	     * the usual reset mechanism, including refractory period.
 	     */
-		FORCE_OUTPUT_SPIKE
+		FORCE_OUTPUT_SPIKE = 0,
+
+		/**
+	     * Sets the voltage to the given value. The voltage is encoded as a
+	     * 16-bit integer which ranges from eReset (= 0) to eSpikeEff (= MAX).
+	     */
+		SET_VOLTAGE = 1,
 	};
 
 private:
@@ -102,33 +108,44 @@ private:
 		constexpr Double(uint64_t i) : i(i) {}
 	};
 
-	static constexpr float
-	encodeKind(float, Kind kind)
+	static constexpr float encode(float, Kind kind, uint16_t payload)
 	{
-		return Single(uint32_t(NaN32 | uint8_t(kind))).f;
+		return Single(uint32_t(NaN32 | uint8_t(kind) | (payload << 4))).f;
 	}
 
-	static constexpr double encodeKind(double, Kind kind)
+	static constexpr double encode(double, Kind kind, uint16_t payload)
 	{
-		return Double(uint64_t(NaN64 | uint8_t(kind))).f;
+		return Double(uint64_t(NaN64 | uint8_t(kind) | (payload << 4))).f;
 	}
 
-	static constexpr bool isSpecial(float f) {
+	static constexpr bool isSpecial(float f)
+	{
 		return (Single(f).i & NaN32) == NaN32;
 	}
 
-	static constexpr bool isSpecial(double f) {
+	static constexpr bool isSpecial(double f)
+	{
 		return (Double(f).i & NaN64) == NaN64;
 	}
 
 	static constexpr Kind decodeKind(float f)
 	{
-		return static_cast<Kind>(Single(f).i & 0xFF);
+		return static_cast<Kind>(Single(f).i & 0x0F);
 	}
 
 	static constexpr Kind decodeKind(double f)
 	{
-		return static_cast<Kind>(Double(f).i & 0xFF);
+		return static_cast<Kind>(Double(f).i & 0x0F);
+	}
+
+	static constexpr uint16_t decodePayload(float f)
+	{
+		return (Single(f).i & 0xFFFF0) >> 4;
+	}
+
+	static constexpr uint16_t decodePayload(double f)
+	{
+		return (Double(f).i & 0xFFFF0) >> 4;
 	}
 
 public:
@@ -140,8 +157,8 @@ public:
 	 * @param kind is the kind of SpecialSpike the new instance should
 	 * represent.
 	 */
-	constexpr SpecialSpike(Time t, Kind kind)
-	    : Spike(t, encodeKind(Val(), kind)) {};
+	constexpr SpecialSpike(Time t, Kind kind, uint16_t payload = 0)
+	    : Spike(t, encode(Val(), kind, payload)){};
 
 	/**
 	 * Returns true if the spike encodes special information. The information
@@ -162,6 +179,14 @@ public:
 	}
 
 	/**
+	 * Returns the payload attached to the spike data.
+	 */
+	static constexpr uint16_t payload(const Spike &spike)
+	{
+		return decodePayload(spike.w);
+	}
+
+	/**
 	 * Returns true if the Spike encodes any special information.
 	 */
 	bool isSpecial() const { return isSpecial(*this); }
@@ -171,6 +196,11 @@ public:
 	 * true.
 	 */
 	Kind kind() const { return kind(*this); }
+
+	/**
+	 * Returns the payload attached to the spike data.
+	 */
+	uint16_t payload() const { return payload(*this); }
 };
 
 /**

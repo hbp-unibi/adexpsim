@@ -179,6 +179,76 @@ private:
 		             );
 	}
 
+	/**
+	 * Method responsible for the generation of an output spike. Records the
+	 * output spike, resets the membrane potential, increases the habituation
+	 * current and starts the refractory period.
+	 *
+	 * @param t is the current time.
+	 * @param s is the neuron state.
+	 * @param tLastSpike is the time of the last spike.
+	 * @param recorder is used to record the output spike event.
+	 * @param p are the current neuron parameters.
+	 */
+	template <uint8_t Flags, typename Recorder>
+	static void generateOutputSpike(Time t, State &s, Time &tLastSpike,
+	                                Recorder &recorder,
+	                                const WorkingParameters &p)
+	{
+		AuxiliaryState as;
+
+		// Record the spike event
+		s.v() = p.eSpike();
+		as = aux<Flags>(s, p);
+		recorder.record(t, s, as, true);
+
+		// Reset the voltage and increase the adaptation current
+		s.v() = p.eReset();
+		if (!(Flags & IF_COND_EXP)) {
+			s.dvW() += p.lB();
+		}
+		as = aux<Flags>(s, p);
+		recorder.outputSpike(t, s);
+		recorder.record(t, s, as, true);
+
+		// Set tLastSpike in order to start the refractory period
+		if (!(Flags & DISABLE_REFRACTORY)) {
+			tLastSpike = t;
+		}
+	}
+
+	/**
+	 * Method responsible for handling special spikes.
+	 *
+	 * @param t is the current time.
+	 * @param s is the neuron state.
+	 * @param tLastSpike is the time of the last spike.
+	 * @param recorder is used to record the output spike event.
+	 * @param p are the current neuron parameters.
+	 */
+	template <uint8_t Flags, typename Recorder>
+	static bool handleSpecialSpikes(const Spike &spike, Time t, State &s,
+	                                Time &tLastSpike, Recorder &recorder,
+	                                const WorkingParameters &p)
+	{
+		if (SpecialSpike::isSpecial(spike)) {
+			switch (SpecialSpike::kind(spike)) {
+				case SpecialSpike::Kind::FORCE_OUTPUT_SPIKE: {
+					generateOutputSpike<Flags>(t, s, tLastSpike, recorder, p);
+					break;
+				}
+				case SpecialSpike::Kind::SET_VOLTAGE: {
+					Val f = SpecialSpike::payload(spike) /
+					        Val(std::numeric_limits<uint16_t>::max());
+					s.v() = p.eReset() + (p.eSpike() - p.eReset()) * f;
+					break;
+				}
+			}
+			return true;
+		}
+		return false;
+	}
+
 public:
 	/**
 	 * Performs a single neuron simulation. Allows to customize the simulation
@@ -253,9 +323,6 @@ public:
 			Time nextSpikeTime =
 			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : tEnd;
 
-			// Flag set if an output spike is forced in this iteration
-			bool forceOutputSpike = false;
-
 			// Handle incomming spikes
 			if (nextSpikeTime <= t) {
 				// Record the old values
@@ -267,29 +334,24 @@ public:
 				// Handle special spikes (if processing of special input spikes
 				// is enabled)
 				if ((Flags & PROCESS_SPECIAL) &&
-				    SpecialSpike::isSpecial(spike)) {
-					switch (SpecialSpike::kind(spike)) {
-						case SpecialSpike::Kind::FORCE_OUTPUT_SPIKE:
-							forceOutputSpike = true;
-							break;
-						default:
-							continue;
-					}
-				} else {
-					// Add the spike weight to either the excitatory or the
-					// inhibitory channel
-					const Val w = spike.w * p.w();
-					if (w > 0) {
-						s.lE() += w;
-					} else {
-						s.lI() -= w;
-					}
-
-					// Record the new values
-					recorder.inputSpike(t, s);
-					recorder.record(t, s, aux<Flags>(s, p), true);
+				    handleSpecialSpikes<Flags>(spike, t, s, tLastSpike,
+				                               recorder, p)) {
 					continue;
 				}
+
+				// Add the spike weight to either the excitatory or the
+				// inhibitory channel
+				const Val w = spike.w * p.w();
+				if (w > 0) {
+					s.lE() += w;
+				} else {
+					s.lI() -= w;
+				}
+
+				// Record the new values
+				recorder.inputSpike(t, s);
+				recorder.record(t, s, aux<Flags>(s, p), true);
+				continue;
 			}
 
 			// Fetch the currently allowed maximum tDelta -- we'll limit this to
@@ -298,55 +360,33 @@ public:
 			// passed.
 			const bool inRefrac =
 			    (!(Flags & DISABLE_REFRACTORY)) && t - tLastSpike < tRefrac;
-			if (!(Flags & PROCESS_SPECIAL) || !forceOutputSpike) {
-				Time tDeltaMax = nextSpikeTime - t;
-				if (!(Flags & DISABLE_REFRACTORY) && inRefrac) {
-					const Time tRefLeft = tLastSpike + tRefrac - t;
-					if (tRefLeft < tDeltaMax) {
-						tDeltaMax = tRefLeft;
-					}
+			Time tDeltaMax = nextSpikeTime - t;
+			if (!(Flags & DISABLE_REFRACTORY) && inRefrac) {
+				const Time tRefLeft = tLastSpike + tRefrac - t;
+				if (tRefLeft < tDeltaMax) {
+					tDeltaMax = tRefLeft;
 				}
-
-				// Perform the actual integration
-				std::pair<State, Time> res =
-				    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax,
-				                         s, [&p, inRefrac](const State &s) {
-					    return df<Flags>(s, aux<Flags>(s, p), p, inRefrac);
-					});
-
-				// Copy the result and advance the time by the performed
-				// timestep
-				s = res.first;
-				t += res.second;
 			}
+
+			// Perform the actual integration
+			std::pair<State, Time> res =
+			    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax, s,
+			                         [&p, inRefrac](const State &s) {
+				    return df<Flags>(s, aux<Flags>(s, p), p, inRefrac);
+				});
+
+			// Copy the result and advance the time by the performed
+			// timestep
+			s = res.first;
+			t += res.second;
 
 			// Calculate the auxiliary state for the recorder
 			AuxiliaryState as = aux<Flags>(s, p);
 
 			// Reset the neuron if the spike potential is reached
-			if (!(Flags & DISABLE_SPIKING) ||
-			    ((Flags & PROCESS_SPECIAL) && forceOutputSpike)) {
-				if (s.v() > ((Flags & IF_COND_EXP) ? p.eTh() : p.eSpike()) ||
-				    ((Flags & PROCESS_SPECIAL) && forceOutputSpike)) {
-					// Record the spike event
-					s.v() = p.eSpike();
-					as = aux<Flags>(s, p);
-					recorder.record(t, s, as, true);
-
-					// Reset the voltage and increase the adaptation current
-					s.v() = p.eReset();
-					if (!(Flags & IF_COND_EXP)) {
-						s.dvW() += p.lB();
-					}
-					as = aux<Flags>(s, p);
-					recorder.outputSpike(t, s);
-					recorder.record(t, s, as, true);
-
-					// Set tLastSpike in order to start the refractory period
-					if (!(Flags & DISABLE_REFRACTORY)) {
-						tLastSpike = t;
-					}
-				}
+			if (!(Flags & DISABLE_SPIKING) &&
+			    s.v() > ((Flags & IF_COND_EXP) ? p.eTh() : p.eSpike())) {
+				generateOutputSpike<Flags>(t, s, tLastSpike, recorder, p);
 			}
 
 			// Record the value -- this is the regular position in which values
@@ -354,7 +394,8 @@ public:
 			recorder.record(t, s, as, false);
 
 			// Ask the controller whether it is time to abort
-			const ControllerResult cres = controller.control(t, s, as, p, inRefrac);
+			const ControllerResult cres =
+			    controller.control(t, s, as, p, inRefrac);
 			if (cres == ControllerResult::ABORT ||
 			    (cres == ControllerResult::MAY_CONTINUE &&
 			     spikeIdx >= nSpikes)) {
