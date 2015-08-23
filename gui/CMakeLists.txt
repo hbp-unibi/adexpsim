@@ -67,6 +67,7 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/NeuronSimulationWidget
 	src/view/OptimizationWidget
 	src/view/ParameterWidget
+	src/view/PlotMarker
 	src/view/ParametersWidget
 	src/view/PresetsWidget
 	src/view/SingleGroupWidget

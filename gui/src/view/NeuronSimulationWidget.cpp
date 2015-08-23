@@ -31,6 +31,7 @@
 #include "Colors.hpp"
 #include "NeuronSimulationWidget.hpp"
 #include "SpikeWidget.hpp"
+#include "PlotMarker.hpp"
 
 namespace AdExpSim {
 
@@ -50,6 +51,7 @@ NeuronSimulationWidget::NeuronSimulationWidget(QWidget *parent)
 	pltVolt->addLayer("v");
 	pltVolt->addLayer("spikes");
 	pltVolt->addLayer("limits");
+	pltVolt->addLayer("maxima");
 
 	pltCond = new QCustomPlot(this);
 	pltCond->addLayer("gE");
@@ -111,6 +113,22 @@ static void addHorzLine(QCustomPlot *plot, Val y)
 	line->setPen(QPen(Qt::black, 1, Qt::DotLine));
 }
 
+static void addMaxima(QCustomPlot *plot, const Parameters &p,
+                      const NeuronSimulation::MaximaData &maxima, Val minT,
+                      Val maxT)
+{
+	plot->setCurrentLayer("maxima");
+	for (const auto &max : maxima) {
+		Val t = SIPrefixTrafo::transformTime(max.t.sec());
+		if (t >= minT && t <= maxT) {
+			Val v = SIPrefixTrafo::transformVoltage(max.s.v() + p.eL());
+			PlotMarker *marker = new PlotMarker(plot, 5);
+			plot->addItem(marker);
+			marker->setCoords(t, v);
+		}
+	}
+}
+
 void NeuronSimulationWidget::rangeChange() { updateTimer->start(100); }
 
 void NeuronSimulationWidget::updatePlot()
@@ -130,7 +148,7 @@ void NeuronSimulationWidget::updatePlot()
 	    SIPrefixTrafo::transformTime(spikeWidget->getRangeStart().sec());
 	double maxT =
 	    SIPrefixTrafo::transformTime(spikeWidget->getRangeEnd().sec());
-	const VectorRecorderData<QVector<double>> &oData = sim.getData();
+	const VectorRecorderData<QVector<double>> &oData = sim.getValues();
 	const VectorRecorderData<QVector<double>> &data = oData.slice(minT, maxT);
 
 	// Abort if the simulation is not valid
@@ -156,6 +174,7 @@ void NeuronSimulationWidget::updatePlot()
 		            SIPrefixTrafo::transformVoltage(p.params.eReset()));
 
 		addSpikes(pltVolt, sim.getInputSpikes(), minT, maxT);
+		addMaxima(pltVolt, p.params, sim.getMaxima(), minT, maxT);
 
 		// Create the conductance graph
 		pltCond->setCurrentLayer("gE");

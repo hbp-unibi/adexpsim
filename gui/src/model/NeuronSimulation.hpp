@@ -49,6 +49,8 @@ class NeuronSimulation {
 public:
 	using OutputSpikeVec = std::vector<SpikeTrainEvaluation::OutputSpike>;
 	using OutputGroupVec = std::vector<SpikeTrainEvaluation::OutputGroup>;
+	using ValueData = VectorRecorderData<QVector<double>>;
+	using MaximaData = std::vector<LocalMaximumRecorder::Maximum>;
 
 private:
 	/**
@@ -80,14 +82,20 @@ private:
 	/**
 	 * Recorder used to record and hold the data from the neuron simulation.
 	 */
-	VectorRecorder<QVector<double>, SIPrefixTrafo> recorder;
+	VectorRecorder<QVector<double>, SIPrefixTrafo> vectorRecorder;
+
+	/**
+	 * Recorder used to track local maxima.
+	 */
+	LocalMaximumRecorder maximumRecorder;
 
 public:
 	/**
 	 * Creates a new NeuronSimulation instance.
 	 */
 	NeuronSimulation(Time interval = Time(0))
-	    : mValid(false), recorder(params.params, interval){};
+	    : mValid(false),
+	      vectorRecorder(params.params, interval) {};
 
 	/**
 	 * Runs the simulation with the parameters given in the prepare method.
@@ -125,15 +133,17 @@ public:
 	/**
 	 * Returns the maximum timestamp of the recorded data.
 	 */
-	const double getMaxT() const { return getData().maxTime; }
+	const double getMaxT() const { return getValues().maxTime; }
 
 	/**
-	 * Returns the recorded data.
+	 * Returns references to the recorded values.
 	 */
-	const VectorRecorderData<QVector<double>> &getData() const
-	{
-		return recorder.getData();
-	}
+	const ValueData &getValues() const { return vectorRecorder.getData(); }
+
+	/**
+	 * Returns references to the maxima.
+	 */
+	const MaximaData &getMaxima() const { return maximumRecorder.maxima; }
 
 	/**
 	 * Returns true if a valid result is present.

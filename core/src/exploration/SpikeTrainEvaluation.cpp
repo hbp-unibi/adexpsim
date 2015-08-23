@@ -24,41 +24,8 @@
 #include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
-/**
- * Spike as recorded by the SpikeRecorder class. Contains the state of the
- * neuron at the time the spike has been issued.
- */
-struct RecordedSpike {
-	/**
-	 * Time at which the spike was recorded.
-	 */
-	Time t;
 
-	/**
-	 * State of the neuron at the time the spike was captured.
-	 */
-	State state;
-
-	/**
-	 * Constructor of the RecordedSpike descriptor.
-	 *
-	 * @param t is the time at which the Spike was captured.
-	 * @param state is the state of the neuron at the time of capture.
-	 * @param isOutputSpike is set to true if the captured spike is an
-	 * output spike, otherwise to true.
-	 */
-	RecordedSpike(Time t, const State &state = State()) : t(t), state(state) {}
-
-	/**
-	 * Comperator used to allow binary search within a list of RecordedSpike
-	 * instances.
-	 */
-	friend bool operator<(const RecordedSpike &s1, const RecordedSpike &s2)
-	{
-		return s1.t < s2.t;
-	}
-};
-
+namespace {
 /**
  * The SpikeRecorder class is used internally be the evaluation algorithm to
  * track input and output spikes. Input spikes are recorded, because they may
@@ -156,6 +123,7 @@ public:
 		return outputSpikes;
 	}
 };
+}
 
 SpikeTrainEvaluation::SpikeTrainEvaluation(const SpikeTrain &train,
                                            bool useIfCondExp)

@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <limits>
 #include <ostream>
+#include <utility>
 
 #include <common/Types.hpp>
 
@@ -74,6 +75,15 @@ public:
 	void outputSpike(Time t, const State &)
 	{
 		// Discard everything
+	}
+
+	/**
+	 * Resets the recorder to its initial state. Nothing to do in this
+	 * implementation.
+	 */
+	void reset()
+	{
+		// Nothing to reset.
 	}
 };
 
@@ -658,6 +668,281 @@ public:
 	 */
 	const Trafo &getTrafo() const { return trafo; }
 };
+
+/**
+ * Spike as recorded by the SpikeRecorder or OutputSpikeRecorder class. Contains
+ * the state of the neuron at the time the spike has been issued.
+ */
+struct RecordedSpike {
+	/**
+	 * Time at which the spike was recorded.
+	 */
+	Time t;
+
+	/**
+	 * State of the neuron at the time the spike was captured.
+	 */
+	State state;
+
+	/**
+	 * Constructor of the RecordedSpike descriptor.
+	 *
+	 * @param t is the time at which the Spike was captured.
+	 * @param state is the state of the neuron at the time of capture.
+	 */
+	RecordedSpike(Time t, const State &state = State()) : t(t), state(state) {}
+
+	/**
+	 * Comperator used to allow binary search within a list of RecordedSpike
+	 * instances.
+	 */
+	friend bool operator<(const RecordedSpike &s1, const RecordedSpike &s2)
+	{
+		return s1.t < s2.t;
+	}
+};
+
+/**
+ * Recorder class which simply captures outgoing spikes and stores them in a
+ * vector.
+ */
+struct OutputSpikeRecorder : public NullRecorder {
+	/**
+	 * Vector containing the time points of the recorded spikes and the state
+	 * after the spike had been issued (including the neuron reset).
+	 */
+	std::vector<RecordedSpike> spikes;
+
+	/**
+	 * Called whenever an incomming spike is captured.
+	 *
+	 * @param t is the time at which the spike was captured.
+	 * @param s is state after the spike has been issued.
+	 */
+	void outputSpike(Time t, const State &s) { spikes.emplace_back(t, s); }
+
+	/**
+	 * Resets the recorder to its initial state, clears all stored spikes.
+	 */
+	void reset() { spikes.clear(); }
+};
+
+
+struct OutputSpikeCountRecorder : public NullRecorder {
+	size_t count;
+
+	OutputSpikeCountRecorder() {
+		reset();
+	}
+
+	void outputSpike(Time t, const State &s) { count++; }
+
+	void reset() { count = 0;}
+};
+
+/**
+ * Recorder responsible for recording local maxima of the membrane potential.
+ * It does so by analyzing the total current flowing through the membrane (aka
+ * the first derivative of the membrane potential). Filters out maxima produced
+ * by both input/output spikes.
+ */
+class LocalMaximumRecorder : public NullRecorder {
+private:
+	/**
+	 * Neuron state from the last call to "record".
+	 */
+	State lastState;
+
+	/**
+	 * Last current flowing through the membrane.
+	 */
+	Val lastCurrent;
+
+	/**
+	 * Last time the "record" method was called.
+	 */
+	Time lastTime;
+
+	/**
+	 * Set to true if the above values are actually valid.
+	 */
+	bool validLast;
+
+public:
+	/**
+	 * Structure describing the encountered maximum.
+	 */
+	struct Maximum {
+		/**
+		 * Time at which the maximum occured.
+		 */
+		Time t;
+
+		/**
+		 * State of the neuron at the maximum.
+		 */
+		State s;
+
+		/**
+		 * Slope of the current at the maximum (second derivative of the
+		 * membrane potential).
+		 */
+		Val dI;
+
+		/**
+		 * Constructor, initializes all members with the given values.
+		 */
+		Maximum(Time t = Time(0), State s = State(), Val dI = 0.0)
+		    : t(t), s(s), dI(dI)
+		{
+		}
+
+		/**
+		 * Constructor of the Maximum structure, calculates the slope, the time
+		 * of the zero crossing and the state of the zero crossing using linear
+		 * interpolation.
+		 */
+		Maximum(Time t0, Time t1, State s0, State s1, Val i0, Val i1)
+		{
+			// Second derivative of the current
+			dI = (i1 - i0) / (t1 - t0).sec();
+
+			// Interpolate the time
+			t = Time::sec(-i0 / dI) + t0;
+
+			// Interpolate the state
+			Val f = -i0 / (i1 - i0);
+			s = s0 * (1.0 - f) + s1 * f;
+		}
+	};
+
+	/**
+	 * Vector containing all encountered maxima.
+	 */
+	std::vector<Maximum> maxima;
+
+	/**
+	 * Constructor of the LocalMaximaRecorder class. Resets the state of the
+	 * Recorder to its initial state.
+	 */
+	LocalMaximumRecorder() { reset(); }
+
+	/**
+	 * Resets the state of the recorder to its initial state. Clears all
+	 * recorded maxima and resets all internal variables.
+	 */
+	void reset()
+	{
+		maxima.clear();
+		lastState = State();
+		lastCurrent = 0.0;
+		validLast = false;
+	}
+
+	/**
+	 * Returns true if a last state is available.
+	 */
+	bool hasLastState() { return validLast; }
+
+	/**
+	 * Returns the last state and time. Result is only valid if
+	 * "hasLastState" returns true.
+	 */
+	std::pair<Time, State> getLastState()
+	{
+		return std::make_pair(lastTime, lastState);
+	}
+
+	/**
+	 * Called by the integrator once every timestep.
+	 *
+	 * @param t is the current time.
+	 * @param s is the current state of the neuron.
+	 * @param as is the current auxiliary state vector, containing all currents.
+	 * @param special is set to true if the the record function was called to
+	 * record a "special" event, such as an incomming or outgoing spike. We
+	 * ignore such special events as they would lead to false-positive maxima.
+	 */
+	void record(Time t, const State &s, const AuxiliaryState &as, bool special)
+	{
+		// Skip "special" events. Reset "validLastState".
+		if (special) {
+			validLast = false;
+			return;
+		}
+
+		// Calculate the currently flowing current
+		Val current = as.dvL() + as.dvE() + as.dvI() + as.dvTh() + s.dvW();
+
+		// Check for a local maximum -- we need a zero crossing from the
+		// negative side (negative currents charge the neuron)
+		if (validLast && t > lastTime && lastCurrent <= 0.0 && current > 0.0) {
+			maxima.emplace_back(lastTime, t, lastState, s, lastCurrent,
+			                    current);
+		}
+
+		// Store the current values as "last" values
+		lastState = s;
+		lastCurrent = current;
+		lastTime = t;
+		validLast = true;
+	}
+};
+
+template <typename... Recorders>
+class MultiRecorder : public NullRecorder {
+};
+
+/**
+ * Class used to cascade a number of Recorders. Use the makeMultiRecorder()
+ * method to conveniently construct a Recorder consisting of multiple recorders.
+ */
+template <typename Recorder, typename... Recorders>
+class MultiRecorder<Recorder, Recorders...> : MultiRecorder<Recorders...> {
+private:
+	Recorder &recorder;
+
+public:
+	MultiRecorder(Recorder &recorder, Recorders &... rs)
+	    : MultiRecorder<Recorders...>(rs...), recorder(recorder)
+	{
+	}
+
+	void record(Time t, const State &s, const AuxiliaryState &as, bool special)
+	{
+		recorder.record(t, s, as, special);
+		MultiRecorder<Recorders...>::record(t, s, as, special);
+	}
+
+	void inputSpike(Time t, const State &s)
+	{
+		recorder.inputSpike(t, s);
+		MultiRecorder<Recorders...>::inputSpike(t, s);
+	}
+
+	void outputSpike(Time t, const State &s)
+	{
+		recorder.outputSpike(t, s);
+		MultiRecorder<Recorders...>::outputSpike(t, s);
+	}
+
+	void reset()
+	{
+		recorder.reset();
+		MultiRecorder<Recorders...>::reset();
+	}
+};
+
+/**
+ * Helper function which can be used to conveniently create a MultiRecorder
+ * instance. Simply pass references to all recorders that should be used to the
+ * method and store the result in an auto variable.
+ */
+template <typename... Recorders>
+MultiRecorder<Recorders...> makeMultiRecorder(Recorders &... rs)
+{
+	return MultiRecorder<Recorders...>(rs...);
+}
 }
 
 #endif /* _ADEXPSIM_RECORDER_HPP_ */

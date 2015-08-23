@@ -31,7 +31,8 @@ void NeuronSimulation::run(std::shared_ptr<ParameterCollection> sharedParams)
 
 	// Reset all output
 	mValid = false;
-	recorder.reset();
+	vectorRecorder.reset();
+	maximumRecorder.reset();
 	outputSpikes.clear();
 	outputGroups.clear();
 
@@ -45,21 +46,25 @@ void NeuronSimulation::run(std::shared_ptr<ParameterCollection> sharedParams)
 	// output spikes is superceeded.
 	auto controller = createMaxOutputSpikeCountController(
 	    [this]() -> size_t {
-		    return recorder.getData().outputSpikeTimes.size();
+		    return vectorRecorder.getData().outputSpikeTimes.size();
 		},
-	    getTrain().getExpectedOutputSpikeCount() * 5);
+	    getTrain().getExpectedOutputSpikeCount() * 20);
 
 	// Use a DormandPrinceIntegrator with default parameters
-	DormandPrinceIntegrator integrator;
+	DormandPrinceIntegrator integrator(0.1e-3);
+//	RungeKuttaIntegrator integrator;
+//	const Time deltaT = Time(-1);
+	const Time deltaT = 0.1e-3_s;
 
 	// Run the actual simulation until the end of the time
+	auto multiRecorder = makeMultiRecorder(vectorRecorder, maximumRecorder);
 	if (params.model == ModelType::IF_COND_EXP) {
-		Model::simulate<Model::IF_COND_EXP>(getTrain().getSpikes(), recorder,
+		Model::simulate<Model::IF_COND_EXP>(getTrain().getSpikes(), multiRecorder,
 		                                    controller, integrator, wp,
-		                                    Time(-1), getTrain().getMaxT());
+		                                    deltaT, getTrain().getMaxT());
 	} else {
-		Model::simulate<Model::FAST_EXP>(getTrain().getSpikes(), recorder,
-		                                 controller, integrator, wp, Time(-1),
+		Model::simulate<Model::FAST_EXP>(getTrain().getSpikes(), multiRecorder,
+		                                 controller, integrator, wp, deltaT,
 		                                 getTrain().getMaxT());
 	}
 
