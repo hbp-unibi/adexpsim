@@ -354,7 +354,7 @@ public:
 			recorder.record(t, s, as, false);
 
 			// Ask the controller whether it is time to abort
-			const ControllerResult cres = controller.control(t, s, as, p);
+			const ControllerResult cres = controller.control(t, s, as, p, inRefrac);
 			if (cres == ControllerResult::ABORT ||
 			    (cres == ControllerResult::MAY_CONTINUE &&
 			     spikeIdx >= nSpikes)) {

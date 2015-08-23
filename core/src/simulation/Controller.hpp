@@ -45,7 +45,7 @@ enum class ControllerResult { CONTINUE, MAY_CONTINUE, ABORT };
 class NullController {
 public:
 	static ControllerResult control(Time, const State &, const AuxiliaryState &,
-	                                const WorkingParameters &)
+	                                const WorkingParameters &, bool)
 	{
 		return ControllerResult::CONTINUE;
 	}
@@ -79,9 +79,10 @@ public:
 	 */
 	static ControllerResult control(Time, const State &s,
 	                                const AuxiliaryState &,
-	                                const WorkingParameters &)
+	                                const WorkingParameters &, bool inRefrac)
 	{
-		return (fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE)
+		return (fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE ||
+		        inRefrac)
 		           ? ControllerResult::CONTINUE
 		           : ControllerResult::MAY_CONTINUE;
 	}
@@ -147,7 +148,7 @@ public:
 	 * @return true if the neuron should continue, false otherwise.
 	 */
 	ControllerResult control(Time t, const State &s, const AuxiliaryState &aux,
-	                         const WorkingParameters &p)
+	                         const WorkingParameters &p, bool inRefrac)
 	{
 		// Track the maximum voltage
 		if (s.v() > vMax) {
@@ -165,7 +166,7 @@ public:
 
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
-		return (s.lE() > MIN_RATE ||
+		return (s.lE() > MIN_RATE || inRefrac ||
 		        (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV))
 		           ? ControllerResult::CONTINUE
 		           : ControllerResult::MAY_CONTINUE;
@@ -189,7 +190,7 @@ public:
 	}
 
 	ControllerResult control(Time, const State &, const AuxiliaryState &,
-	                         const WorkingParameters &) const
+	                         const WorkingParameters &, bool) const
 	{
 		return tripped() ? ControllerResult::ABORT : ControllerResult::CONTINUE;
 	}
