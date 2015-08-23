@@ -28,6 +28,7 @@
 #ifndef _ADEXPSIM_SPIKE_HPP_
 #define _ADEXPSIM_SPIKE_HPP_
 
+#include <cmath>
 #include <cstdint>
 #include <vector>
 
@@ -58,6 +59,118 @@ struct Spike {
 	{
 		return s1.t < s2.t;
 	}
+};
+
+/**
+ * Class used to build a "SpecialSpike". Special spikes are used to inject
+ * additional timed information into a neuron simulation. Instances of
+ * SpecialSpike can be converted back and from the Spike class without any
+ * loss of information. The spike type is hidden in the weight parameter.
+ * Processing of special spikes must be enabled in Model::simulate() using
+ * the corresponding template parameter.
+ */
+class SpecialSpike : public Spike {
+public:
+	/**
+	 * Enum containing possible kinds of special spikes.
+	 */
+	enum class Kind : uint8_t {
+		/**
+	     * Tells the neuron simulation to generate an output spike. Triggers
+	     * the usual reset mechanism, including refractory period.
+	     */
+		FORCE_OUTPUT_SPIKE
+	};
+
+private:
+	union Single {
+		float f;
+		uint32_t i;
+
+		constexpr Single(float f) : f(f) {}
+		constexpr Single(uint32_t i) : i(i) {}
+	};
+
+	static constexpr uint32_t NaN32 = 0x7FC00000;
+	static constexpr uint64_t NaN64 = 0x7FF8000000000000L;
+
+	union Double {
+		double f;
+		uint64_t i;
+
+		constexpr Double(double f) : f(f) {}
+		constexpr Double(uint64_t i) : i(i) {}
+	};
+
+	static constexpr float
+	encodeKind(float, Kind kind)
+	{
+		return Single(uint32_t(NaN32 | uint8_t(kind))).f;
+	}
+
+	static constexpr double encodeKind(double, Kind kind)
+	{
+		return Double(uint64_t(NaN64 | uint8_t(kind))).f;
+	}
+
+	static constexpr bool isSpecial(float f) {
+		return (Single(f).i & NaN32) == NaN32;
+	}
+
+	static constexpr bool isSpecial(double f) {
+		return (Double(f).i & NaN64) == NaN64;
+	}
+
+	static constexpr Kind decodeKind(float f)
+	{
+		return static_cast<Kind>(Single(f).i & 0xFF);
+	}
+
+	static constexpr Kind decodeKind(double f)
+	{
+		return static_cast<Kind>(Double(f).i & 0xFF);
+	}
+
+public:
+	/**
+	 * Creates a new "SpecialSpike".
+	 *
+	 * @param t time at which the SpecialSpike instance should be processed by
+	 * the neuron.
+	 * @param kind is the kind of SpecialSpike the new instance should
+	 * represent.
+	 */
+	constexpr SpecialSpike(Time t, Kind kind)
+	    : Spike(t, encodeKind(Val(), kind)) {};
+
+	/**
+	 * Returns true if the spike encodes special information. The information
+	 * can be accessed via the "kind" method.
+	 */
+	static constexpr bool isSpecial(const Spike &spike)
+	{
+		return isSpecial(spike.w);
+	}
+
+	/**
+	 * Returns the kind of the spike. The result is only valid if isSpecial()
+	 * returns true.
+	 */
+	static constexpr Kind kind(const Spike &spike)
+	{
+		return decodeKind(spike.w);
+	}
+
+	/**
+	 * Returns true if the Spike encodes any special information.
+	 */
+	bool isSpecial() const { return isSpecial(*this); }
+
+	/**
+	 * Returns the kind of the special spike. Only valid if isSpecial() returns
+	 * true.
+	 */
+	Kind kind() const { return kind(*this); }
 };
 
 /**

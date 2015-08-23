@@ -105,6 +105,12 @@ public:
 	 */
 	static constexpr uint8_t IF_COND_EXP = (1 << 5);
 
+	/**
+	 * Enables processing of "Special" input spikes as created using the
+	 * SpecialSpike class.
+	 */
+	static constexpr uint8_t PROCESS_SPECIAL = (1 << 6);
+
 private:
 	/**
 	 * Calculates the current auxiliary state. This function is the bottleneck
@@ -180,7 +186,8 @@ public:
 	 * customizing the differential equation integrator, the data recorder and
 	 * the controller.
 	 *
-	 * @param spikes is a vector containing the input spikes.
+	 * @param spikes is a vector containing the input spikes. Spikes have to be
+	 * sorted by input time, with the earliest spikes first.
 	 * @param recorder is an object to which the current simulation state and
 	 * output spikes are passed. Use an instance of the NullRecorder class
 	 * to disable recording.
@@ -246,27 +253,43 @@ public:
 			Time nextSpikeTime =
 			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : tEnd;
 
+			// Flag set if an output spike is forced in this iteration
+			bool forceOutputSpike = false;
+
 			// Handle incomming spikes
 			if (nextSpikeTime <= t) {
 				// Record the old values
 				recorder.record(t, s, aux<Flags>(s, p), true);
 
-				// Add the spike weight to either the excitatory or the
-				// inhibitory channel
-				const Val w = spikes[spikeIdx].w * p.w();
-				if (w > 0) {
-					s.lE() += w;
+				// Fetch the spike from the list
+				const Spike &spike = spikes[spikeIdx++];
+
+				// Handle special spikes (if processing of special input spikes
+				// is enabled)
+				if ((Flags & PROCESS_SPECIAL) &&
+				    SpecialSpike::isSpecial(spike)) {
+					switch (SpecialSpike::kind(spike)) {
+						case SpecialSpike::Kind::FORCE_OUTPUT_SPIKE:
+							forceOutputSpike = true;
+							break;
+						default:
+							continue;
+					}
 				} else {
-					s.lI() -= w;
+					// Add the spike weight to either the excitatory or the
+					// inhibitory channel
+					const Val w = spike.w * p.w();
+					if (w > 0) {
+						s.lE() += w;
+					} else {
+						s.lI() -= w;
+					}
+
+					// Record the new values
+					recorder.inputSpike(t, s);
+					recorder.record(t, s, aux<Flags>(s, p), true);
+					continue;
 				}
-
-				// Record the new values
-				recorder.inputSpike(t, s);
-				recorder.record(t, s, aux<Flags>(s, p), true);
-
-				// Advance the spike index and try again
-				spikeIdx++;
-				continue;
 			}
 
 			// Fetch the currently allowed maximum tDelta -- we'll limit this to
@@ -275,31 +298,36 @@ public:
 			// passed.
 			const bool inRefrac =
 			    (!(Flags & DISABLE_REFRACTORY)) && t - tLastSpike < tRefrac;
-			Time tDeltaMax = nextSpikeTime - t;
-			if (!(Flags & DISABLE_REFRACTORY) && inRefrac) {
-				const Time tRefLeft = tLastSpike + tRefrac - t;
-				if (tRefLeft < tDeltaMax) {
-					tDeltaMax = tRefLeft;
+			if (!(Flags & PROCESS_SPECIAL) || !forceOutputSpike) {
+				Time tDeltaMax = nextSpikeTime - t;
+				if (!(Flags & DISABLE_REFRACTORY) && inRefrac) {
+					const Time tRefLeft = tLastSpike + tRefrac - t;
+					if (tRefLeft < tDeltaMax) {
+						tDeltaMax = tRefLeft;
+					}
 				}
+
+				// Perform the actual integration
+				std::pair<State, Time> res =
+				    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax,
+				                         s, [&p, inRefrac](const State &s) {
+					    return df<Flags>(s, aux<Flags>(s, p), p, inRefrac);
+					});
+
+				// Copy the result and advance the time by the performed
+				// timestep
+				s = res.first;
+				t += res.second;
 			}
-
-			// Perform the actual integration
-			std::pair<State, Time> res =
-			    integrator.integrate(std::min(tDelta, tDeltaMax), tDeltaMax, s,
-			                         [&p, inRefrac](const State &s) {
-				    return df<Flags>(s, aux<Flags>(s, p), p, inRefrac);
-				});
-
-			// Copy the result and advance the time by the performed timestep
-			s = res.first;
-			t += res.second;
 
 			// Calculate the auxiliary state for the recorder
 			AuxiliaryState as = aux<Flags>(s, p);
 
 			// Reset the neuron if the spike potential is reached
-			if (!(Flags & DISABLE_SPIKING)) {
-				if (s.v() > ((Flags & IF_COND_EXP) ? p.eTh() : p.eSpike())) {
+			if (!(Flags & DISABLE_SPIKING) ||
+			    ((Flags & PROCESS_SPECIAL) && forceOutputSpike)) {
+				if (s.v() > ((Flags & IF_COND_EXP) ? p.eTh() : p.eSpike()) ||
+				    ((Flags & PROCESS_SPECIAL) && forceOutputSpike)) {
 					// Record the spike event
 					s.v() = p.eSpike();
 					as = aux<Flags>(s, p);
