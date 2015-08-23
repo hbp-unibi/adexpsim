@@ -38,17 +38,21 @@
 namespace AdExpSim {
 
 /**
- * Structure representing a single spike.
+ * Structure representing a single input spike.
  */
 struct Spike {
+	/**
+	 * Time at which the spike is received by the neuron.
+	 */
 	Time t;
+
+	/**
+	 * Weight of the spike -- can be understood as the weight of the synaptic
+	 * connection the spike came from.
+	 */
 	Val w;
 
-	Spike() : t(0), w(0.0) {}
-
-	Spike(Time t, Val w) : t(t), w(w) {}
-
-	Spike(Time t) : t(t) {}
+	constexpr Spike(Time t = Time(0), Val w = 0.0) : t(t), w(w) {}
 
 	friend bool operator<(const Spike &s1, const Spike &s2)
 	{
@@ -173,7 +177,7 @@ struct SingleGroupMultiOutSpikeData : public SingleGroupSpikeData {
 	 * Constructor, sets each member to the given value.
 	 */
 	SingleGroupMultiOutSpikeData(Val n, Val nM1, Val nOut, Time deltaT = 1e-3_s,
-	                     Time T = 33e-3_s)
+	                             Time T = 33e-3_s)
 	    : SingleGroupSpikeData(n, nM1, deltaT, T), nOut(nOut)
 	{
 	}
@@ -362,6 +366,12 @@ private:
 	bool sorted;
 
 	/**
+	 * Set to true if equal spacing should be used, just as in the SingleGroup
+	 * simulation.
+	 */
+	bool equidistant;
+
+	/**
 	 * Time between the occurance of two spike train groups.
 	 */
 	Time T;
@@ -391,9 +401,12 @@ public:
 	 * @param T is the time between two spike train groups.
 	 * @param sigmaT is the standard deviation that should be added to the inter
 	 * spike train group delay T.
+	 * @param equidistant if true, creates equidistant input spikes just as in
+	 * the SingleGroup simulation.
 	 */
 	SpikeTrain(const std::vector<Descriptor> &descrs, size_t n = 0,
-	           bool sorted = true, Time T = 0.0334_s, Val sigmaT = 0.0);
+	           bool sorted = true, Time T = 0.0334_s, Val sigmaT = 0.0,
+	           bool equidistant = false);
 
 	/**
 	 * Builds a new spike train using the parameters given in the constructor.
@@ -414,6 +427,11 @@ public:
 	 * Returns whether the spike train was sorted.
 	 */
 	bool isSorted() const { return sorted; }
+
+	/**
+	 * Returns whether the input spikes are drawn equidistant.
+	 */
+	bool isEquidistant() const { return equidistant; }
 
 	/**
 	 * Returns the time between the occurance of two spike train groups.
@@ -439,9 +457,14 @@ public:
 	void setN(size_t n) { this->n = n; }
 
 	/**
-	 * Returns whether the spike train was sorted.
+	 * Sets the "sorted" flag.
 	 */
 	void setSorted(bool sorted) { this->sorted = sorted; }
+
+	/**
+	 * Sets the "equidistant" flag.
+	 */
+	void setEquidistant(bool equidistant) { this->equidistant = equidistant; }
 
 	/**
 	 * Returns the time between the occurance of two spike train groups.

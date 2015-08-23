@@ -29,7 +29,7 @@ namespace AdExpSim {
 SpikeVec extractSpikesFrom(const SpikeVec &spikes, Time t)
 {
 	SpikeVec res;
-	for (const Spike &spike: spikes) {
+	for (const Spike &spike : spikes) {
 		if (spike.t > t) {
 			res.emplace_back(spike.t - t, spike.w);
 		}
@@ -52,8 +52,13 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 }
 
 SpikeTrain::SpikeTrain(const std::vector<Descriptor> &descrs, size_t n,
-                       bool sorted, Time T, Val sigmaT)
-    : descrs(descrs), n(n), sorted(sorted), T(T), sigmaT(sigmaT)
+                       bool sorted, Time T, Val sigmaT, bool equidistant)
+    : descrs(descrs),
+      n(n),
+      sorted(sorted),
+      equidistant(equidistant),
+      T(T),
+      sigmaT(sigmaT)
 {
 	rebuild();
 }
@@ -85,6 +90,21 @@ void SpikeTrain::rebuild(bool randomSeed)
 	// Distribution used to fetch the descriptors
 	std::uniform_int_distribution<> distDescr(0, nDescrs - 1);
 
+	// Calculate the avarage number of excitatory and inhibitory spikes and a
+	// corresponding deltaT for equidistant spacing
+	Val avgSigmaT = 0, dtE, dtI;
+	size_t tNE = 0, tNI = 0, nNE = 0, nNI = 0;
+	for (const Descriptor &descr: descrs) {
+		tNE += descr.nE;
+		tNI += descr.nI;
+		nNE += (descr.nE > 0) ? 1 : 0;
+		nNI += (descr.nI > 0) ? 1 : 0;
+		avgSigmaT += descr.sigmaT;
+	}
+	avgSigmaT /= Val(nDescrs);
+	dtE = nNE > 0 ? 2.0 * avgSigmaT * Val(nNE) / Val(tNE) : 0;
+	dtI = nNI > 0 ? 2.0 * avgSigmaT * Val(nNI) / Val(tNI) : 0;
+
 	// Iterate over all spike trains that should be generated
 	Time t;
 	Time minT = MAX_TIME;
@@ -99,12 +119,12 @@ void SpikeTrain::rebuild(bool randomSeed)
 		std::normal_distribution<> distT(t.sec(), descr.sigmaT);
 		std::normal_distribution<> distW(0, descr.sigmaW);
 		for (size_t j = 0; j < descr.nE; j++) {
-			spikeGroup.emplace_back(Time::sec(distT(gen)),
-			                        descr.wE + distW(gen));
+			Time st = Time::sec(equidistant ? t.sec() + j * dtE : distT(gen));
+			spikeGroup.emplace_back(st, descr.wE + distW(gen));
 		}
 		for (size_t j = 0; j < descr.nI; j++) {
-			spikeGroup.emplace_back(Time::sec(distT(gen)),
-			                        descr.wI + distW(gen));
+			Time st = Time::sec(equidistant ? t.sec() + j * dtI : distT(gen));
+			spikeGroup.emplace_back(st, descr.wI + distW(gen));
 		}
 		for (const Spike &spike : spikeGroup) {
 			minT = std::min(minT, spike.t);

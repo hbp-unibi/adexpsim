@@ -175,6 +175,7 @@ static Json::Value serializeSpikeTrain(const SpikeTrain &train)
 	res["descrs"] = serializeSpikeTrainDescriptors(train.getDescrs());
 	res["n"] = int(train.getN());
 	res["sorted"] = train.isSorted();
+	res["equidistant"] = train.isEquidistant();
 	res["T"] = train.getT().sec();
 	res["sigmaT"] = train.getSigmaT();
 	return res;
@@ -191,7 +192,8 @@ static SpikeTrain deserializeSpikeTrain(
 	    value.get("n", int(defaultValues.getN())).asUInt(),
 	    value.get("sorted", defaultValues.isSorted()).asBool(),
 	    Time::sec(value.get("T", defaultValues.getT().sec()).asDouble()),
-	    value.get("sigmaT", defaultValues.getSigmaT()).asDouble());
+	    value.get("sigmaT", defaultValues.getSigmaT()).asDouble(),
+	    value.get("equidistant", defaultValues.isEquidistant()).asBool());
 }
 
 static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)

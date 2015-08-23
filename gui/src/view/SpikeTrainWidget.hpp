@@ -65,6 +65,7 @@ private:
 	QTimer *updateTimer;
 	QTableWidget *tableWidget;
 	ParameterWidget *paramSorted;
+	ParameterWidget *paramEquidistant;
 	ParameterWidget *paramN;
 	ParameterWidget *paramT;
 	ParameterWidget *paramSigmaT;

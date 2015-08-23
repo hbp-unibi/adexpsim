@@ -83,6 +83,10 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	paramSorted = new ParameterWidget(this, "sorted", 1, 0, 1, "", "sorted");
 	paramSorted->setIntOnly(true);
 	paramSorted->setMinMaxEnabled(false);
+	paramEquidistant =
+	    new ParameterWidget(this, "equi", 1, 0, 1, "", "equidistant");
+	paramEquidistant->setIntOnly(true);
+	paramEquidistant->setMinMaxEnabled(false);
 	paramN = new ParameterWidget(this, "N", 2, 1, 1000, "", "N");
 	paramN->setIntOnly(true);
 	paramN->setMinMaxEnabled(false);
@@ -93,6 +97,8 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	paramSigmaT->setMinMaxEnabled(false);
 
 	connect(paramSorted, SIGNAL(update(Val, const QVariant &)),
+	        SLOT(handleParameterUpdate(Val, const QVariant &)));
+	connect(paramEquidistant, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramN, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
@@ -105,6 +111,7 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	layout->addWidget(toolbar);
 	layout->addWidget(tableWidget);
 	layout->addWidget(paramSorted);
+	layout->addWidget(paramEquidistant);
 	layout->addWidget(paramN);
 	layout->addWidget(paramT);
 	layout->addWidget(paramSigmaT);
@@ -182,6 +189,8 @@ void SpikeTrainWidget::handleParameterUpdate(Val value, const QVariant &data)
 	QString s = data.toString();
 	if (s == "sorted") {
 		params->train.setSorted(value != 0.0);
+	} else if (s == "equidistant") {
+		params->train.setEquidistant(value != 0.0);
 	} else if (s == "N") {
 		params->train.setN(size_t(value));
 	} else if (s == "T") {
@@ -236,6 +245,7 @@ void SpikeTrainWidget::refresh()
 
 	// Update the parameter sliders
 	paramSorted->setValue(params->train.isSorted());
+	paramEquidistant->setValue(params->train.isEquidistant());
 	paramN->setValue(params->train.getN());
 	paramT->setValue(params->train.getT().sec() * 1000.0);
 	paramSigmaT->setValue(params->train.getSigmaT() * 1000.0);
