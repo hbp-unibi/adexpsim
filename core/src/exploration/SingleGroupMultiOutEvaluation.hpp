@@ -53,29 +53,14 @@ public:
 	 */
 	struct SpikeCountResult {
 		size_t spikeCount;
-		Val fracSpikeCount;
-		Val vMax0;
-		Val vMax1;
+		Val eDelta;
+		Val eDeltaNorm;
 
-		SpikeCountResult(size_t spikeCount)
-		    : spikeCount(spikeCount),
-		      fracSpikeCount(0.0),
-		      vMax0(0.0),
-		      vMax1(0.0)
+		SpikeCountResult(size_t spikeCount, Val eDelta, Val eDeltaNorm)
+		    : spikeCount(spikeCount), eDelta(eDelta), eDeltaNorm(eDeltaNorm)
 		{
 		}
-
-		Val totalSpikeCount() { return spikeCount + fracSpikeCount; }
 	};
-
-	/**
-	 * Calculates the maximum potential for the given parameters starting from
-	 * the specified state with disabled spiking.
-	 */
-	Val maximumPotential(const SpikeVec &spikes,
-	                     const WorkingParameters &params,
-	                     const State &state = State(), const Time t0 = Time(0),
-	                     const Time lastSpikeTime = Time(-1)) const;
 
 	/**
 	 * Calculates the fractional number of output spikes for the given
