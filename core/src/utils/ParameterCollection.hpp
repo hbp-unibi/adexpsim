@@ -80,7 +80,7 @@ struct ParameterCollection {
 	/**
 	 * Holds the setup used in the SingleGroupSpikeData evaluation.
 	 */
-	SingleGroupSpikeData singleGroup;
+	SingleGroupMultiOutSpikeData singleGroup;
 
 	/**
 	 * Holds the current SpikeTrain setup. The SpikeTrain defines the input

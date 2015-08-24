@@ -31,6 +31,7 @@
 
 #include "Exploration.hpp"
 #include "SingleGroupEvaluation.hpp"
+#include "SingleGroupMultiOutEvaluation.hpp"
 #include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
@@ -74,9 +75,9 @@ bool Exploration::run(const Evaluation &evaluation,
 
 			// Do nothing if the given parameters are invalid
 			EvaluationResult result;
-			if (params.valid()) {
+			if (p.valid()) {
 				// Update the parameters
-				params.update();
+				p.update();
 
 				// Run the evaluation for these parameters
 				result = evaluation.evaluate(p);
@@ -159,5 +160,8 @@ template bool Exploration::run<SpikeTrainEvaluation>(
     const SpikeTrainEvaluation &evaluation, const ProgressCallback &progress);
 template bool Exploration::run<SingleGroupEvaluation>(
     const SingleGroupEvaluation &evaluation, const ProgressCallback &progress);
+template bool Exploration::run<SingleGroupMultiOutEvaluation>(
+    const SingleGroupMultiOutEvaluation &evaluation,
+    const ProgressCallback &progress);
 }
 

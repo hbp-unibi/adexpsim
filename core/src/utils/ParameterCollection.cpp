@@ -24,7 +24,7 @@ const std::vector<std::string> ParameterCollection::modelNames = {
     "IfCondExp", "AdIfCondExp"};
 
 const std::vector<std::string> ParameterCollection::evaluationNames = {
-    "Train", "Single"};
+    "Train", "SgSo", "SgMo"};
 
 ParameterCollection::ParameterCollection()
     : model(ModelType::IF_COND_EXP),

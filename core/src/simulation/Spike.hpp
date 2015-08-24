@@ -675,13 +675,13 @@ public:
 	 * Constructs a new SingleGroupSpikeData instance according to the
 	 * parameters found in the SpikeTrain.
 	 */
-	SingleGroupSpikeData toSingleGroupSpikeData() const;
+	SingleGroupMultiOutSpikeData toSingleGroupSpikeData() const;
 
 	/**
 	 * Adapts this instance to the parameters found in the SingleGroupSpikeData
 	 * instance.
 	 */
-	void fromSingleGroupSpikeData(const SingleGroupSpikeData &data);
+	void fromSingleGroupSpikeData(const SingleGroupMultiOutSpikeData &data);
 };
 }
 

@@ -26,6 +26,7 @@
 #include "Optimization.hpp"
 #include "Simplex.hpp"
 #include "SingleGroupEvaluation.hpp"
+#include "SingleGroupMultiOutEvaluation.hpp"
 #include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
@@ -417,5 +418,9 @@ template std::vector<OptimizationResult> Optimization::optimize<
     SingleGroupEvaluation>(const std::vector<WorkingParameters> &params,
                            const SingleGroupEvaluation &eval,
                            ProgressCallback callback) const;
+template std::vector<OptimizationResult> Optimization::optimize<
+    SingleGroupMultiOutEvaluation>(const std::vector<WorkingParameters> &params,
+                                   const SingleGroupMultiOutEvaluation &eval,
+                                   ProgressCallback callback) const;
 }
 

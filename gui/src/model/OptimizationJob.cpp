@@ -19,6 +19,7 @@
 #include <QThreadPool>
 
 #include <exploration/SingleGroupEvaluation.hpp>
+#include <exploration/SingleGroupMultiOutEvaluation.hpp>
 #include <exploration/SpikeTrainEvaluation.hpp>
 #include <utils/ParameterCollection.hpp>
 #include <simulation/HardwareParameters.hpp>
@@ -80,17 +81,26 @@ void OptimizationJobRunner::run()
 
 	// Optimize either using the SPIKE_TRAIN or the SINGLE_GROUP evaluation
 	std::vector<OptimizationResult> res;
-	if (params->evaluation == EvaluationType::SPIKE_TRAIN) {
-		res = optimization.optimize(
-		    input, SpikeTrainEvaluation(
-		               params->train, params->model == ModelType::IF_COND_EXP),
-		    progressCallback);
-	} else if (params->evaluation == EvaluationType::SINGLE_GROUP) {
-		res = optimization.optimize(
-		    input,
-		    SingleGroupEvaluation(params->singleGroup,
-		                          params->model == ModelType::IF_COND_EXP),
-		    progressCallback);
+	switch (params->evaluation) {
+		case EvaluationType::SPIKE_TRAIN:
+			res = optimization.optimize(
+			    input,
+			    SpikeTrainEvaluation(params->train,
+			                         params->model == ModelType::IF_COND_EXP),
+			    progressCallback);
+			break;
+		case EvaluationType::SINGLE_GROUP:
+			res = optimization.optimize(
+			    input,
+			    SingleGroupEvaluation(params->singleGroup,
+			                          params->model == ModelType::IF_COND_EXP),
+			    progressCallback);
+		case EvaluationType::SINGLE_GROUP_MULTI_OUT:
+			res = optimization.optimize(
+			    input, SingleGroupMultiOutEvaluation(
+			               params->singleGroup,
+			               params->model == ModelType::IF_COND_EXP),
+			    progressCallback);
 	}
 
 	// Emit the done event

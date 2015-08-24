@@ -24,6 +24,7 @@
 #include <exploration/Exploration.hpp>
 #include <exploration/SpikeTrainEvaluation.hpp>
 #include <exploration/SingleGroupEvaluation.hpp>
+#include <exploration/SingleGroupMultiOutEvaluation.hpp>
 #include <utils/ParameterCollection.hpp>
 
 #include "IncrementalExploration.hpp"
@@ -53,16 +54,26 @@ void IncrementalExplorationRunner::run()
 		emit progress(p);
 		return !aborted.load();
 	};
-	if (params->evaluation == EvaluationType::SPIKE_TRAIN) {
-		ok = exploration.run(
-		    SpikeTrainEvaluation(params->train,
-		                         params->model == ModelType::IF_COND_EXP),
-		    progressCallback);
-	} else if (params->evaluation == EvaluationType::SINGLE_GROUP) {
-		ok = exploration.run(
-		    SingleGroupEvaluation(params->singleGroup,
-		                          params->model == ModelType::IF_COND_EXP),
-		    progressCallback);
+
+	switch (params->evaluation) {
+		case EvaluationType::SPIKE_TRAIN:
+			ok = exploration.run(
+			    SpikeTrainEvaluation(params->train,
+			                         params->model == ModelType::IF_COND_EXP),
+			    progressCallback);
+			break;
+		case EvaluationType::SINGLE_GROUP:
+			ok = exploration.run(
+			    SingleGroupEvaluation(params->singleGroup,
+			                          params->model == ModelType::IF_COND_EXP),
+			    progressCallback);
+			break;
+		case EvaluationType::SINGLE_GROUP_MULTI_OUT:
+			ok = exploration.run(SingleGroupMultiOutEvaluation(
+			                         params->singleGroup,
+			                         params->model == ModelType::IF_COND_EXP),
+			                     progressCallback);
+			break;
 	}
 
 	// Emit the done event
@@ -74,7 +85,7 @@ void IncrementalExplorationRunner::abort() { aborted.store(true); }
 /*
  * Class IncrementalExploration
  */
- 
+
 constexpr int IncrementalExploration::MIN_LEVEL;
 constexpr int IncrementalExploration::MAX_LEVEL;
 constexpr int IncrementalExploration::MAX_LEVEL_INITIAL;

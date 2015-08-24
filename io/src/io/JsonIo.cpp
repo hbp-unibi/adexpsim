@@ -196,23 +196,27 @@ static SpikeTrain deserializeSpikeTrain(
 	    value.get("equidistant", defaultValues.isEquidistant()).asBool());
 }
 
-static Json::Value serializeSingleGroup(const SingleGroupSpikeData &singleGroup)
+static Json::Value serializeSingleGroup(
+    const SingleGroupMultiOutSpikeData &singleGroup)
 {
 	Json::Value res;
 	res["n"] = singleGroup.n;
 	res["nM1"] = singleGroup.nM1;
+	res["nOut"] = singleGroup.nOut;
 	res["deltaT"] = singleGroup.deltaT.sec();
 	res["T"] = singleGroup.T.sec();
 	return res;
 }
 
-static SingleGroupSpikeData deserializeSingleGroup(
+static SingleGroupMultiOutSpikeData deserializeSingleGroup(
     const Json::Value &value,
-    const SingleGroupSpikeData &defaultValues = SingleGroupSpikeData())
+    const SingleGroupMultiOutSpikeData &defaultValues =
+        SingleGroupMultiOutSpikeData())
 {
-	return SingleGroupSpikeData(
+	return SingleGroupMultiOutSpikeData(
 	    value.get("n", defaultValues.n).asDouble(),
 	    value.get("nM1", defaultValues.nM1).asDouble(),
+	    value.get("nOut", defaultValues.nOut).asDouble(),
 	    Time::sec(value.get("deltaT", defaultValues.deltaT.sec()).asDouble()),
 	    Time::sec(value.get("T", defaultValues.T.sec()).asDouble()));
 }

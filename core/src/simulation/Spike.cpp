@@ -172,7 +172,7 @@ size_t SpikeTrain::getExpectedOutputSpikeCount() const
 	return res;
 }
 
-SingleGroupSpikeData SpikeTrain::toSingleGroupSpikeData() const
+SingleGroupMultiOutSpikeData SpikeTrain::toSingleGroupSpikeData() const
 {
 	static constexpr uint16_t NInit = std::numeric_limits<uint16_t>::max();
 	static constexpr uint16_t NM1Init = std::numeric_limits<uint16_t>::lowest();
@@ -182,6 +182,7 @@ SingleGroupSpikeData SpikeTrain::toSingleGroupSpikeData() const
 	// threshold)
 	uint16_t n = std::numeric_limits<uint16_t>::max();
 	uint16_t nM1 = std::numeric_limits<uint16_t>::lowest();
+	Val nOut = 1;
 	Val sigmaT = 0;
 	Val sigmaTM1 = 0;
 	for (const auto &descr : descrs) {
@@ -193,6 +194,7 @@ SingleGroupSpikeData SpikeTrain::toSingleGroupSpikeData() const
 		} else if (descr.nOut > 0) {
 			if (descr.nE < n) {
 				n = descr.nE;
+				nOut = descr.nOut;
 				sigmaT = descr.sigmaT;
 			}
 		}
@@ -214,12 +216,12 @@ SingleGroupSpikeData SpikeTrain::toSingleGroupSpikeData() const
 		sigmaTM1 = sigmaT;
 	}
 
-	// Create a new SingleGroupSpikeData instance
-	return SingleGroupSpikeData(
-	    n, nM1, Time::sec(2 * (sigmaT + sigmaTM1) / (n + nM1)), T);
+	// Create a new SingleGroupMultiOutSpikeData instance
+	return SingleGroupMultiOutSpikeData(
+	    n, nM1, nOut, Time::sec(2 * (sigmaT + sigmaTM1) / (n + nM1)), T);
 }
 
-void SpikeTrain::fromSingleGroupSpikeData(const SingleGroupSpikeData &data)
+void SpikeTrain::fromSingleGroupSpikeData(const SingleGroupMultiOutSpikeData &data)
 {
 	// Copy T
 	T = data.T;
@@ -227,7 +229,7 @@ void SpikeTrain::fromSingleGroupSpikeData(const SingleGroupSpikeData &data)
 	// Clear the current descriptor list and create three new descriptors
 	descrs.clear();
 	Val sigmaT = 0.25 * data.deltaT.sec() * (data.n + data.nM1);
-	descrs.emplace_back(data.n, 1, sigmaT);
+	descrs.emplace_back(data.n, data.nOut, sigmaT);
 	descrs.emplace_back(data.nM1, 0, sigmaT);
 
 	// Rebuild

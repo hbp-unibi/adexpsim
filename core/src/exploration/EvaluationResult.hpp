@@ -43,10 +43,16 @@ enum class EvaluationType : int {
 	SPIKE_TRAIN = 0,
 
 	/**
-     * Only uses a single spike gorup for the evaluation and checks it for
+     * Only uses a single spike group for the evaluation and checks it for
      * fulfilling the binary threshold and reset condition.
      */
-	SINGLE_GROUP = 1
+	SINGLE_GROUP = 1,
+
+	/**
+     * Same as SINGLE_GROUP, but allows multiple output spikes. Internally uses
+     * the far more sophisticated FractionalSpikeCount measure.
+     */
+    SINGLE_GROUP_MULTI_OUT = 2
 };
 
 /**
