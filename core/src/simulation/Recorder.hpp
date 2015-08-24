@@ -727,19 +727,25 @@ struct OutputSpikeRecorder : public NullRecorder {
 	 * Resets the recorder to its initial state, clears all stored spikes.
 	 */
 	void reset() { spikes.clear(); }
+
+	/**
+	 * Returns the number of recorded spikes.
+	 */
+	size_t count() const { return spikes.size(); }
 };
 
+class OutputSpikeCountRecorder : public NullRecorder {
+private:
+	size_t mCount;
 
-struct OutputSpikeCountRecorder : public NullRecorder {
-	size_t count;
+public:
+	OutputSpikeCountRecorder() { reset(); }
 
-	OutputSpikeCountRecorder() {
-		reset();
-	}
+	void outputSpike(Time t, const State &s) { mCount++; }
 
-	void outputSpike(Time t, const State &s) { count++; }
+	void reset() { mCount = 0; }
 
-	void reset() { count = 0;}
+	size_t count() const { return mCount; }
 };
 
 /**

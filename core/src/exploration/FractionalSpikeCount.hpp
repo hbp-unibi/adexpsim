@@ -34,11 +34,11 @@
 #include <simulation/Spike.hpp>
 
 namespace AdExpSim {
-
 class FractionalSpikeCount {
 private:
 	bool useIfCondExp;
 	Val eTar;
+	size_t maxSpikeCount;
 
 public:
 	struct Result {
@@ -46,13 +46,17 @@ public:
 		Val eReq;
 		Val eRel;
 
-		Result(size_t spikeCount, Val eReq, Val eRel) : spikeCount(spikeCount), eReq(eReq), eRel(eRel)
+		Result(size_t spikeCount, Val eReq, Val eRel)
+		    : spikeCount(spikeCount), eReq(eReq), eRel(eRel)
 		{
 		}
+
+		Val fracSpikeCount() { return spikeCount + 1.0 - eRel; }
 	};
 
-	FractionalSpikeCount(bool useIfCondExp = false, Val eTar = 0.1e-3)
-	    : useIfCondExp(useIfCondExp), eTar(eTar)
+	FractionalSpikeCount(bool useIfCondExp = false, Val eTar = 0.1e-3,
+	                     size_t maxSpikeCount = 50)
+	    : useIfCondExp(useIfCondExp), eTar(eTar), maxSpikeCount(maxSpikeCount)
 	{
 	}
 

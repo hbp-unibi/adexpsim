@@ -84,9 +84,6 @@ public:
 	      eTar(eTar)
 	{
 	}
-
-	const SpikeVec &getSpikesN() { return sN;}
-	const SpikeVec &getSpikesNM1() { return sNM1;}
 };
 
 /**

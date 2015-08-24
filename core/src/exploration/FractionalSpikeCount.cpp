@@ -32,10 +32,12 @@ namespace AdExpSim {
 
 template <typename Recorder>
 static void run(const SpikeVec &spikes, const WorkingParameters &params,
-                Recorder &recorder, bool useIfCondExp, Val eTar)
+                Recorder &recorder, bool useIfCondExp, Val eTar,
+                size_t maxSpikeCount)
 {
 	const Time tDelta = 0.1e-3_s;
-	DefaultController controller;
+	auto controller = createMaxOutputSpikeCountController<true>(
+	    [&recorder]() { return recorder.count(); }, maxSpikeCount);
 	DormandPrinceIntegrator integrator(eTar);
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP | Model::PROCESS_SPECIAL>(
@@ -48,20 +50,22 @@ static void run(const SpikeVec &spikes, const WorkingParameters &params,
 
 static RecordedSpikeVec runCollectOutputSpikes(const SpikeVec &spikes,
                                                const WorkingParameters &params,
-                                               bool useIfCondExp, Val eTar)
+                                               bool useIfCondExp, Val eTar,
+                                               size_t maxSpikeCount)
 {
 	OutputSpikeRecorder recorder;
-	run(spikes, params, recorder, useIfCondExp, eTar);
+	run(spikes, params, recorder, useIfCondExp, eTar, maxSpikeCount);
 	return recorder.spikes;
 }
 
 static size_t runCollectSpikeCount(const SpikeVec &spikes,
                                    const WorkingParameters &params,
-                                   bool useIfCondExp, Val eTar)
+                                   bool useIfCondExp, Val eTar,
+                                   size_t maxSpikeCount)
 {
 	OutputSpikeCountRecorder recorder;
-	run(spikes, params, recorder, useIfCondExp, eTar);
-	return recorder.count;
+	run(spikes, params, recorder, useIfCondExp, eTar, maxSpikeCount);
+	return recorder.count();
 }
 
 /**
@@ -93,9 +97,13 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
     const SpikeVec &spikes, const WorkingParameters &params)
 {
 	// Perform an initial run with just the given input spikes
-	RecordedSpikeVec outputSpikes =
-	    runCollectOutputSpikes(spikes, params, useIfCondExp, eTar);
+	RecordedSpikeVec outputSpikes = runCollectOutputSpikes(
+	    spikes, params, useIfCondExp, eTar, maxSpikeCount);
 	const size_t spikeCount = outputSpikes.size();
+	const Val eSpikeEff = params.eSpikeEff(useIfCondExp);
+	if (spikeCount == maxSpikeCount) {
+		return Result(spikeCount, eSpikeEff, 1.0);
+	}
 
 	// Add an virtual output spike at -tauRefrac in order to be able to control
 	// the initial membrane potential
@@ -104,7 +112,6 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 	// Iterate over all output spikes. Increase the membrane potential after
 	// each spike until a new output spike is generated. Search the minimum
 	// potential which causes such an increase
-	const Val eSpikeEff = params.eSpikeEff(useIfCondExp);
 	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.eReset(),
 	                                                 params.eSpike());
 	for (const RecordedSpike &spike : outputSpikes) {
@@ -132,8 +139,8 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 
 			// Run the simulation, restrict binary search area according to the
 			// result
-			if (runCollectSpikeCount(inputSpikes, params, useIfCondExp, eTar) >
-			    spikeCount) {
+			if (runCollectSpikeCount(inputSpikes, params, useIfCondExp, eTar,
+			                         maxSpikeCount) > spikeCount) {
 				curVMax = curV;
 			} else {
 				curVMin = curV;

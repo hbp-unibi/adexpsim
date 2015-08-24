@@ -177,7 +177,7 @@ public:
  * Controller class used to limit the number of output spikes to a reasonable
  * count.
  */
-template <typename CountFun>
+template <bool DefaultBehaviour, typename CountFun>
 class MaxOutputSpikeCountController {
 private:
 	CountFun countFun;
@@ -189,10 +189,14 @@ public:
 	{
 	}
 
-	ControllerResult control(Time, const State &, const AuxiliaryState &,
-	                         const WorkingParameters &, bool) const
+	ControllerResult control(Time t, const State &s, const AuxiliaryState &as,
+	                         const WorkingParameters &p, bool inRefrac) const
 	{
-		return tripped() ? ControllerResult::ABORT : ControllerResult::CONTINUE;
+		return tripped()
+		           ? ControllerResult::ABORT
+		           : (DefaultBehaviour
+		                  ? DefaultController::control(t, s, as, p, inRefrac)
+		                  : ControllerResult::CONTINUE);
 	}
 
 	bool tripped() const { return countFun() > maxCount; }
@@ -201,11 +205,12 @@ public:
 /**
  * Constructor method for the MaxOutputSpikeCountController.
  */
-template <typename CountFun>
-static MaxOutputSpikeCountController<CountFun>
+template <bool DefaultBehaviour, typename CountFun>
+static MaxOutputSpikeCountController<DefaultBehaviour, CountFun>
 createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
 {
-	return MaxOutputSpikeCountController<CountFun>(countFun, maxCount);
+	return MaxOutputSpikeCountController<DefaultBehaviour, CountFun>(countFun,
+	                                                                 maxCount);
 }
 }
 

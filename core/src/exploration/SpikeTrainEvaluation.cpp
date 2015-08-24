@@ -204,7 +204,7 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	// collect all spikes
 	const Time T = train.getMaxT();
 	SpikeRecorder recorder(train.getRangeStartSpikes());
-	auto controller = createMaxOutputSpikeCountController(
+	auto controller = createMaxOutputSpikeCountController<false>(
 	    [&recorder]() { return recorder.getOutputSpikes().size(); },
 	    train.getExpectedOutputSpikeCount() * 5);
 	DormandPrinceIntegrator integrator(eTar);

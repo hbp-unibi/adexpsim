@@ -44,7 +44,7 @@ void NeuronSimulation::run(std::shared_ptr<ParameterCollection> sharedParams)
 
 	// Create a new controller -- make sure to abort after a certain count of
 	// output spikes is superceeded.
-	auto controller = createMaxOutputSpikeCountController(
+	auto controller = createMaxOutputSpikeCountController<false>(
 	    [this]() -> size_t {
 		    return vectorRecorder.getData().outputSpikeTimes.size();
 		},

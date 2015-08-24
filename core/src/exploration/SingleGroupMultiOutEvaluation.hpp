@@ -29,15 +29,11 @@
 #define _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_
 
 #include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
-#include <simulation/State.hpp>
-#include <common/Types.hpp>
 
 #include "EvaluationResult.hpp"
 #include "SingleGroupEvaluation.hpp"
 
 namespace AdExpSim {
-
 /**
  * The evaluation class can be used for the evalutation of the behaviour of a
  * single neuron for the given SpikeTrain.
@@ -47,27 +43,6 @@ class SingleGroupMultiOutEvaluation
 public:
 	using SingleGroupEvaluationBase<
 	    SingleGroupMultiOutSpikeData>::SingleGroupEvaluationBase;
-
-	/**
-	 * Structure used internally by the spikeCount method.
-	 */
-	struct SpikeCountResult {
-		size_t spikeCount;
-		Val eDelta;
-		Val eDeltaNorm;
-
-		SpikeCountResult(size_t spikeCount, Val eDelta, Val eDeltaNorm)
-		    : spikeCount(spikeCount), eDelta(eDelta), eDeltaNorm(eDeltaNorm)
-		{
-		}
-	};
-
-	/**
-	 * Calculates the fractional number of output spikes for the given
-	 * parameters.
-	 */
-	SpikeCountResult spikeCount(const SpikeVec &spikes,
-	                            const WorkingParameters &params) const;
 
 	/**
 	 * Evaluates the given parameter set.
