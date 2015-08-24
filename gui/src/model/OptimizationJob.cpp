@@ -38,9 +38,9 @@ OptimizationJobRunner::OptimizationJobRunner(
 {
 	// Select the evaluation dimension
 	const EvaluationResultDimension evalDim =
-	    params->evaluation == EvaluationType::SINGLE_GROUP
-	        ? EvaluationResultDimension::SOFT
-	        : EvaluationResultDimension::BINARY;
+	    params->evaluation == EvaluationType::SPIKE_TRAIN
+	        ? EvaluationResultDimension::BINARY
+	        : EvaluationResultDimension::SOFT;
 
 	// Fetch the to-be-optimized dimensions
 	const std::vector<size_t> dims = params->optimizationDims();
