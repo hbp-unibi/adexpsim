@@ -158,7 +158,7 @@ public:
 	 * represent.
 	 */
 	constexpr SpecialSpike(Time t, Kind kind, uint16_t payload = 0)
-	    : Spike(t, encode(Val(), kind, payload)){};
+	    : Spike(t, encode(kind, payload)){};
 
 	/**
 	 * Returns true if the spike encodes special information. The information
@@ -184,6 +184,25 @@ public:
 	static constexpr uint16_t payload(const Spike &spike)
 	{
 		return decodePayload(spike.w);
+	}
+
+	/**
+	 * Encodes the special spike kind and its payload in a spike weight.
+	 */
+	static constexpr Val encode(Kind kind, uint16_t payload)
+	{
+		return encode(Val(), kind, payload);
+	}
+
+	static uint16_t encodeSpikeVoltage(Val v, Val vMin, Val vMax)
+	{
+		return (std::min(vMax, std::max(vMin, v)) - vMin) *
+		       std::numeric_limits<uint16_t>::max() / (vMax - vMin);
+	}
+
+	static Val decodeSpikeVoltage(uint16_t v, Val vMin, Val vMax)
+	{
+		return vMin + (vMax - vMin) * v / std::numeric_limits<uint16_t>::max();
 	}
 
 	/**

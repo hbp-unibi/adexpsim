@@ -33,6 +33,8 @@
 #include <cmath>
 #include <cstdint>
 
+#include <iostream>  // XXX
+
 #include <common/FastMath.hpp>
 
 #include "Controller.hpp"
@@ -238,9 +240,8 @@ private:
 					break;
 				}
 				case SpecialSpike::Kind::SET_VOLTAGE: {
-					Val f = SpecialSpike::payload(spike) /
-					        Val(std::numeric_limits<uint16_t>::max());
-					s.v() = p.eReset() + (p.eSpike() - p.eReset()) * f;
+					s.v() = SpecialSpike::decodeSpikeVoltage(
+					    SpecialSpike::payload(spike), p.eReset(), p.eSpike());
 					break;
 				}
 			}
