@@ -45,7 +45,7 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 
 	// Convert the fractional spike counts to a value between 0 and 1
 	static constexpr Val nu = 100;
-	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.1, nu);
+	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.5, nu);
 	const Val pNM1 = dist(resNM1.fracSpikeCount(), 0, nu);
 	const Val pBin = ((resN.spikeCount == nOut) && (resNM1.spikeCount == 0));
 	return EvaluationResult(pBin, (1.0 - pNM1), (1.0 - pN), pN * pNM1);
