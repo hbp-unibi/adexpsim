@@ -66,6 +66,7 @@ private:
 	QToolBar *toolbar;
 	ParameterWidget *paramN;
 	ParameterWidget *paramNM1;
+	ParameterWidget *paramNOut;
 	ParameterWidget *paramDeltaT;
 	ParameterWidget *paramT;
 

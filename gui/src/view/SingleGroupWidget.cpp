@@ -75,6 +75,9 @@ SingleGroupWidget::SingleGroupWidget(
 	paramNM1 = new ParameterWidget(this, "n-1", 2, 0, 19, "", "nM1");
 	paramNM1->setIntOnly(true);
 	paramNM1->setMinMaxEnabled(false);
+	paramNOut = new ParameterWidget(this, "nOut", 1, 0, 100, "", "nOut");
+	paramNOut->setIntOnly(true);
+	paramNOut->setMinMaxEnabled(false);
 	paramDeltaT =
 	    new ParameterWidget(this, "Δt", 1.0, 0.0, 20.0, "ms", "deltaT");
 	paramDeltaT->setMinMaxEnabled(false);
@@ -85,6 +88,8 @@ SingleGroupWidget::SingleGroupWidget(
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramNM1, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
+	connect(paramNOut, SIGNAL(update(Val, const QVariant &)),
+	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramDeltaT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramT, SIGNAL(update(Val, const QVariant &)),
@@ -94,6 +99,7 @@ SingleGroupWidget::SingleGroupWidget(
 	layout->addWidget(toolbar);
 	layout->addWidget(paramN);
 	layout->addWidget(paramNM1);
+	layout->addWidget(paramNOut);
 	layout->addWidget(paramDeltaT);
 	layout->addWidget(paramT);
 	setLayout(layout);
@@ -126,6 +132,8 @@ void SingleGroupWidget::handleParameterUpdate(Val value, const QVariant &data)
 			params->singleGroup.n = value + 1;
 			paramN->setValue(value + 1);
 		}
+	} else if (s == "nOut") {
+		params->singleGroup.nOut = value;
 	} else if (s == "deltaT") {
 		params->singleGroup.deltaT = Time::sec(value / 1000.0);
 	} else if (s == "T") {
@@ -141,6 +149,7 @@ void SingleGroupWidget::refresh()
 	blockSignals(true);
 	paramN->setValue(params->singleGroup.n);
 	paramNM1->setValue(params->singleGroup.nM1);
+	paramNOut->setValue(params->singleGroup.nOut);
 	paramDeltaT->setValue(params->singleGroup.deltaT.sec() * 1000.0);
 	paramT->setValue(params->singleGroup.T.sec() * 1000.0);
 	blockSignals(false);
