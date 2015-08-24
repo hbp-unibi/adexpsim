@@ -44,16 +44,17 @@ namespace AdExpSim {
 
 static void fillDimensionCombobox(QComboBox *box)
 {
-	for (int i = 0; i < 13; i++) {
+	for (size_t i = 0; i < WorkingParameters::Size; i++) {
 		if (WorkingParameters::linear[i]) {
 			box->addItem(
-			    QString::fromStdString(WorkingParameters::originalNames[i]), i);
+			    QString::fromStdString(WorkingParameters::originalNames[i]),
+			    int(i));
 			box->setItemData(i, QString::fromStdString(
 			                        WorkingParameters::originalDescriptions[i]),
 			                 Qt::ToolTipRole);
 		} else {
 			box->addItem(QString::fromStdString(WorkingParameters::names[i]),
-			             i);
+			             int(i));
 			box->setItemData(
 			    i, QString::fromStdString(WorkingParameters::descriptions[i]),
 			    Qt::ToolTipRole);
