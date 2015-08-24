@@ -74,9 +74,9 @@ bool Exploration::run(const Evaluation &evaluation,
 
 			// Do nothing if the given parameters are invalid
 			EvaluationResult result;
-			if (params.valid()) {
+			if (p.valid()) {
 				// Update the parameters
-				params.update();
+				p.update();
 
 				// Run the evaluation for these parameters
 				result = evaluation.evaluate(p);
