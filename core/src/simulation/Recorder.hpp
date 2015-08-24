@@ -702,6 +702,8 @@ struct RecordedSpike {
 	}
 };
 
+using RecordedSpikeVec = std::vector<RecordedSpike>;
+
 /**
  * Recorder class which simply captures outgoing spikes and stores them in a
  * vector.
