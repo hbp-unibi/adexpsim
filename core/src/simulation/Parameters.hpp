@@ -143,6 +143,11 @@ private:
 	 */
 	mutable Val mTDelta;
 
+	/**
+	 * Maximum and minimal potentials. Used to encode voltage ranges.
+	 */
+	mutable Val mVMax, mVMin;
+
 public:
 	using Vector<WorkingParameters, 14>::Vector;
 
@@ -476,6 +481,8 @@ public:
 		mESpikeEff = calculateESpikeEff(eTh(), deltaTh());
 		mESpikeEffRed = mESpikeEff - Val(1e-4);
 		mTDelta = Val(0.1) / std::max({lL(), lE(), lI(), lW(), lA()});
+		mVMax = std::max({0.0f, eE(), eI(), eSpike(), eTh(), eReset()});
+		mVMin = std::min({0.0f, eE(), eI(), eSpike(), eTh(), eReset()});
 	}
 
 	/**
@@ -485,8 +492,8 @@ public:
 	{
 		return lL() > 0 && lE() > 0 && lI() > 0 && lW() > 0 && tauRef() >= 0 &&
 		       deltaTh() > 0 && lA() >= 0 && lB() >= 0 && eE() > eI() &&
-		       eE() > eTh() && eE() > 0 && eSpike() > eReset() &&
-		       eSpike() > eTh();
+		       eE() > eTh() && eE() > 0 && eSpike() > 0 && eSpike() > eTh() &&
+		       eReset() <= 0;
 	}
 
 	/**
@@ -551,6 +558,16 @@ public:
 	 * Returns the tDelta proposed for this parameter set.
 	 */
 	Val tDelta() const { return mTDelta; }
+
+	/**
+	 * Returns the maximum potential stored in the parameters.
+	 */
+	Val vMax() const { return mVMax; }
+
+	/**
+	 * Returns the minimum potential stored in the parameters.
+	 */
+	Val vMin() const { return mVMin; }
 };
 }
 

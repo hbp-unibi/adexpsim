@@ -112,8 +112,8 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 	// Iterate over all output spikes. Increase the membrane potential after
 	// each spike until a new output spike is generated. Search the minimum
 	// potential which causes such an increase
-	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.eReset(),
-	                                                 params.eSpike());
+	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.vMin(),
+	                                                 params.vMax());
 	for (const RecordedSpike &spike : outputSpikes) {
 		// Create a new input spike vector containing a new special
 		// "SET_VOLTAGE" input spike
@@ -128,7 +128,7 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 		// minimum
 		bool first = true;
 		uint16_t curVMin = SpecialSpike::encodeSpikeVoltage(
-		    spike.state.v(), params.eReset(), params.eSpike());
+		    spike.state.v(), params.vMin(), params.vMax());
 		uint16_t curVMax = vMin;
 		while (int(curVMax) - int(curVMin) > 1) {
 			// Set the voltage of the virtual spike
@@ -154,8 +154,8 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 
 	// Return the actual spike count and the minimum voltage needed to induce
 	// a new spike
-	const Val eReq = SpecialSpike::decodeSpikeVoltage(vMin, params.eReset(),
-	                                                  params.eSpike());
+	const Val eReq =
+	    SpecialSpike::decodeSpikeVoltage(vMin, params.vMin(), params.vMax());
 	const Val eNorm = (spikeCount == 0) ? 0.0 : params.eReset();
 	return Result(spikeCount, eReq, (eReq - eNorm) / (eSpikeEff - eNorm));
 }
