@@ -42,8 +42,8 @@ ParameterCollection::ParameterCollection()
                                             DefaultParameters::eL),
            WorkingParameters::fromParameter(MAX_S, 12, DefaultParameters::cM,
                                             DefaultParameters::eL)}),
-      optimize({true, true, false, true, true, false, true, false, true, true,
-                true, true,
+      optimize({true, true, false, true, true, true, false, true, false, true,
+                true, true, true,
                 true})  // Do not optimize the inhibitory channels and eSpike
 {
 	// Initialize the optimize/explore flags
