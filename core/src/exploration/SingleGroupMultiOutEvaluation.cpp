@@ -22,7 +22,6 @@
 #include "SingleGroupMultiOutEvaluation.hpp"
 
 namespace AdExpSim {
-
 /**
  * Student-t like long-tail distribution, no normalization. In contrast to a
  * gauss-like distribution has a long tail which makes it more suitable for
@@ -44,7 +43,7 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 	auto resNM1 = eval.calculate(sNM1, params);
 
 	// Convert the fractional spike counts to a value between 0 and 1
-	static constexpr Val nu = 100;
+	static constexpr Val nu = 1;
 	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.5, nu);
 	const Val pNM1 = dist(resNM1.fracSpikeCount(), 0, nu);
 	const Val pBin = ((resN.spikeCount == nOut) && (resNM1.spikeCount == 0));
