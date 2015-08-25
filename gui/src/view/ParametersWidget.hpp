@@ -44,7 +44,7 @@ private:
 	QTimer *updateTimer;
 	ParameterWidget *paramCM;
 	ParameterWidget *paramEL;
-	ParameterWidget *workingParams[13];
+	ParameterWidget *workingParams[WorkingParameters::Size];
 
 private slots:
 	void triggerUpdateParameters();
