@@ -749,6 +749,62 @@ public:
 };
 
 /**
+ * Class which can be used to fetch the state of the system at the end of the
+ * time.
+ */
+class LastStateRecorder : public NullRecorder {
+private:
+	/**
+	 * Neuron state from the last call to "record".
+	 */
+	State mState;
+
+	/**
+	 * Time of the last spike.
+	 */
+	Time mLastSpike;
+
+public:
+	/**
+	 * Default constructor.
+	 */
+	LastStateRecorder() { reset(); }
+
+	/**
+	 * Advances the "lastSpike" timer.
+	 */
+	void outputSpike(Time t, const State &) { mLastSpike = t; }
+
+	/**
+	 * Simply copies the current state.
+	 */
+	void record(Time, const State &s, const AuxiliaryState &, bool)
+	{
+		mState = s;
+	}
+
+	/**
+	 * Resets the recorder to its initial state.
+	 */
+	void reset()
+	{
+		mState = State();
+		mLastSpike = MIN_TIME;
+	}
+
+	/**
+	 * Returns the last state.
+	 */
+	State state() const { return mState; }
+
+	/**
+	 * Returns the time of the last spike that was issued. Important to decide
+	 * whether the neuron is still in its refractory period.
+	 */
+	Time lastSpike() const { return mLastSpike; }
+};
+
+/**
  * Recorder responsible for recording local maxima of the membrane potential.
  * It does so by analyzing the total current flowing through the membrane (aka
  * the first derivative of the membrane potential). Filters out maxima produced

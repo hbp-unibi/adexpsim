@@ -18,6 +18,11 @@
 
 #include <cmath>
 
+#include <simulation/Controller.hpp>
+#include <simulation/DormandPrinceIntegrator.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+
 #include "FractionalSpikeCount.hpp"
 #include "SingleGroupMultiOutEvaluation.hpp"
 
@@ -42,11 +47,26 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 	auto resN = eval.calculate(sN, params);
 	auto resNM1 = eval.calculate(sNM1, params);
 
+	// Run a short simulation to get the state the neuron is in at time T
+	NullController controller;
+	DormandPrinceIntegrator integrator(eTar);
+	LastStateRecorder recorder;
+	Model::simulate<Model::FAST_EXP | Model::DISABLE_SPIKING |
+	                Model::CLAMP_ITH>(useIfCondExp, sN, recorder, controller,
+	                                  integrator, params, Time(-1),
+	                                  spikeData.T);
+
+	// Calculate the
+	const State sRescale = State(100.0, 0.1, 0.1, 0.1);
+	const Val delta = ((State() - recorder.state()) * sRescale).sqrL2Norm();
+	const Val pReset = exp(-delta);
+
 	// Convert the fractional spike counts to a value between 0 and 1
 	static constexpr Val nu = 1;
-	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.5, nu);
+	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.25, nu);
 	const Val pNM1 = dist(resNM1.fracSpikeCount(), 0, nu);
 	const Val pBin = ((resN.spikeCount == nOut) && (resNM1.spikeCount == 0));
-	return EvaluationResult(pBin, (1.0 - pNM1), (1.0 - pN), pN * pNM1);
+	return EvaluationResult(pReset, (1.0 - pNM1), (1.0 - pN),
+	                        pN * pNM1 * pReset);
 }
 }
