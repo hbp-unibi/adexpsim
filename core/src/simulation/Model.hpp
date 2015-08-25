@@ -402,6 +402,26 @@ public:
 			}
 		}
 	}
+
+	template <uint8_t Flags = 0, typename Recorder = NullRecorder,
+	          typename Integrator = RungeKuttaIntegrator,
+	          typename Controller = DefaultController>
+	static void simulate(bool useIfCondExp, const SpikeVec &spikes,
+	                     Recorder &recorder, Controller &controller,
+	                     Integrator &integrator,
+	                     const WorkingParameters &p = WorkingParameters(),
+	                     Time tDelta = Time(-1), Time tEnd = MAX_TIME,
+	                     const State &s0 = State(), Time tLastSpike = Time(-1))
+	{
+		if (useIfCondExp) {
+			simulate<Flags | IF_COND_EXP>(spikes, recorder, controller,
+			                              integrator, p, tDelta, tEnd, s0,
+			                              tLastSpike);
+		} else {
+			simulate<Flags>(spikes, recorder, controller, integrator, p, tDelta,
+			                tEnd, s0, tLastSpike);
+		}
+	}
 };
 }
 
