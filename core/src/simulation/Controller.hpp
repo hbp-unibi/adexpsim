@@ -110,7 +110,7 @@ public:
 	static constexpr Val MIN_RATE = 10;
 
 	/**
-	 * Minim excitatory plus inhibitory channel rate. This value is chosen
+	 * Minimum excitatory plus inhibitory channel rate. This value is chosen
 	 * rather high as we want to abort as early as possible and only if the
 	 * high excitatory current could still increase the membrane potential.
 	 */
