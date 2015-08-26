@@ -29,6 +29,7 @@
 
 #include <array>
 #include <cmath>
+#include <iostream>
 
 #include "Types.hpp"
 
@@ -164,6 +165,16 @@ public:
 	friend Impl operator/(const T &v, Val s)
 	{
 		return map(v, [s](Val a) { return a / s; });
+	}
+
+	friend std::ostream &operator<<(std::ostream &os, const T &m)
+	{
+		os << "{";
+		for (size_t i = 0; i < N; i++) {
+			os << (i == 0 ? "" : ", ") << m.arr[i];
+		}
+		os << "}";
+		return os;
 	}
 };
 
