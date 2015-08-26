@@ -315,9 +315,9 @@ public:
 		// Start with state s0
 		State s = s0;
 
-		// Iterate over all time slices
+		// Iterate over all time slices. Make sure t does not overflow!
 		Time t;
-		while (t < tEnd) {
+		while (t < tEnd && t >= Time(0)) {
 			// Fetch the next spike time
 			Time nextSpikeTime =
 			    (spikeIdx < nSpikes) ? spikes[spikeIdx].t : tEnd;
