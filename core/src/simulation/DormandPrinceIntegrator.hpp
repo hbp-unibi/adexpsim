@@ -165,7 +165,7 @@ private:
 	/**
 	 * Inverse target error.
 	 */
-	const Val invETar;
+	const State invETar;
 
 	/**
 	 * Last stepsize.
@@ -176,10 +176,7 @@ private:
 	 * Calculates a single error vector form the error vector. Calculates the
 	 * L2-norm of the vector.
 	 */
-	Val error(State errVec) const
-	{
-		return (errVec * invETar).L2Norm();
-	}
+	Val error(State errVec) const { return (errVec * invETar).L2Norm(); }
 
 public:
 	/**
@@ -188,7 +185,11 @@ public:
 	 *
 	 * @param err is the target integration error.
 	 */
-	AdaptiveIntegratorBase(Val eTar = 1e-3) : invETar(1.0 / eTar) { reset(); }
+	AdaptiveIntegratorBase(Val eTar = 1e-3)
+	    : invETar(1.0 / eTar, 10.0 / eTar, 10.0 / eTar, 10.0 / eTar)
+	{
+		reset();
+	}
 
 	/**
 	 * Resets the integrator to its initial state.
@@ -210,10 +211,10 @@ public:
 	std::pair<State, Time> integrate(Time tDelta, Time tDeltaMax,
 	                                 const State &s, Deriv df)
 	{
-		static constexpr Val S = 0.9; // Safety factor
-		static constexpr Val MIN_H = 1e-6; // Absolute minimum for h.
-		static constexpr Val MIN_SCALE = 0.2; // Minimum scale factor.
-		static constexpr Val MAX_SCALE = 10.0; // Maximum scale factor.
+		static constexpr Val S = 0.9;           // Safety factor
+		static constexpr Val MIN_H = 1e-6;      // Absolute minimum for h.
+		static constexpr Val MIN_SCALE = 0.2;   // Minimum scale factor.
+		static constexpr Val MAX_SCALE = 10.0;  // Maximum scale factor.
 
 		// Fetch the step size as floating point number
 		const Val MAX_H = std::min(10e-3, tDeltaMax.sec());
