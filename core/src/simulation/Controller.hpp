@@ -69,6 +69,13 @@ public:
 	static constexpr Val MIN_RATE = 1e-3;
 
 	/**
+	 * Minimum total current. A non-zero voltage is ignored if the current is
+	 * near zero, as the AdExp model may go into an additional equilibrium
+	 * stage.
+	 */
+	static constexpr Val MIN_DV = 1e-3;
+
+	/**
 	 * The control function is responsible for aborting the simulation. The
 	 * default controller aborts the simulation once the neuron has settled,
 	 * so there are no inhibitory or excitatory currents and the membrane
@@ -78,11 +85,12 @@ public:
 	 * @return true if the neuron should continue, false otherwise.
 	 */
 	static ControllerResult control(Time, const State &s,
-	                                const AuxiliaryState &,
+	                                const AuxiliaryState &as,
 	                                const WorkingParameters &, bool inRefrac)
 	{
-		return (fabs(s.v()) > MIN_VOLTAGE || (s.lE() + s.lI()) > MIN_RATE ||
-		        inRefrac)
+		return ((fabs(s.v()) > MIN_VOLTAGE &&
+		         fabs(as.dvL() + as.dvE() + as.dvI() + as.dvTh()) > MIN_DV) ||
+		        (s.lE() + s.lI()) > MIN_RATE || inRefrac)
 		           ? ControllerResult::CONTINUE
 		           : ControllerResult::MAY_CONTINUE;
 	}
