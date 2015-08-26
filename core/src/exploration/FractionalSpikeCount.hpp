@@ -54,7 +54,7 @@ public:
 		Val fracSpikeCount() { return spikeCount + 1.0 - eRel; }
 	};
 
-	FractionalSpikeCount(bool useIfCondExp = false, Val eTar = 1e-3,
+	FractionalSpikeCount(bool useIfCondExp = false, Val eTar = 0.1e-3,
 	                     size_t maxSpikeCount = 50)
 	    : useIfCondExp(useIfCondExp), eTar(eTar), maxSpikeCount(maxSpikeCount)
 	{

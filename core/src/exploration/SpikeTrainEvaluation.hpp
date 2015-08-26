@@ -194,7 +194,7 @@ public:
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
 	EvaluationResult evaluate(const WorkingParameters &params,
-	                          Val eTar = 1e-3) const;
+	                          Val eTar = 0.1e-3) const;
 
 	/**
 	 * Evaluates the given parameter set and writes information about the
@@ -211,7 +211,7 @@ public:
 	EvaluationResult evaluate(const WorkingParameters &params,
 	                          std::vector<OutputSpike> &outputSpikes,
 	                          std::vector<OutputGroup> &outputGroups,
-	                          Val eTar = 1e-3) const;
+	                          Val eTar = 0.1e-3) const;
 
 	/**
 	 * Returns a reference at the internally used spike train instance.

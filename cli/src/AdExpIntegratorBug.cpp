@@ -58,7 +58,8 @@ public:
 	                                const AuxiliaryState &as,
 	                                const WorkingParameters &, bool inRefrac)
 	{
-		std::cout << t << ";" << s << "; " << as << "; " << inRefrac << std::endl;
+		std::cout << t << ";" << s << "; " << as << "; " << inRefrac
+		          << std::endl;
 		std::cout << (fabs(s.v()) > MIN_VOLTAGE) << ", "
 		          << (fabs(as.dvL() + as.dvE() + as.dvI() + as.dvTh()) > MIN_DV)
 		          << ", " << ((s.lE() + s.lI()) > MIN_RATE) << ", " << inRefrac
@@ -75,18 +76,25 @@ public:
 int main(int argc, char *argv[])
 {
 	// Raw data as extracted from a GDB memory dump, convert to parameters
-	const uint32_t raw[14] = {0x4064d180, 0x43a663c3, 0x43480000, 0x40de38e4,
-	                          0x0,        0x3d8f5c29, 0x0,        0x3c83126e,
-	                          0x3db851ec, 0xbc23d708, 0x3b03126f, 0x40800000,
-	                          0x3da4dd30, 0x41f00000};
+	/*	const uint32_t raw[14] = {0x4064d180, 0x43a663c3, 0x43480000,
+	   0x40de38e4,
+	                              0x0,        0x3d8f5c29, 0x0, 0x3c83126e,
+	                              0x3db851ec, 0xbc23d708, 0x3b03126f,
+	   0x40800000,
+	                              0x3da4dd30, 0x41f00000};*/
+	const uint32_t raw[14] = {0x44f238b0, 0x438e5809, 0x43480000, 0x40de38e4,
+	                          0x0,        0x3d4ccccd, 0xbd4ccccd, 0x3cc91700,
+	                          0x3d4ccccd, 0xbcf5c28e, 0x3a03126f, 0x3e800000,
+	                          0x3e5c28f5, 0xc30cb86a};
 	WorkingParameters p(
 	    *reinterpret_cast<const std::array<float, 14> *>(
-	        &raw));  // Blah strict aliasing blah blah blah... Just do it!
+	        &raw));  // Blah strict-aliasing blah blah blah... Just do it!
 	p.update();
 
-	DormandPrinceIntegrator integrator(1e-3);
+	DormandPrinceIntegrator integrator(0.1e-3);
 	Controller controller;
 	NullRecorder recorder;
+//	SpikeVec train = buildInputSpikes(3, 1e-3_s);
 	SpikeVec train = buildInputSpikes(3, 1e-3_s);
 
 	Model::simulate<Model::IF_COND_EXP>(train, recorder, controller, integrator,
