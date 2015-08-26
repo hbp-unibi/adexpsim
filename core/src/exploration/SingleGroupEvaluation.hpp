@@ -76,7 +76,7 @@ public:
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
 	SingleGroupEvaluationBase(const SpikeData &spikeData,
-	                          bool useIfCondExp = false, Val eTar = 0.1e-3)
+	                          bool useIfCondExp = false, Val eTar = 1e-3)
 	    : sN(spikeData.spikes(spikeData.n)),
 	      sNM1(spikeData.spikes(spikeData.nM1)),
 	      useIfCondExp(useIfCondExp),
