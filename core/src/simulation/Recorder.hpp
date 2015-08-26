@@ -462,17 +462,15 @@ public:
 		}
 
 		// Fetch the next larger and smaller timestamp (it2 and it1)
-		auto it2 = std::upper_bound(ts.begin(), ts.end(), t);
-		auto it1 = it2--;
-		if (it2 == ts.begin()) {
-			it2++;
-			it1 = ts.begin();
-		}
-		size_t i1 = std::distance(ts.begin(), it1);
-		size_t i2 = std::distance(ts.begin(), it2);
+		const size_t i2 = std::max<size_t>(
+		    1,
+		    std::min<size_t>(ts.size() - 1,
+		             std::distance(ts.begin(),
+		                           std::upper_bound(ts.begin(), ts.end(), t))));
+		const size_t i1 = i2 - 1;
 
 		// Calculate the interpolation factor f and perform linear interpolation
-		const Val f = (t - *it1) / (*it2 - *it1);
+		const Val f = (t - ts[i1]) / (ts[i2] - ts[i1]);
 		VectorRecorderDataSample res =
 		    (*this)[i1] * (1.0f - f) + (*this)[i2] * f;
 		res.ts = t;
