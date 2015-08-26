@@ -26,7 +26,6 @@ PROJECT (AdExSimCore)
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
 	-Wall -pedantic-errors -std=c++11 -march=native -ffast-math")
 
-# AdExpSim executable
 ADD_EXECUTABLE(AdExpSim
 	src/AdExpSim
 )
@@ -35,7 +34,6 @@ TARGET_LINK_LIBRARIES(AdExpSim
 	AdExpSimCore
 )
 
-# AdExploration executable
 ADD_EXECUTABLE(AdExploration
 	src/AdExploration
 )
@@ -44,7 +42,6 @@ TARGET_LINK_LIBRARIES(AdExploration
 	AdExpSimCore
 )
 
-# AdExpIntegratorBenchmark executable
 ADD_EXECUTABLE(AdExpIntegratorBenchmark
 	src/AdExpIntegratorBenchmark
 )
@@ -53,7 +50,6 @@ TARGET_LINK_LIBRARIES(AdExpIntegratorBenchmark
 	AdExpSimCore
 )
 
-# AdExpOptimization executable
 ADD_EXECUTABLE(AdExpOptimization
 	src/AdExpOptimization
 )
@@ -63,11 +59,18 @@ TARGET_LINK_LIBRARIES(AdExpOptimization
 	AdExpSimIo
 )
 
-# AdExpOptimization executable
 ADD_EXECUTABLE(AdExpEvaluationMetric
 	src/AdExpEvaluationMetric
 )
 
 TARGET_LINK_LIBRARIES(AdExpEvaluationMetric
+	AdExpSimCore
+)
+
+ADD_EXECUTABLE(AdExpIntegratorBug
+	src/AdExpIntegratorBug
+)
+
+TARGET_LINK_LIBRARIES(AdExpIntegratorBug
 	AdExpSimCore
 )
