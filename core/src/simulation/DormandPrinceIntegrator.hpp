@@ -165,7 +165,7 @@ private:
 	/**
 	 * Inverse target error.
 	 */
-	const State invETar;
+	const Val invETar;
 
 	/**
 	 * Last stepsize.
@@ -185,11 +185,7 @@ public:
 	 *
 	 * @param err is the target integration error.
 	 */
-	AdaptiveIntegratorBase(Val eTar = 1e-3)
-	    : invETar(1.0 / eTar, 10.0 / eTar, 10.0 / eTar, 10.0 / eTar)
-	{
-		reset();
-	}
+	AdaptiveIntegratorBase(Val eTar = 0.1e-3) : invETar(1.0 / eTar) { reset(); }
 
 	/**
 	 * Resets the integrator to its initial state.
