@@ -109,12 +109,12 @@ public:
 
 void SurfacePlotIo::storeSurfacePlot(std::ostream &os,
                                      const Exploration &exploration,
-                                     EvaluationResultDimension dim,
+                                     size_t dim,
                                      bool gnuplot)
 {
-	const DiscreteRange rX = exploration.getRangeX();
-	const DiscreteRange rY = exploration.getRangeY();
-	const ExplorationMemory &mem = exploration.getMemory();
+	const DiscreteRange rX = exploration.rangeX();
+	const DiscreteRange rY = exploration.rangeY();
+	const ExplorationMemory &mem = exploration.mem();
 	for (size_t x = 0; x < rX.steps; x++) {
 		for (size_t y = 0; y < rY.steps; y++) {
 			os << rX.value(x) << ' ' << rY.value(y) << ' ' << mem(x, y, dim)
@@ -128,16 +128,17 @@ void SurfacePlotIo::storeSurfacePlot(std::ostream &os,
 
 void SurfacePlotIo::runGnuPlot(const Parameters &params,
                                const Exploration &exploration,
-                               EvaluationResultDimension dim)
+                               size_t dim)
 {
 	Process p = Process::create("gnuplot", {"-p"});
 	if (p.valid()) {
+		const Range r = exploration.mem().range(dim);
 		std::ostream &os = p.getStdIn();
 		os << "set nokey; "
 			  "set pm3d; "
 			  "set hidden3d; "
-			  "set cbrange [0:1]; "
-			  "set zrange [0:1]; "
+			  "set cbrange [" << r.max << ":" << r.min << "]; "
+			  "set zrange [" << r.max << ":" << r.min << "]; "
 			  "set view 0, 0; "
 			  "splot '-' with pm3d"
 		   << std::endl;

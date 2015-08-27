@@ -40,8 +40,8 @@ class QVBoxLayout;
 namespace AdExpSim {
 
 class ParameterCollection;
+class PlotMarker;
 class Exploration;
-class ExplorationWidgetCrosshair;
 class ExplorationWidgetInvalidOverlay;
 
 /**
@@ -56,18 +56,14 @@ private:
 	QAction *actZoomCenter;
 	QAction *actLockXAxis;
 	QAction *actLockYAxis;
+	QAction *actFunction;
 	QComboBox *comboDimX;
 	QComboBox *comboDimY;
 	QComboBox *comboFunction;
 	QVBoxLayout *layout;
 	QProgressBar *progressBar;
-	QLabel *statusLabel;
-	QLabel *lblDimX;
-	QLabel *lblDimY;
-	QLabel *lblPBinary;
-	QLabel *lblPFalsePositive;
-	QLabel *lblPFalseNegative;
-	QLabel *lblPSoft;
+	QLabel *lblStatus;
+	QLabel *lblInfo;
 	QCustomPlot *pltExploration;
 	PlotMarker *crosshair;
 	PlotMarker *crosshairHW1;
@@ -76,15 +72,17 @@ private:
 	ExplorationWidgetInvalidOverlay *overlayHW;
 	std::shared_ptr<ParameterCollection> params;
 	std::shared_ptr<Exploration> exploration;
+	int curEvaluationType;
 
 	void dimensionChanged();
+	void rebuildDimensionWidgets();
 
 	QPointF workingParametersToPlot(Val x, Val y);
 	QPointF parametersToPlot(Val x, Val y);
 	QPointF plotToWorkingParameters(Val x, Val y);
 	QPointF plotToParameters(Val x, Val y);
 
-	QString axisName(size_t dim, bool unit = false);
+	std::string axisName(size_t dim, bool unit = false);
 
 private slots:
 	void dimensionChanged(QCPAxis *axis, size_t dim);
@@ -123,7 +121,7 @@ public:
 	/**
 	 * Returns the current function displayed on the Z-axis.
 	 */
-	EvaluationResultDimension getDimZ();
+	size_t getDimZ();
 
 	/**
 	 * Draws the current exploration as PDF.

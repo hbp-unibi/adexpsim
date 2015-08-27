@@ -141,8 +141,7 @@ Val SpikeTrainEvaluation::sigma(Val x, const WorkingParameters &params,
                                 bool invert) const
 {
 	const Val th = params.eSpikeEff(useIfCondExp);
-	const double res =
-	    1.0 / (1.0 + exp(-TAU * (x - th)));
+	const double res = 1.0 / (1.0 + exp(-TAU * (x - th)));
 	return invert ? 1.0 - res : res;
 }
 
@@ -197,7 +196,7 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 {
 	// Return an empty result if the input spike train contains no spikes
 	if (train.getRanges().empty()) {
-		return EvaluationResult();
+		return descr.defaultResult();
 	}
 
 	// Run the simulation on the spike train with the given parameters and
@@ -220,7 +219,7 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 
 	// Abort if the maximum spike count controller has tripped.
 	if (controller.tripped()) {
-		return EvaluationResult(0.0, 1.0, 0.0, 0.0);
+		return descr.defaultResult();
 	}
 
 	// Iterate over all ranges described in the spike train and adapt the result
@@ -230,7 +229,8 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	const std::vector<RecordedSpike> &outputSpikes = recorder.getOutputSpikes();
 	const std::vector<SpikeTrain::Range> &ranges = train.getRanges();
 
-	EvaluationResult res(0.0, 0.0, 0.0, 0.0);
+	Val pSoft = 0.0, pBinary = 0.0, pFalsePositive = 0.0, pFalseNegative = 0.0;
+
 	size_t group = 0;
 	size_t groupDescrIdx = ranges.front().descrIdx;
 	size_t groupExpected = 0;
@@ -273,9 +273,9 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 			    OutputGroup(groupStart, rangeStart, groupDescrIdx, groupOk));
 
 			// Update the output
-			res.pBinary += groupOk ? 1.0 : 0.0;
-			res.pFalsePositive += (groupReceived > groupExpected) ? 1.0 : 0.0;
-			res.pFalseNegative += (groupReceived < groupExpected) ? 1.0 : 0.0;
+			pBinary += groupOk ? 1.0 : 0.0;
+			pFalsePositive += (groupReceived > groupExpected) ? 1.0 : 0.0;
+			pFalseNegative += (groupReceived < groupExpected) ? 1.0 : 0.0;
 
 			// Increase the group cpunt
 			nGroups++;
@@ -313,7 +313,7 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 			    trackMaxPotential(params, *curSpike, it->t, eTar);
 
 			// Adapt the softExpectationRatio
-			res.pSoft += sigma(simRes.vMax, params) * simRes.tLen.sec() /* *
+			pSoft += sigma(simRes.vMax, params) * simRes.tLen.sec() /* *
 			             simRes.tMaxRel()*/;
 
 			// Advance the curSpike pointer to the last processed output spike
@@ -327,8 +327,8 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 		// lower potentials are better).
 		const auto simRes =
 		    trackMaxPotential(params, *curSpike, rangeEnd, eTar);
-		res.pSoft += sigma(simRes.vMax, params, nSpikesExpected == 0) *
-		             simRes.tLen.sec();
+		pSoft += sigma(simRes.vMax, params, nSpikesExpected == 0) *
+		         simRes.tLen.sec();
 	}
 
 	// Record the last output group
@@ -336,16 +336,17 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	    OutputGroup(groupStart, ranges.back().start, groupDescrIdx, groupOk));
 
 	// Normalize the result by the total simulation time in seconds
-	res.pBinary = (res.pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
-	res.pFalsePositive =
-	    (res.pFalsePositive + ((groupReceived > groupExpected) ? 1.0 : 0.0)) /
+	pBinary = (pBinary + (groupOk ? 1.0 : 0.0)) / Val(nGroups);
+	pFalsePositive =
+	    (pFalsePositive + ((groupReceived > groupExpected) ? 1.0 : 0.0)) /
 	    Val(nGroups);
-	res.pFalseNegative =
-	    (res.pFalseNegative + ((groupReceived < groupExpected) ? 1.0 : 0.0)) /
+	pFalseNegative =
+	    (pFalseNegative + ((groupReceived < groupExpected) ? 1.0 : 0.0)) /
 	    Val(nGroups);
-	res.pSoft = res.pSoft / T.sec();
+	pSoft = pSoft / T.sec();
 
-	return res;
+	return EvaluationResult(
+	    {pSoft, pBinary, 1.0f - pFalsePositive, 1.0f - pFalseNegative});
 }
 
 EvaluationResult SpikeTrainEvaluation::evaluate(const WorkingParameters &params,
@@ -369,5 +370,12 @@ EvaluationResult SpikeTrainEvaluation::evaluate(
 	                        [&outputGroups](const OutputGroup &group)
 	                            -> void { outputGroups.emplace_back(group); });
 }
+
+const EvaluationResultDescriptor SpikeTrainEvaluation::descr =
+    EvaluationResultDescriptor(EvaluationType::SPIKE_TRAIN)
+        .add("Soft", "pSoft", "", 0.0, Range(0.0, 1.0))
+        .add("Binary", "pBin", "", 0.0, Range(0.0, 1.0), true)
+        .add("True Pos.", "pTPos", "", 0.0, Range(0.0, 1.0))
+        .add("True Neg.", "pTNeg", "", 0.0, Range(0.0, 1.0));
 }
 

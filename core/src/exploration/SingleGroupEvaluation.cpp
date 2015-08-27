@@ -93,18 +93,25 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 
 	const Val th = params.eSpikeEff(useIfCondExp);
 	const bool ok = cN.vMax > th && cNM1.vMax < th && cNS.vMax < th;
-	const Val pFalseNegative = sigmaV(cN.vMax, th);
-	const Val pFalsePositive =
-	    1.0 - sigmaV(cNM1.vMax, th) * sigmaV(cNS.vMax, th);
+	const Val pOk = ok ? 1.0 : 0.0f;
+	const Val pTrueNegative = 1.0 - sigmaV(cN.vMax, th);
+	const Val pTruePositive = sigmaV(cNM1.vMax, th) * sigmaV(cNS.vMax, th);
 	const State sInit = State(0.0, 0.0, 0.0, 0.0);
 	const State sRescale = State(100.0, 0.1, 0.1, 0.1);
 	const Val eDiff = ((sInit - cN.state) * sRescale).sqrL2Norm();
 	const Val eDiffM1 = ((sInit - cNM1.state) * sRescale).sqrL2Norm();
 	const Val eDiffS = ((sInit - cNS.state) * sRescale).sqrL2Norm();
 	const Val pReset = exp(-((eDiff + eDiffM1 + eDiffS) * 0.333333f));
-	return EvaluationResult(
-	    ok ? 1.0 : 0.0, pFalsePositive, pFalseNegative,
-	    (1.0 - pFalseNegative) * (1.0 - pFalsePositive) * pReset);
+	const Val pSoft = pTrueNegative * pTruePositive * pReset;
+	return EvaluationResult({pSoft, pOk, pTruePositive, pTrueNegative, pReset});
 }
+
+const EvaluationResultDescriptor SingleGroupEvaluation::descr =
+    EvaluationResultDescriptor(EvaluationType::SINGLE_GROUP)
+        .add("Soft", "pSoft", "", 0.0, Range(0.0, 1.0), true)
+        .add("Binary", "pBin", "", 0.0, Range(0.0, 1.0))
+        .add("True Pos.", "pTPos", "", 0.0, Range(0.0, 1.0))
+        .add("True Neg.", "pTNeg", "", 0.0, Range(0.0, 1.0))
+        .add("Reset", "pReset", "", 0.0, Range(0.0, 1.0));
 }
 

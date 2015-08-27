@@ -36,22 +36,16 @@ OptimizationJobRunner::OptimizationJobRunner(
     bool limitToHw, std::shared_ptr<ParameterCollection> params)
     : aborted(false), params(params)
 {
-	// Select the evaluation dimension
-	const EvaluationResultDimension evalDim =
-	    params->evaluation == EvaluationType::SPIKE_TRAIN
-	        ? EvaluationResultDimension::BINARY
-	        : EvaluationResultDimension::SOFT;
-
 	// Fetch the to-be-optimized dimensions
 	const std::vector<size_t> dims = params->optimizationDims();
 
 	// Create the actual optimization object, do not pass the hw limits if
 	// the limitToHw flag is not set
 	if (limitToHw) {
-		optimization = Optimization(params->model, evalDim, dims,
-		                            BrainScaleSParameters::inst);
+		optimization =
+		    Optimization(params->model, dims, BrainScaleSParameters::inst);
 	} else {
-		optimization = Optimization(params->model, evalDim, dims);
+		optimization = Optimization(params->model, dims);
 	}
 
 	// Do not automatically free this object once it is done

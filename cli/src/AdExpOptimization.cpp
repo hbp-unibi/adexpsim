@@ -61,8 +61,7 @@ int main(int argc, char *argv[])
 	// parameters)
 	std::vector<size_t> dims({0, 1, 3, 4, 6, 7, 8, 9, 10, 11, 12});
 
-	Optimization opt(model, EvaluationResultDimension::SOFT, dims,
-	                 BrainScaleSParameters::inst);
+	Optimization opt(model, dims, BrainScaleSParameters::inst);
 	std::vector<OptimizationResult> res =
 	    opt.optimize({params}, eval,
 	                 [](size_t nIt, size_t nInput,
@@ -72,7 +71,7 @@ int main(int argc, char *argv[])
 		    if (!output.empty()) {
 			    std::cout << " eval: " << output.back().eval;
 		    }
-		    std::cout <<  "        \r";
+		    std::cout << "        \r";
 		    return !cancel;
 		});
 
@@ -81,10 +80,10 @@ int main(int argc, char *argv[])
 		const OptimizationResult ores = res[i];
 		std::cout << "Result #" << i << std::endl;
 		std::cout << "pSoft : " << ores.eval << std::endl;
-		JsonIo::storePyNNModel(
-		    std::cout, ores.params.toParameters(DefaultParameters::cM,
-		                                          DefaultParameters::eL),
-		    model);
+		JsonIo::storePyNNModel(std::cout,
+		                       ores.params.toParameters(DefaultParameters::cM,
+		                                                DefaultParameters::eL),
+		                       model);
 	}
 
 	return 0;

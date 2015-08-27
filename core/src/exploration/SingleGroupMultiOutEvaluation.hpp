@@ -40,6 +40,9 @@ namespace AdExpSim {
  */
 class SingleGroupMultiOutEvaluation
     : public SingleGroupEvaluationBase<SingleGroupMultiOutSpikeData> {
+private:
+	static const EvaluationResultDescriptor descr;
+
 public:
 	using SingleGroupEvaluationBase<
 	    SingleGroupMultiOutSpikeData>::SingleGroupEvaluationBase;
@@ -52,6 +55,12 @@ public:
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
 	EvaluationResult evaluate(const WorkingParameters &params) const;
+
+	/**
+	 * Returns the evaluation result descriptor for the SingleGroupEvaluation
+	 * class.
+	 */
+	static const EvaluationResultDescriptor &descriptor() { return descr; }
 };
 }
 

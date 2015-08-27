@@ -28,6 +28,9 @@
 #ifndef _ADEXPSIM_EVALUATION_RESULT_HPP_
 #define _ADEXPSIM_EVALUATION_RESULT_HPP_
 
+#include <string>
+#include <vector>
+
 #include <common/Types.hpp>
 
 namespace AdExpSim {
@@ -52,7 +55,7 @@ enum class EvaluationType : int {
      * Same as SINGLE_GROUP, but allows multiple output spikes. Internally uses
      * the far more sophisticated FractionalSpikeCount measure.
      */
-    SINGLE_GROUP_MULTI_OUT = 2
+	SINGLE_GROUP_MULTI_OUT = 2
 };
 
 /**
@@ -66,74 +69,152 @@ enum class EvaluationResultDimension {
 };
 
 /**
- * Structure containing the result of a call to the "evaluate" method of either
- * the SingleSpikeEvaluation class or the SpikeGroupEvaluation class.
+ * The EvaluationResult class stores a single result from an evaluation method.
+ * It simply consists of an vector of elements of an particular fixed size and
+ * provides methods for setting and reading these values. Note that all values
+ * need to be interpreted in the scope of an EvaluationResultDescriptor.
  */
 struct EvaluationResult {
 	/**
-	 * Percentage of spike train groups for which all conditions were fulfilled.
-	 * Ranges between 0.0 and 1.0.
+	 * Actual vector of values.
 	 */
-	Val pBinary;
+	std::vector<Val> values;
 
 	/**
-	 * Percentage of spike train groups where the number of output spikes was
-	 * larger than the expected number of output spikes.
+	 * Creates a new EvaluationResult instance with a given size.
+	 *
+	 * @param size is the number of dimensions in the result vector.
 	 */
-	Val pFalsePositive;
+	EvaluationResult(size_t size = 0) : values(size, Val(0.0)) {}
 
 	/**
-	 * Percentage of spike train groups where the number of output spikes was
-	 * smaller than the expected number of output spikes.
+	 * Creates a new EvaluationResult instance with a given size.
+	 *
+	 * @param size is the number of dimensions in the result vector.
 	 */
-	Val pFalseNegative;
+	EvaluationResult(std::initializer_list<Val> init) : values(init) {}
 
 	/**
-	 * Soft expectation ratio -- same as the binary ratio, but takes the maximum
-	 * voltage that is theoretically reached in each range into account,
-	 * creating a smooth function. Ranges between 0.0 and 1.0.
+	 * Returns a const reference at the i-th entry.
 	 */
-	Val pSoft;
+	const Val &operator[](size_t i) const { return values[i]; }
 
 	/**
-	 * Default constructor. Initializes the values with the worst possible
-	 * result.
+	 * Returns a reference at the i-th entry.
 	 */
-	EvaluationResult()
-	    : pBinary(0.0), pFalsePositive(1.0), pFalseNegative(1.0), pSoft(0.0)
+	Val &operator[](size_t i) { return values[i]; }
+
+	/**
+	 * Returns the number of dimensions in the result vector.
+	 */
+	size_t size() const { return values.size(); }
+};
+
+/**
+ * The EvaluationResultDescriptor describes the result vector returned by a
+ * certain evaluation methods. It contains the canonical size of the result, the
+ * names of the dimensions (both human readable names and ids) and their units.
+ */
+class EvaluationResultDescriptor {
+private:
+	/**
+	 * Evaluation type descriptor.
+	 */
+	EvaluationType mType;
+
+	/**
+	 * Number of dimensions.
+	 */
+	size_t mSize;
+
+	/**
+	 * Dimension which should be optimized when performing any optimization.
+	 * This is also the dimension which will be displayed first in the
+	 * exploration view of the GUI.
+	 */
+	size_t mOptimizationDim;
+
+	/**
+	 * Human-readable names of the dimensions.
+	 */
+	std::vector<std::string> mNames;
+
+	/**
+	 * Ids of the dimensions to be used internally.
+	 */
+	std::vector<std::string> mIds;
+
+	/**
+	 * Units of the individual dimensions.
+	 */
+	std::vector<std::string> mUnits;
+
+	/**
+	 * Contains the default values of each each result dimension.
+	 */
+	EvaluationResult mDefault;
+
+	/**
+	 * Value range of the unit. If a range is open in any direction (the range
+	 * boundaries are set to the numeric limits of Val or +-Inf), anyone using
+	 * the data is supposed to rescale the dimension according to the actually
+	 * occuring values.
+	 */
+	std::vector<Range> mRanges;
+
+public:
+	/**
+	 * Default constructor of the EvaluationResultDescriptor class. Creates an
+	 * empty result descriptor.
+	 */
+	EvaluationResultDescriptor(
+	    EvaluationType type = EvaluationType::SPIKE_TRAIN)
+	    : mType(type), mSize(0), mOptimizationDim(0)
 	{
 	}
 
 	/**
-	 * Constructor of the EvaluationResult class. Initializes all members with
-	 * the given values.
+	 * Adds a new entry to the result descriptor, returning a reference to this
+	 * instance of the result descriptor. This allows to construct an
+	 * EvaluationResultDescriptor as a chain of calls to the "add()" method.
 	 */
-	EvaluationResult(Val pBinary, Val pFalsePositive, Val pFalseNegative,
-	                 Val pSoft)
-	    : pBinary(pBinary),
-	      pFalsePositive(pFalsePositive),
-	      pFalseNegative(pFalseNegative),
-	      pSoft(pSoft)
+	EvaluationResultDescriptor &add(const std::string &name,
+	                                const std::string &id,
+	                                const std::string &unit,
+	                                const Val defaultValue = 0.0,
+	                                const Range &range = Range::unbounded(),
+	                                bool optimize = false)
 	{
-	}
-
-	/**
-	 * Selects the given evaluation result dimension.
-	 */
-	Val operator()(EvaluationResultDimension dim) const
-	{
-		switch (dim) {
-			case EvaluationResultDimension::BINARY:
-				return pBinary;
-			case EvaluationResultDimension::FALSE_POSITIVE:
-				return pFalsePositive;
-			case EvaluationResultDimension::FALSE_NEGATIVE:
-				return pFalseNegative;
-			case EvaluationResultDimension::SOFT:
-				return pSoft;
+		mNames.push_back(name);
+		mIds.push_back(id);
+		mUnits.push_back(unit);
+		mDefault.values.push_back(defaultValue);
+		mRanges.push_back(range);
+		if (optimize) {
+			mOptimizationDim = mSize;
 		}
-		return 0.0;
+		mSize++;
+		return *this;
 	}
+
+	EvaluationType type() const { return mType; }
+
+	size_t size() const { return mSize; }
+	size_t optimizationDim() const { return mOptimizationDim; }
+
+	const std::vector<std::string> &names() const { return mNames; }
+	const std::vector<std::string> &ids() const { return mIds; }
+	const std::vector<std::string> &units() const { return mUnits; }
+	const std::vector<Range> &ranges() const { return mRanges; }
+	const EvaluationResult &defaultResult() const { return mDefault; }
+
+	const std::string &name(size_t i) const { return mNames[i]; }
+	const std::string &id(size_t i) const { return mIds[i]; }
+	const std::string &unit(size_t i) const { return mUnits[i]; }
+	const Range &range(size_t i) const { return mRanges[i]; }
+
+	bool bounded(size_t i) const { return mRanges[i].bounded(); }
+	bool open(size_t i) const { return mRanges[i].open(); }
 };
 }
 

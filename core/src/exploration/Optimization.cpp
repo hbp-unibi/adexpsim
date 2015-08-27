@@ -188,23 +188,16 @@ public:
 	}
 };
 
-Optimization::Optimization()
-    : model(ModelType::IF_COND_EXP),
-      evalDim(EvaluationResultDimension::SOFT),
-      hw(nullptr)
-{
-}
+Optimization::Optimization() : model(ModelType::IF_COND_EXP), hw(nullptr) {}
 
-Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
-                           const std::vector<size_t> &dims,
+Optimization::Optimization(ModelType model, const std::vector<size_t> &dims,
                            const HardwareParameters &hw)
-    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(&hw)
+    : model(model), dims(filterDims(model, dims)), hw(&hw)
 {
 }
 
-Optimization::Optimization(ModelType model, EvaluationResultDimension evalDim,
-                           const std::vector<size_t> &dims)
-    : model(model), evalDim(evalDim), dims(filterDims(model, dims)), hw(nullptr)
+Optimization::Optimization(ModelType model, const std::vector<size_t> &dims)
+    : model(model), dims(filterDims(model, dims)), hw(nullptr)
 {
 }
 
@@ -251,7 +244,7 @@ void Optimization::optimizationThread(const Optimization &optimization,
 		// Evaluate the parameters, return the negative of the selected
 		// target dimension (the optimization needs a cost and the
 		// evaluation returns a success rate)
-		return -eval.evaluate(p)(optimization.evalDim);
+		return -eval.evaluate(p)[eval.descriptor().optimizationDim()];
 	};
 
 	// Repeat until the "abort" flag has been set by the calling code

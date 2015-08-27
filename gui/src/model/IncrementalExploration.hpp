@@ -137,11 +137,6 @@ private:
 	QThreadPool *pool;
 
 	/**
-	 * Memories for the resolution levels.
-	 */
-	std::vector<std::shared_ptr<ExplorationMemory>> mem;
-
-	/**
 	 * Timer used to defer the calls to "update".
 	 */
 	QTimer *updateTimer;
@@ -185,9 +180,9 @@ private:
 	bool inEmitData;
 
 	/**
-	 * The current exploration instance.
+	 * The exploration instance.
 	 */
-	Exploration *currentExploration;
+	Exploration exploration;
 
 	/**
 	 * The current IncrementalExplorationRunner instance.

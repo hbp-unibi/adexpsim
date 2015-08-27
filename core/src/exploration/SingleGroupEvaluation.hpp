@@ -92,6 +92,9 @@ public:
  */
 class SingleGroupEvaluation
     : public SingleGroupEvaluationBase<SingleGroupSpikeData> {
+private:
+	static const EvaluationResultDescriptor descr;
+
 public:
 	using SingleGroupEvaluationBase<
 	    SingleGroupSpikeData>::SingleGroupEvaluationBase;
@@ -103,6 +106,12 @@ public:
 	 * evaluated. Automatically updates the derived values of the parameter set.
 	 */
 	EvaluationResult evaluate(const WorkingParameters &params) const;
+
+	/**
+	 * Returns the evaluation result descriptor for the SingleGroupEvaluation
+	 * class.
+	 */
+	static const EvaluationResultDescriptor &descriptor() { return descr; }
 };
 }
 

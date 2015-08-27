@@ -77,14 +77,11 @@ int main(int argc, char *argv[])
 	SpikeTrain train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s);
 
 	// Setup the exploration
-	auto mem = std::make_shared<ExplorationMemory>(512, 512);
-	Exploration exploration(mem, params, 0,  // dimX: lL
-	                        100,             // minX
-	                        300,             // maxX
-	                        1,               // dimY: lE
-	                        100,             // minY
-	                        300              // maxY
-	                        );
+	const size_t dimX(WorkingParameters::idx_lL);
+	const size_t dimY(WorkingParameters::idx_lE);
+	const DiscreteRange rangeX(100, 300, 128);
+	const DiscreteRange rangeY(100, 300, 128);
+	Exploration exploration(params, dimX, dimY, rangeX, rangeY);
 
 	// Run the exploration, write the result matrices to a file
 	std::cout << "Running exploration..." << std::endl;
@@ -93,8 +90,12 @@ int main(int argc, char *argv[])
 		std::cout << "Writing result to disk..." << std::endl;
 
 		// Dump the matrices
-		std::ofstream("exploration_pBinary.csv") << mem->pBinary;
-		std::ofstream("exploration_pSoft.csv") << mem->pSoft;
+		const ExplorationMemory &mem = exploration.mem();
+		const EvaluationResultDescriptor &descr = exploration.descriptor();
+		for (size_t i = 0; i < descr.size(); i++) {
+			std::ofstream("exploration_" + descr.id(i) + ".csv") << mem.data[i];
+		}
+		std::cout << "Done." << std::endl;
 	} else {
 		std::cout << std::endl;
 	}

@@ -66,7 +66,17 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.3, nu);
 	const Val pNM1 = dist(resNM1.fracSpikeCount(), 0, nu);
 	const Val pBin = ((resN.spikeCount == nOut) && (resNM1.spikeCount == 0));
-	return EvaluationResult(pReset, (1.0 - pNM1), (1.0 - pN),
-	                        pN * pNM1 * pReset);
+	return EvaluationResult({pN * pNM1 * pReset, pBin, pN, pNM1, pReset,
+	                         resN.fracSpikeCount(), resNM1.fracSpikeCount()});
 }
+
+const EvaluationResultDescriptor SingleGroupMultiOutEvaluation::descr =
+    EvaluationResultDescriptor(EvaluationType::SINGLE_GROUP_MULTI_OUT)
+        .add("Soft", "pSoft", "", 0.0, Range(0.0, 1.0), true)
+        .add("Binary", "pBin", "", 0.0, Range(0.0, 1.0))
+        .add("True Pos.", "pTPos", "", 0.0, Range(0.0, 1.0))
+        .add("True Neg.", "pTNeg", "", 0.0, Range(0.0, 1.0))
+        .add("Reset", "pReset", "", 0.0, Range(0.0, 1.0))
+        .add("#Spike(N)", "cN", "", 0.0, Range::lowerBound(0.0))
+        .add("#Spike(N-1)", "cNM1", "", 0.0, Range::lowerBound(0.0));
 }

@@ -25,69 +25,59 @@
 #include <atomic>
 #include <thread>
 #include <vector>
-#include <iostream>
-
-#include <common/Timer.hpp>
 
 #include "Exploration.hpp"
+
 #include "SingleGroupEvaluation.hpp"
 #include "SingleGroupMultiOutEvaluation.hpp"
 #include "SpikeTrainEvaluation.hpp"
 
 namespace AdExpSim {
 
-Exploration::Exploration(std::shared_ptr<ExplorationMemory> mem,
-                         const WorkingParameters &params, size_t dimX, Val minX,
-                         Val maxX, size_t dimY, Val minY, Val maxY)
-    : mem(mem),
-      params(params),
-      rangeX(minX, maxX, mem->resX),
-      rangeY(minY, maxY, mem->resY),
-      dimX(dimX),
-      dimY(dimY)
-{
-}
-
 template <typename Evaluation>
 bool Exploration::run(const Evaluation &evaluation,
                       const ProgressCallback &progress)
 {
+	// Create the ExplorationMemory instance
+	// Note: It might seem somewhat wasteful to throw away any existing memory
+	// instance and not to reuse it. However, exploration takes significantly
+	// longer than memory allocation.
+	mMem = ExplorationMemory(evaluation.descriptor(), resX(), resY());
+
 	// Fetch the total number of evaluations and the number of cores
-	const size_t N = mem->resX * mem->resY;
+	const size_t N = resX() * resY();
 	size_t nThreads = std::max<size_t>(1, std::thread::hardware_concurrency());
 
 	// Function containing the actual exploration task
-	auto fun = [&](std::shared_ptr<ExplorationMemory> mem,
-	               std::atomic<size_t> &counter, std::atomic<bool> &abort,
-	               size_t idx) -> void {
+	auto fun = [&](ExplorationMemory &mem, std::atomic<size_t> &counter,
+	               std::atomic<bool> &abort, size_t idx) -> void {
 		// Copy the parameters
-		WorkingParameters p = params;
+		WorkingParameters p = params();
+
+		// Variable containing the evaluation result
+		EvaluationResult result(mem.descriptor.size());
 
 		// Iterate over all elements
 		size_t i = idx;
 		while (i < N && !abort.load()) {
 			// Calculate the x and y coordinate from the index and update the
 			// parameters according to the given range.
-			const size_t x = i % mem->resX;
-			const size_t y = i / mem->resX;
-			p[dimX] = rangeX.value(x);
-			p[dimY] = rangeY.value(y);
+			const size_t x = i % resX();
+			const size_t y = i / resX();
+			p[dimX()] = rangeX().value(x);
+			p[dimY()] = rangeY().value(y);
 
-			// Do nothing if the given parameters are invalid
-			EvaluationResult result;
+			// Check whether the parameters are valid, if not use the default
+			// evaluation result
 			if (p.valid()) {
-				// Update the parameters
 				p.update();
-
-				// Run the evaluation for these parameters
 				result = evaluation.evaluate(p);
+			} else {
+				result = descriptor().defaultResult();
 			}
 
 			// Store the evaluation result in the matrices
-			mem->pBinary(x, y) = result.pBinary;
-			mem->pFalsePositive(x, y) = result.pFalsePositive;
-			mem->pFalseNegative(x, y) = result.pFalseNegative;
-			mem->pSoft(x, y) = result.pSoft;
+			mem.store(x, y, result);
 
 			// Increment the counter
 			counter++;
@@ -102,7 +92,8 @@ bool Exploration::run(const Evaluation &evaluation,
 	std::atomic<size_t> counter(0);
 	std::atomic<bool> abort(false);
 	for (size_t idx = 0; idx < nThreads; idx++) {
-		threads.emplace_back(fun, mem, std::ref(counter), std::ref(abort), idx);
+		threads.emplace_back(fun, std::ref(mMem), std::ref(counter),
+		                     std::ref(abort), idx);
 #ifdef PTHREAD_SET_PRIORITY
 		// Fetch the native pthread handle
 		auto handle = threads.back().native_handle();
@@ -142,17 +133,6 @@ bool Exploration::run(const Evaluation &evaluation,
 		thread.join();
 	}
 	return !abort.load();
-}
-
-Exploration Exploration::clone() const
-{
-	// Clone this instance
-	Exploration res(*this);
-
-	// Create a new instance of the ExplorationMemory -- due to CoW semantics
-	// the memory is now decoupled
-	res.mem = std::make_shared<ExplorationMemory>(*mem);
-	return res;
 }
 
 /* Specializations of the "run" method. */

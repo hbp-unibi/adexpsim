@@ -44,6 +44,8 @@ struct RecordedSpike;
  */
 class SpikeTrainEvaluation {
 private:
+	static const EvaluationResultDescriptor descr;
+
 	/**
 	 * Used internally as a result of the trackMaxPotential function.
 	 */
@@ -217,6 +219,12 @@ public:
 	 * Returns a reference at the internally used spike train instance.
 	 */
 	const SpikeTrain &getTrain() const { return train; }
+
+	/**
+	 * Returns the evaluation result descriptor for the SingleGroupEvaluation
+	 * class.
+	 */
+	static const EvaluationResultDescriptor &descriptor() { return descr; }
 };
 }
 

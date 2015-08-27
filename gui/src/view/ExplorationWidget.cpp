@@ -66,7 +66,7 @@ ExplorationWidget::ExplorationWidget(
     std::shared_ptr<ParameterCollection> params,
     std::shared_ptr<Exploration> exploration, QToolBar *toolbar,
     QWidget *parent)
-    : params(params), exploration(exploration)
+    : params(params), exploration(exploration), curEvaluationType(-1)
 {
 	// Create the layout widget
 	layout = new QVBoxLayout(this);
@@ -75,10 +75,6 @@ ExplorationWidget::ExplorationWidget(
 	comboDimX = new QComboBox(toolbar);
 	comboDimY = new QComboBox(toolbar);
 	comboFunction = new QComboBox(toolbar);
-	comboFunction->addItem("Soft Success", 0);
-	comboFunction->addItem("Binary Success", 1);
-	comboFunction->addItem("False Positive", 2);
-	comboFunction->addItem("False Negative", 3);
 
 	fillDimensionCombobox(comboDimX);
 	comboDimX->setCurrentIndex(0);
@@ -138,7 +134,7 @@ ExplorationWidget::ExplorationWidget(
 	toolbar->addWidget(new QLabel(" Y: "));
 	toolbar->addWidget(comboDimY);
 	toolbar->addSeparator();
-	toolbar->addWidget(comboFunction);
+	actFunction = toolbar->addWidget(comboFunction);
 
 	// Add the plot widget
 	pltExploration = new QCustomPlot(this);
@@ -194,21 +190,10 @@ ExplorationWidget::ExplorationWidget(
 	QWidget *statusWidget = new QWidget(this);
 	statusWidget->setMaximumHeight(35);
 
-	lblDimX = new QLabel(statusWidget);
-	lblDimX->setMinimumWidth(100);
-	lblDimY = new QLabel(statusWidget);
-	lblDimY->setMinimumWidth(100);
-	lblPBinary = new QLabel(statusWidget);
-	lblPBinary->setMinimumWidth(75);
-	lblPFalsePositive = new QLabel(statusWidget);
-	lblPFalsePositive->setMinimumWidth(75);
-	lblPFalseNegative = new QLabel(statusWidget);
-	lblPFalseNegative->setMinimumWidth(75);
-	lblPSoft = new QLabel(statusWidget);
-	lblPSoft->setMinimumWidth(75);
-
-	statusLabel = new QLabel(statusWidget);
-	statusLabel->setMinimumWidth(50);
+	lblInfo = new QLabel(statusWidget);
+	lblInfo->setMinimumWidth(100);
+	lblStatus = new QLabel(statusWidget);
+	lblStatus->setMinimumWidth(50);
 	progressBar = new QProgressBar(statusWidget);
 	progressBar->setMinimum(0);
 	progressBar->setMaximum(1000);
@@ -217,14 +202,10 @@ ExplorationWidget::ExplorationWidget(
 	progressBar->setMaximumWidth(200);
 
 	QHBoxLayout *statusLayout = new QHBoxLayout(statusWidget);
-	statusLayout->addWidget(lblDimX);
-	statusLayout->addWidget(lblDimY);
-	statusLayout->addWidget(lblPBinary);
-	statusLayout->addWidget(lblPSoft);
-	statusLayout->addWidget(lblPFalsePositive);
-	statusLayout->addWidget(lblPFalseNegative);
+	statusLayout->addWidget(lblInfo);
+	statusLayout->addStretch(1);
 	statusLayout->addWidget(progressBar);
-	statusLayout->addWidget(statusLabel);
+	statusLayout->addWidget(lblStatus);
 
 	// Combine the widgets in the layout
 	layout->setSpacing(0);
@@ -237,6 +218,9 @@ ExplorationWidget::ExplorationWidget(
 
 	// Update the status bar information
 	updateInfo();
+
+	// Rebuild the dimension widgets
+	rebuildDimensionWidgets();
 }
 
 ExplorationWidget::~ExplorationWidget()
@@ -254,10 +238,15 @@ size_t ExplorationWidget::getDimY()
 	return comboDimY->itemData(comboDimY->currentIndex()).toInt();
 }
 
-EvaluationResultDimension ExplorationWidget::getDimZ()
+size_t ExplorationWidget::getDimZ()
 {
-	return EvaluationResultDimension(
-	    comboFunction->itemData(comboFunction->currentIndex()).toInt());
+	if (exploration->valid()) {
+		const EvaluationResultDescriptor &descr = exploration->descriptor();
+		return std::min<size_t>(
+		    descr.size() - 1,
+		    comboFunction->itemData(comboFunction->currentIndex()).toInt());
+	}
+	return 0;
 }
 
 void ExplorationWidget::saveToPdf(const QString &filename)
@@ -299,16 +288,14 @@ QPointF ExplorationWidget::plotToParameters(Val x, Val y)
 	    WorkingParameters::plotToParameter(y, getDimY(), params->params));
 }
 
-QString ExplorationWidget::axisName(size_t dim, bool unit)
+std::string ExplorationWidget::axisName(size_t dim, bool unit)
 {
 	if (WorkingParameters::linear[dim]) {
-		return QString::fromStdString(
-		    WorkingParameters::originalNames[dim] +
-		    (unit ? " [" + WorkingParameters::originalUnits[dim] + "]" : ""));
+		return WorkingParameters::originalNames[dim] +
+		       (unit ? " [" + WorkingParameters::originalUnits[dim] + "]" : "");
 	}
-	return QString::fromStdString(
-	    WorkingParameters::names[dim] +
-	    (unit ? " [" + WorkingParameters::units[dim] + "]" : ""));
+	return WorkingParameters::names[dim] +
+	       (unit ? " [" + WorkingParameters::units[dim] + "]" : "");
 }
 
 /*
@@ -345,6 +332,27 @@ void ExplorationWidget::dimensionChanged(QCPAxis *axis, size_t dim)
 	refresh();
 }
 
+void ExplorationWidget::rebuildDimensionWidgets()
+{
+	if (exploration->valid()) {
+		const EvaluationResultDescriptor &descr = exploration->descriptor();
+		const int newEvaluationType = static_cast<int>(descr.type());
+		if (newEvaluationType != curEvaluationType) {
+			curEvaluationType = newEvaluationType;
+			comboFunction->clear();
+			for (size_t i = 0; i < descr.size(); i++) {
+				comboFunction->addItem(QString::fromStdString(descr.name(i)),
+				                       int(i));
+			}
+			comboFunction->setCurrentIndex(descr.optimizationDim());
+			actFunction->setVisible(true);
+		}
+	} else {
+		curEvaluationType = -1;
+		actFunction->setVisible(false);
+	}
+}
+
 void ExplorationWidget::dimensionXChanged()
 {
 	dimensionChanged(pltExploration->xAxis,
@@ -359,45 +367,36 @@ void ExplorationWidget::dimensionYChanged()
 
 void ExplorationWidget::updateInfo(QMouseEvent *event)
 {
-	// If event is set to nullptr, just update the label captions
-	lblPBinary->setText("");
-	lblPSoft->setText("");
-	lblPFalsePositive->setText("");
-	lblPFalseNegative->setText("");
-	if (!event) {
-		lblDimX->setText(axisName(getDimX()));
-		lblDimY->setText(axisName(getDimY()));
-	} else {
+	std::stringstream ss;
+	ss << std::setprecision(4);
+	if (event) {
 		// Fetch the raw x/y position
 		Val x = pltExploration->xAxis->pixelToCoord(event->localPos().x());
 		Val y = pltExploration->yAxis->pixelToCoord(event->localPos().y());
+		ss << axisName(getDimX()) << ": " << std::setw(6) << x << "\t"
+		   << axisName(getDimY()) << ": " << std::setw(6) << y << "\t";
 
-		// Print it
-		lblDimX->setText(axisName(getDimX()) + ": " + QString::number(x));
-		lblDimY->setText(axisName(getDimY()) + ": " + QString::number(y));
-
-		// Convert it to working parameters and check whether a corresponding
-		// value can be found in the current exploration
-		QPointF p = plotToWorkingParameters(x, y);
+		// Print the values of all exploration dimensions
 		if (exploration->valid()) {
-			DiscreteRange rX = exploration->getRangeX();
-			DiscreteRange rY = exploration->getRangeY();
+			const QPointF p = plotToWorkingParameters(x, y);
+			const EvaluationResultDescriptor &descr = exploration->descriptor();
+			const ExplorationMemory &mem = exploration->mem();
+			const DiscreteRange &rX = exploration->rangeX();
+			const DiscreteRange &rY = exploration->rangeY();
 			int iX = floor(rX.index(p.x()));
 			int iY = floor(rY.index(p.y()));
 			if (iX >= 0 && iX < (int)rX.steps && iY >= 0 &&
 			    iY < (int)rY.steps) {
-				EvaluationResult res = exploration->getMemory()(iX, iY);
-				lblPBinary->setText("pBin: " +
-				                    QString::number(res.pBinary, 'f', 3));
-				lblPFalsePositive->setText(
-				    "pFPos: " + QString::number(res.pFalsePositive, 'f', 3));
-				lblPFalseNegative->setText(
-				    "pFNeg: " + QString::number(res.pFalseNegative, 'f', 3));
-				lblPSoft->setText("pSoft: " +
-				                  QString::number(res.pSoft, 'f', 3));
+				for (size_t iDim = 0; iDim < descr.size(); iDim++) {
+					ss << descr.id(iDim) << ": " << std::setw(6)
+					   << mem(iX, iY, iDim) << "\t";
+				}
 			}
 		}
+	} else {
+		ss << axisName(getDimX()) << "\t" << axisName(getDimY());
 	}
+	lblInfo->setText(QString::fromStdString(ss.str()));
 }
 
 void ExplorationWidget::plotDoubleClick(QMouseEvent *event)
@@ -450,14 +449,14 @@ void ExplorationWidget::progress(float p, bool show)
 		std::stringstream ss;
 		ss << std::setprecision(5) << std::setw(4) << ceil(p * 1000) / 10
 		   << "%";
-		statusLabel->setText(QString::fromStdString(ss.str()));
+		lblStatus->setText(QString::fromStdString(ss.str()));
 		progressBar->setValue(p * 1000);
 		progressBar->show();
 	} else {
 		if (p == 0.0) {
-			statusLabel->setText("Wait...");
+			lblStatus->setText("Wait...");
 		} else {
-			statusLabel->setText("Ready.");
+			lblStatus->setText("Ready.");
 		}
 		progressBar->hide();
 	}
@@ -522,8 +521,8 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 		const size_t HW_RES = showHWOverlay ? RES : 0;
 		MatrixBase<bool> mask(RES, RES);
 		MatrixBase<bool> maskHW(HW_RES, HW_RES);
-		const DiscreteRange &rX = exploration->getRangeX();
-		const DiscreteRange &rY = exploration->getRangeY();
+		const DiscreteRange &rX = exploration->rangeX();
+		const DiscreteRange &rY = exploration->rangeY();
 		const DiscreteRange rEX(rX.min, rX.max, RES);
 		const DiscreteRange rEY(rY.min, rY.max, RES);
 		const size_t dimX = getDimX();
@@ -558,19 +557,24 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 
 void ExplorationWidget::refresh()
 {
+	// Check whether the function selection combobox has to be rebuilt
+	rebuildDimensionWidgets();
+
 	// Clear the graph
 	pltExploration->setCurrentLayer("main");
 	pltExploration->clearPlottables();
 
 	// Update the x- and y- axis labels
-	pltExploration->xAxis->setLabel(axisName(getDimX(), true));
-	pltExploration->yAxis->setLabel(axisName(getDimY(), true));
+	pltExploration->xAxis->setLabel(
+	    QString::fromStdString(axisName(getDimX(), true)));
+	pltExploration->yAxis->setLabel(
+	    QString::fromStdString(axisName(getDimY(), true)));
 
 	// Plot the exploration data
 	if (exploration->valid()) {
 		// Fetch the X and Y range
-		const DiscreteRange &rX = exploration->getRangeX();
-		const DiscreteRange &rY = exploration->getRangeY();
+		const DiscreteRange &rX = exploration->rangeX();
+		const DiscreteRange &rY = exploration->rangeY();
 
 		// Transform the range
 		QPointF min = workingParametersToPlot(rX.min, rY.min);
@@ -585,36 +589,15 @@ void ExplorationWidget::refresh()
 		                      QCPRange(min.y(), max.y()));
 
 		// Fill the plot data
-		const ExplorationMemory &mem = exploration->getMemory();
-		switch (getDimZ()) {
-			case EvaluationResultDimension::SOFT:
-				fillColorMap(
-				    map, rX.steps, rY.steps,
-				    [&mem](size_t x, size_t y) { return mem.pSoft(x, y); });
-				map->setGradient(ExplorationWidgetGradients::blue());
-				break;
-			case EvaluationResultDimension::BINARY:
-				fillColorMap(
-				    map, rX.steps, rY.steps,
-				    [&mem](size_t x, size_t y) { return mem.pBinary(x, y); });
-				map->setGradient(ExplorationWidgetGradients::orange());
-				break;
-			case EvaluationResultDimension::FALSE_POSITIVE:
-				fillColorMap(map, rX.steps, rY.steps,
-				             [&mem](size_t x, size_t y) {
-					return mem.pFalsePositive(x, y);
-				});
-				map->setGradient(ExplorationWidgetGradients::green());
-				break;
-			case EvaluationResultDimension::FALSE_NEGATIVE:
-				fillColorMap(map, rX.steps, rY.steps,
-				             [&mem](size_t x, size_t y) {
-					return mem.pFalseNegative(x, y);
-				});
-				map->setGradient(ExplorationWidgetGradients::green());
-				break;
-		}
-		map->setDataRange(QCPRange(0, 1));
+		const ExplorationMemory &mem = exploration->mem();
+		const Matrix &mat = mem.data[getDimZ()];
+		fillColorMap(map, mat.getWidth(), mat.getHeight(),
+		             [&mat](size_t x, size_t y) { return mat(x, y); });
+		map->setGradient(ExplorationWidgetGradients::blue());
+
+		// Set the value range
+		const Range valueRange = mem.range(getDimZ());
+		map->setDataRange(QCPRange(valueRange.min, valueRange.max));
 	}
 
 	updateInvalidRegionsOverlay();

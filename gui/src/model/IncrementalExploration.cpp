@@ -105,16 +105,8 @@ IncrementalExploration::IncrementalExploration(
       level(MIN_LEVEL),
       restart(false),
       inEmitData(false),
-      currentExploration(nullptr),
       currentRunner(nullptr)
 {
-	// Create the exploration memory instances
-	for (int level = MIN_LEVEL; level <= MAX_LEVEL; level++) {
-		mem.emplace_back(
-		    std::make_shared<ExplorationMemory>(1 << level, 1 << level));
-	}
-
-	// Create the timer
 	updateTimer = new QTimer(this);
 	connect(updateTimer, SIGNAL(timeout()), this, SLOT(updateTimeout()));
 }
@@ -153,18 +145,15 @@ void IncrementalExploration::setMaxLevel(int maxLevel)
 
 void IncrementalExploration::start()
 {
-	// Delete the currentExploration instance
-	if (currentExploration != nullptr) {
-		delete currentExploration;
-	}
-
 	// Create a new Exploration instance
-	currentExploration = new Exploration(mem[level - MIN_LEVEL], params->params,
-	                                     dimX, minX, maxX, dimY, minY, maxY);
+	const size_t res = 1 << level;
+	exploration = Exploration(params->params, dimX, dimY,
+	                                     DiscreteRange(minX, maxX, res),
+	                                     DiscreteRange(minY, maxY, res));
 
 	// Create a new IncrementExplorationRunner and connect all signals
 	currentRunner =
-	    new IncrementalExplorationRunner(*currentExploration, params);
+	    new IncrementalExplorationRunner(exploration, params);
 	connect(currentRunner, SIGNAL(progress(float)), this,
 	        SLOT(runnerProgress(float)));
 	connect(currentRunner, SIGNAL(done(bool)), this, SLOT(runnerDone(bool)));
@@ -229,7 +218,7 @@ void IncrementalExploration::runnerDone(bool ok)
 	// If the result is ok, emit the data
 	if (ok) {
 		inEmitData = true;
-		emit data(*currentExploration);
+		emit data(exploration);
 		inEmitData = false;
 	} else {
 		emit progress(0.0, false);
@@ -237,9 +226,7 @@ void IncrementalExploration::runnerDone(bool ok)
 
 	// Delete the runner object and the exploration object
 	delete currentRunner;
-	delete currentExploration;
 	currentRunner = nullptr;
-	currentExploration = nullptr;
 
 	// If the last level is reached, emit a last progress event
 	if (level > maxLevel) {

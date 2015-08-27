@@ -140,8 +140,8 @@ void ExplorationWindow::createWidgets()
 
 void ExplorationWindow::handleExplorationData(Exploration data)
 {
-	// Create a clone of the given exploration instance (including the memory)
-	*exploration = data.clone();
+	// Create a copy of the given exploration instance
+	*exploration = data;
 
 	// Update the view, fit it if the corresponding flag has been set
 	explorationWidget->refresh();

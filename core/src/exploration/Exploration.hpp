@@ -29,7 +29,6 @@
 #define _ADEXPSIM_EXPLORATION_HPP_
 
 #include <functional>
-#include <memory>
 
 #include <simulation/Parameters.hpp>
 #include <common/Matrix.hpp>
@@ -38,13 +37,18 @@
 #include "EvaluationResult.hpp"
 
 namespace AdExpSim {
-
 /**
  * The ExplorationMemory structure provides the memory for an exploration run of
  * a certain resolution. It allows Exploration objects to access and modify this
- * memory.
+ * memory. Copying an ExplorationMemory object is cheap due to copy on write
+ * semantics of the underlying Matrix class.
  */
 struct ExplorationMemory {
+	/**
+	 * Copy of the evaluation result descriptor.
+	 */
+	EvaluationResultDescriptor descriptor;
+
 	/**
 	 * Resolution in x-direction.
 	 */
@@ -56,26 +60,20 @@ struct ExplorationMemory {
 	size_t resY;
 
 	/**
-	 * Matrix containing the probability of the number of expected spikes being
-	 * fulfilled for the given spike train.
+	 * Vector of matrices containing each result dimension.
 	 */
-	Matrix pBinary;
+	std::vector<Matrix> data;
 
 	/**
-	 * Matrix containing the probability of false positive spikes.
+	 * Vector of ranges containing the min/max values occuring in that
+	 * dimension.
 	 */
-	Matrix pFalsePositive;
+	std::vector<Range> extrema;
 
 	/**
-	 * Matrix containing the probability of false negative spikes.
+	 * Default constructor, creates an empty memory instance.
 	 */
-	Matrix pFalseNegative;
-
-	/**
-	 * Matrix containing hte probability of the number of expected spikes begin
-	 * fulfilled under noise.
-	 */
-	Matrix pSoft;
+	ExplorationMemory() : resX(0), resY(0) {}
 
 	/**
 	 * Constructor of the ExplorationMemory class for a certain resolution.
@@ -83,14 +81,18 @@ struct ExplorationMemory {
 	 * @param resX is the resolution of the memory in X direction.
 	 * @param resY is the resolution of the memory in Y direction.
 	 */
-	ExplorationMemory(size_t resX = 1024, size_t resY = 1024)
-	    : resX(resX),
+	ExplorationMemory(const EvaluationResultDescriptor &descriptor, size_t resX,
+	                  size_t resY)
+	    : descriptor(descriptor),
+	      resX(resX),
 	      resY(resY),
-	      pBinary(resX, resY),
-	      pFalsePositive(resX, resY),
-	      pFalseNegative(resX, resY),
-	      pSoft(resX, resY)
+	      data(descriptor.size()),
+	      extrema(descriptor.size())
 	{
+		for (size_t i = 0; i < descriptor.size(); i++) {
+			data[i].resize(resX, resY);
+			extrema[i] = Range::invalid();
+		}
 	}
 
 	/**
@@ -99,64 +101,88 @@ struct ExplorationMemory {
 	 */
 	EvaluationResult operator()(size_t x, size_t y) const
 	{
-		return EvaluationResult(pBinary(x, y), pFalsePositive(x, y),
-		                        pFalseNegative(x, y), pSoft(x, y));
+		EvaluationResult res(data.size());
+		for (size_t i = 0; i < data.size(); i++) {
+			res[i] = data[i](x, y);
+		}
+		return res;
 	}
 
 	/**
-	 * Returns a value for the corresponding evaluation result dimension.
+	 * Returns an the value of the evaluation at the given position.
 	 */
-	Val operator()(size_t x, size_t y, EvaluationResultDimension dim) const
+	Val operator()(size_t x, size_t y, size_t dim) const
 	{
-		switch (dim) {
-			case EvaluationResultDimension::BINARY:
-				return pBinary(x, y);
-			case EvaluationResultDimension::FALSE_POSITIVE:
-				return pFalsePositive(x, y);
-			case EvaluationResultDimension::FALSE_NEGATIVE:
-				return pFalseNegative(x, y);
-			case EvaluationResultDimension::SOFT:
-				return pSoft(x, y);
-		}
-		return 0.0;
+		return data[dim](x, y);
 	}
+
+	/**
+	 * Stores an EvaluationResult in the memory.
+	 */
+	void store(size_t x, size_t y, const EvaluationResult &res)
+	{
+		for (size_t i = 0; i < std::min(data.size(), res.size()); i++) {
+			data[i](x, y) = res[i];
+			extrema[i].expand(res[i]);
+		}
+	}
+
+	/**
+	 * Returns the data range for the given dimension. If an explicitly bounded
+	 * range is specified in the EvaluationResultDescriptor this range is used,
+	 * otherwise the actual data range is used.
+	 */
+	Range range(size_t i) const
+	{
+		return Range(descriptor.range(i).openMax() ? extrema[i].max
+		                                           : descriptor.range(i).max,
+		             descriptor.range(i).openMin() ? extrema[i].min
+		                                           : descriptor.range(i).min);
+	}
+
+	/**
+	 * Returns true if there is actually any data stored inside the memory.
+	 */
+	bool valid() const { return resX > 0 && resY > 0 && data.size() > 0; }
 };
 
 /**
- * The Exploration class is used to run a parameter space exploration. It
- * automatically
+ * The Exploration class is used to run a parameter space exploration. Note that
+ * the Exploration class uses copy on write semantics, so copying an Exploration
+ * class is actually quite cheap as the cloned instance will share the same
+ * buffer until one of the buffers is modified.
  */
 class Exploration {
 private:
 	/**
 	 * ExplorationMemory instance on which the exploration is working.
 	 */
-	std::shared_ptr<ExplorationMemory> mem;
+	ExplorationMemory mMem;
 
 	/**
 	 * Base working parameter set.
 	 */
-	WorkingParameters params;
-
-	/**
-	 * Parameter range along the x-axis.
-	 */
-	DiscreteRange rangeX;
-
-	/**
-	 * Parameter range along the y-axis.
-	 */
-	DiscreteRange rangeY;
+	WorkingParameters mParams;
 
 	/**
 	 * Index of the parameter dimension that is varried along the x-axis.
 	 */
-	size_t dimX;
+	size_t mDimX;
 
 	/**
 	 * Index of the parameter dimension that is varried along the y-axis.
 	 */
-	size_t dimY;
+	size_t mDimY;
+
+	/**
+	 * Parameter range along the x-axis.
+	 */
+	DiscreteRange mRangeX;
+
+	/**
+	 * Parameter range along the y-axis.
+	 */
+	DiscreteRange mRangeY;
 
 public:
 	/**
@@ -170,25 +196,25 @@ public:
 	/**
 	 * Default constructor. Resulting exploration is invalid.
 	 */
-	Exploration() : mem(nullptr), dimX(0), dimY(1) {}
+	Exploration() : mDimX(0), mDimY(1) {}
 
 	/**
 	 * Creates a new Exploration instance and sets all its parameters.
 	 *
-	 * @param mem is a reference at the underlying ExplorationMemory instance.
 	 * @param params is the base parameter set.
 	 * @param dimX is the index of the parameter vector entry which is varried
 	 * in x-direction.
-	 * @param minX is the minimum parameter value in x-direction.
-	 * @param maxX is the maximum parameter value in x-direction.
 	 * @param dimY is the index of the parameter vector entry which is varried
-	 * in y-direction.
-	 * @param minY is the minimum parameter value in y-direction.
-	 * @param maxY is the maximum parameter value in y-direction.
+	 * @param rangeX is the range descriptor for the X-direction.
+	 * @param rangeY is the range descriptor for the Y-direction.
 	 */
-	Exploration(std::shared_ptr<ExplorationMemory> mem,
-	            const WorkingParameters &params, size_t dimX, Val minX,
-	            Val maxX, size_t dimY, Val minY, Val maxY);
+	Exploration(const WorkingParameters &params, size_t dimX, size_t dimY,
+	            DiscreteRange rangeX, DiscreteRange rangeY)
+	    : mParams(params),
+	      mDimX(dimX),
+	      mDimY(dimY),
+	      mRangeX(rangeX),
+	      mRangeY(rangeY){};
 
 	/**
 	 * Runs the exploration process, returns true if the process has completed
@@ -208,34 +234,56 @@ public:
 	/**
 	 * Flag indicating whether the exploration is valid or not.
 	 */
-	bool valid() const { return mem != nullptr; }
+	bool valid() const { return mMem.valid(); }
 
 	/**
 	 * Returns a reference at the exploration memory.
 	 */
-	const ExplorationMemory &getMemory() const { return *mem; }
+	const ExplorationMemory &mem() const { return mMem; }
+
+	/**
+	 * Returns a reference at the evaluation result descriptor.
+	 */
+	const EvaluationResultDescriptor &descriptor() const
+	{
+		return mMem.descriptor;
+	}
 
 	/**
 	 * Returns a reference at the base working parameters.
 	 */
-	const WorkingParameters &getParams() const { return params; }
+	const WorkingParameters &params() const { return mParams; }
+
+	/**
+	 * Returns the resolution in x-direction.
+	 */
+	const size_t resX() const { return mRangeX.steps; }
+
+	/**
+	 * Returns the resolution in y-direction.
+	 */
+	const size_t resY() const { return mRangeY.steps; }
 
 	/**
 	 * Returns a reference at the x-range.
 	 */
-	const DiscreteRange &getRangeX() const { return rangeX; }
+	const DiscreteRange &rangeX() const { return mRangeX; }
 
 	/**
 	 * Returns a reference at the y-range.
 	 */
-	const DiscreteRange &getRangeY() const { return rangeY; }
+	const DiscreteRange &rangeY() const { return mRangeY; }
 
 	/**
-	 * Returns a new Exploration instance with cloned, not shared memory.
+	 * Returns the x-dimension.
 	 */
-	Exploration clone() const;
-};
+	size_t dimX() const { return mDimX; }
 
+	/**
+	 * Returns the y-dimension.
+	 */
+	size_t dimY() const { return mDimY; }
+};
 }
 
 #endif /* _ADEXPSIM_EXPLORATION_HPP_ */

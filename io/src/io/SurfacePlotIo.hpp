@@ -42,17 +42,15 @@ public:
 	 * If the "gnuplot" argument is set to true, a blank line is inserted after
 	 * each "X" block.
 	 */
-	static void storeSurfacePlot(
-	    std::ostream &os, const Exploration &exploration,
-	    EvaluationResultDimension dim = EvaluationResultDimension::SOFT,
-	    bool gnuplot = true);
+	static void storeSurfacePlot(std::ostream &os,
+	                             const Exploration &exploration, size_t dim,
+	                             bool gnuplot = true);
 
 	/**
 	 * Runs GnuPlot and shows the given exploration.
 	 */
-	static void runGnuPlot(
-	    const Parameters &params, const Exploration &exploration,
-	    EvaluationResultDimension dim = EvaluationResultDimension::SOFT);
+	static void runGnuPlot(const Parameters &params,
+	                       const Exploration &exploration, size_t dim);
 };
 }
 

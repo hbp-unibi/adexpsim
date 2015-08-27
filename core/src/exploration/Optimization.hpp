@@ -81,11 +81,6 @@ private:
 	ModelType model;
 
 	/**
-	 * Evaluation result dimension that should be optimized.
-	 */
-	EvaluationResultDimension evalDim;
-
-	/**
 	 * Parameter dimensions that should be optimized.
 	 */
 	std::vector<size_t> dims;
@@ -129,15 +124,13 @@ public:
 	 *
 	 * @param model specifies whether the AdExp or IfCondExp model should be
 	 * used.
-	 * @param evalDim is the result dimension in the evaluation that should be
-	 * optimized.
 	 * @param dims as an array containing the working parameter dimensions that
 	 * should be optimized.
 	 * @param hw is a reference at a HardwareParameters object specifying the
 	 * hardware restrictions.
 	 */
-	Optimization(ModelType model, EvaluationResultDimension evalDim,
-	             const std::vector<size_t> &dims, const HardwareParameters &hw);
+	Optimization(ModelType model, const std::vector<size_t> &dims,
+	             const HardwareParameters &hw);
 
 	/**
 	 * Constructor of the Optimization class. This optimization instance will
@@ -145,13 +138,10 @@ public:
 	 *
 	 * @param model specifies whether the AdExp or IfCondExp model should be
 	 * used.
-	 * @param evalDim is the result dimension in the evaluation that should be
-	 * optimized.
 	 * @param dims as an array containing the working parameter dimensions that
 	 * should be optimized.
 	 */
-	Optimization(ModelType model, EvaluationResultDimension evalDim,
-	             const std::vector<size_t> &dims);
+	Optimization(ModelType model, const std::vector<size_t> &dims);
 
 	/**
 	 * Callback function which gets called periodically to inform the calling
