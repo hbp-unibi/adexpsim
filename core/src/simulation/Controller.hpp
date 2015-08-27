@@ -185,15 +185,17 @@ public:
  * Controller class used to limit the number of output spikes to a reasonable
  * count.
  */
-template <bool DefaultBehaviour, typename CountFun>
+template <typename CountFun, typename ParentController>
 class MaxOutputSpikeCountController {
 private:
+	ParentController &parent;
 	CountFun countFun;
 	size_t maxCount;
 
 public:
-	MaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
-	    : countFun(countFun), maxCount(maxCount)
+	MaxOutputSpikeCountController(CountFun countFun, size_t maxCount,
+	                              ParentController &parent)
+	    : parent(parent), countFun(countFun), maxCount(maxCount)
 	{
 	}
 
@@ -202,9 +204,7 @@ public:
 	{
 		return tripped()
 		           ? ControllerResult::ABORT
-		           : (DefaultBehaviour
-		                  ? DefaultController::control(t, s, as, p, inRefrac)
-		                  : ControllerResult::CONTINUE);
+		           : parent.control(t, s, as, p, inRefrac);
 	}
 
 	bool tripped() const { return countFun() > maxCount; }
@@ -213,12 +213,29 @@ public:
 /**
  * Constructor method for the MaxOutputSpikeCountController.
  */
-template <bool DefaultBehaviour, typename CountFun>
-static MaxOutputSpikeCountController<DefaultBehaviour, CountFun>
+template <typename CountFun, typename ParentController>
+static MaxOutputSpikeCountController<CountFun, ParentController>
+createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount,
+                                    ParentController &parent)
+{
+	return MaxOutputSpikeCountController<CountFun, ParentController>(
+	    countFun, maxCount, parent);
+}
+
+template <typename CountFun>
+static MaxOutputSpikeCountController<CountFun, DefaultController>
+createMaxOutputSpikeCountControllerWithDefault(CountFun countFun, size_t maxCount)
+{
+	DefaultController controller; // DefaultController.control is static
+	return createMaxOutputSpikeCountController(countFun, maxCount, controller);
+}
+
+template <typename CountFun>
+static MaxOutputSpikeCountController<CountFun, NullController>
 createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
 {
-	return MaxOutputSpikeCountController<DefaultBehaviour, CountFun>(countFun,
-	                                                                 maxCount);
+	NullController controller; // NullController.control is static
+	return createMaxOutputSpikeCountController(countFun, maxCount, controller);
 }
 }
 
