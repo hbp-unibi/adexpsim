@@ -69,12 +69,15 @@ SingleGroupWidget::SingleGroupWidget(
 	        SLOT(copyToSpikeTrain()));
 
 	// Create the other parameter widgets
-	paramN = new ParameterWidget(this, "n", 3, 1, 20, "", "n");
+	paramN = new ParameterWidget(this, "n", 3, 1, 10, "", "n");
 	paramN->setIntOnly(true);
 	paramN->setMinMaxEnabled(false);
-	paramNM1 = new ParameterWidget(this, "n-1", 2, 0, 19, "", "nM1");
+	paramNM1 = new ParameterWidget(this, "n-1", 2, 0, 9, "", "nM1");
 	paramNM1->setIntOnly(true);
 	paramNM1->setMinMaxEnabled(false);
+	paramNPatch = new ParameterWidget(this, "nPatch", 1, 1, 20, "", "nPatch");
+	paramNPatch->setIntOnly(true);
+	paramNPatch->setMinMaxEnabled(false);
 	paramNOut = new ParameterWidget(this, "nOut", 1, 0, 100, "", "nOut");
 	paramNOut->setIntOnly(true);
 	paramNOut->setMinMaxEnabled(false);
@@ -88,6 +91,8 @@ SingleGroupWidget::SingleGroupWidget(
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramNM1, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
+	connect(paramNPatch, SIGNAL(update(Val, const QVariant &)),
+	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramNOut, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramDeltaT, SIGNAL(update(Val, const QVariant &)),
@@ -99,6 +104,7 @@ SingleGroupWidget::SingleGroupWidget(
 	layout->addWidget(toolbar);
 	layout->addWidget(paramN);
 	layout->addWidget(paramNM1);
+	layout->addWidget(paramNPatch);
 	layout->addWidget(paramNOut);
 	layout->addWidget(paramDeltaT);
 	layout->addWidget(paramT);
@@ -132,6 +138,8 @@ void SingleGroupWidget::handleParameterUpdate(Val value, const QVariant &data)
 			params->singleGroup.n = value + 1;
 			paramN->setValue(value + 1);
 		}
+	} else if (s == "nPatch") {
+		params->singleGroup.nPatch = value;
 	} else if (s == "nOut") {
 		params->singleGroup.nOut = value;
 	} else if (s == "deltaT") {
@@ -149,6 +157,7 @@ void SingleGroupWidget::refresh()
 	blockSignals(true);
 	paramN->setValue(params->singleGroup.n);
 	paramNM1->setValue(params->singleGroup.nM1);
+	paramNPatch->setValue(params->singleGroup.nPatch);
 	paramNOut->setValue(params->singleGroup.nOut);
 	paramDeltaT->setValue(params->singleGroup.deltaT.sec() * 1000.0);
 	paramT->setValue(params->singleGroup.T.sec() * 1000.0);

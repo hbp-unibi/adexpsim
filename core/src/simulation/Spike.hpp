@@ -256,16 +256,21 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  */
 struct SingleGroupSpikeData {
 	/**
-	 * n is the number of input spikes that should cause an output spike.
+	 * n is the number of input patches that should cause an output spike.
 	 * Should be larger or equal to one.
 	 */
 	Val n;
 
 	/**
-	 * nM1 is the number of input spikes that should not cause an output spike.
+	 * nM1 is the number of input patches that should not cause an output spike.
 	 * Usually set to n - 1.
 	 */
 	Val nM1;
+
+	/**
+	 * Number of spikes in a single patch.
+	 */
+	Val nPatch;
 
 	/**
 	 * t is the delay between the input spikes.
@@ -280,21 +285,25 @@ struct SingleGroupSpikeData {
 	/**
 	 * Default constructor. Initializes all members with sane values.
 	 */
-	SingleGroupSpikeData() : n(3), nM1(2), deltaT(1e-3_s), T(33e-3_s) {}
-
-	/**
-	 * Constructor, sets each member to the given value.
-	 */
-	SingleGroupSpikeData(Val n, Time deltaT = 1e-3_s, Time T = 33e-3_s)
-	    : SingleGroupSpikeData(n, n - 1, deltaT, T)
+	SingleGroupSpikeData() : n(3), nM1(2), nPatch(1), deltaT(1e-3_s), T(33e-3_s)
 	{
 	}
 
 	/**
 	 * Constructor, sets each member to the given value.
 	 */
-	SingleGroupSpikeData(Val n, Val nM1, Time deltaT = 1e-3_s, Time T = 33e-3_s)
-	    : n(n), nM1(nM1), deltaT(deltaT), T(T)
+	SingleGroupSpikeData(Val n, Val nPatch = 1, Time deltaT = 1e-3_s,
+	                     Time T = 33e-3_s)
+	    : SingleGroupSpikeData(n, n - 1, nPatch, deltaT, T)
+	{
+	}
+
+	/**
+	 * Constructor, sets each member to the given value.
+	 */
+	SingleGroupSpikeData(Val n, Val nM1, Val nPatch = 1, Time deltaT = 1e-3_s,
+	                     Time T = 33e-3_s)
+	    : n(n), nM1(nM1), nPatch(nPatch), deltaT(deltaT), T(T)
 	{
 	}
 
@@ -302,11 +311,11 @@ struct SingleGroupSpikeData {
 	 * Constructs an input spike vector according to the parameters stored in
 	 * this class.
 	 *
-	 * @param n is the number of input spikes. Might be set to n or nM1.
+	 * @param n is the number of input spikes. Should be set to n or nM1.
 	 */
 	SpikeVec spikes(Val n) const
 	{
-		return buildInputSpikes(n, deltaT, 0_s, 1.0);
+		return buildInputSpikes(n, deltaT, 0_s, nPatch);
 	}
 };
 
