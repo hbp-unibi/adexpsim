@@ -242,19 +242,74 @@ constexpr double MIN_TIME_DELTA = TIME_TO_SEC;
 using TimeVec = std::vector<Time>;
 
 /**
- * Range type, represents a range from a minimum to a maximum value.
+ * Range type, represents an interval from a minimum to a maximum value.
  */
 struct Range {
+	/**
+	 * Minimum value of the range (inclusive).
+	 */
 	Val min;
+
+	/**
+	 * Maximum value of the range (inclusive).
+	 */
 	Val max;
 
+	/**
+	 * Default constructor, initializes the range to [0, 0].
+	 */
 	Range() : min(0), max(0) {}
 
+	/**
+	 * Creates a range with the given minimum/maximum values.
+	 */
 	Range(Val min, Val max) : min(min), max(max) {}
+
+	static Range upperBound(Val max)
+	{
+		return Range(std::numeric_limits<Val>::lowest(), max);
+	};
+
+	static Range lowerBound(Val min)
+	{
+		return Range(min, std::numeric_limits<Val>::max());
+	};
+
+	static Range unbounded()
+	{
+		return Range(std::numeric_limits<Val>::lowest(),
+		             std::numeric_limits<Val>::max());
+	}
+
+	static Range invalid()
+	{
+		return Range(std::numeric_limits<Val>::max(),
+		             std::numeric_limits<Val>::lowest());
+	}
+
+	void expand(Val v)
+	{
+		max = std::max(v, max);
+		min = std::min(v, min);
+	}
 
 	bool contains(Val v) const { return (v >= min) && (v <= max); }
 
 	Val clamp(Val v) const { return v > max ? max : (v < min ? min : v); };
+
+	bool valid() const { return min <= max; }
+
+	bool openMin() const { return min <= std::numeric_limits<Val>::lowest(); }
+
+	bool openMax() const { return max >= std::numeric_limits<Val>::max(); }
+
+	bool open() const { return openMin() || openMax(); }
+
+	bool boundedMin() const { return !openMin(); }
+
+	bool boundedMax() const { return !openMax(); }
+
+	bool bounded() const { return boundedMin() && boundedMax(); }
 };
 
 /**
