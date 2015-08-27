@@ -122,7 +122,8 @@ static void addMaxima(QCustomPlot *plot, const Parameters &p,
 		Val t = SIPrefixTrafo::transformTime(max.t.sec());
 		if (t >= minT && t <= maxT) {
 			Val v = SIPrefixTrafo::transformVoltage(max.s.v() + p.eL());
-			PlotMarker *marker = new PlotMarker(plot, 5);
+			PlotMarker *marker =
+			    new PlotMarker(plot, PlotMarker::Type::POINT, 5);
 			plot->addItem(marker);
 			marker->setCoords(t, v);
 		}
