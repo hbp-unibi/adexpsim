@@ -44,11 +44,6 @@ namespace AdExpSim {
 using Val = float;
 
 /**
- * Vector of Val values.
- */
-using ValVec = std::vector<Val>;
-
-/**
  * Integer type used internally by the Time type to represent times.
  */
 using TimeType = int64_t;
