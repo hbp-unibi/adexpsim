@@ -112,8 +112,8 @@ void SurfacePlotIo::storeSurfacePlot(std::ostream &os,
                                      EvaluationResultDimension dim,
                                      bool gnuplot)
 {
-	const Range rX = exploration.getRangeX();
-	const Range rY = exploration.getRangeY();
+	const DiscreteRange rX = exploration.getRangeX();
+	const DiscreteRange rY = exploration.getRangeY();
 	const ExplorationMemory &mem = exploration.getMemory();
 	for (size_t x = 0; x < rX.steps; x++) {
 		for (size_t y = 0; y < rY.steps; y++) {

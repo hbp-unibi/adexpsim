@@ -141,12 +141,12 @@ private:
 	/**
 	 * Parameter range along the x-axis.
 	 */
-	Range rangeX;
+	DiscreteRange rangeX;
 
 	/**
 	 * Parameter range along the y-axis.
 	 */
-	Range rangeY;
+	DiscreteRange rangeY;
 
 	/**
 	 * Index of the parameter dimension that is varried along the x-axis.
@@ -223,12 +223,12 @@ public:
 	/**
 	 * Returns a reference at the x-range.
 	 */
-	const Range &getRangeX() const { return rangeX; }
+	const DiscreteRange &getRangeX() const { return rangeX; }
 
 	/**
 	 * Returns a reference at the y-range.
 	 */
-	const Range &getRangeY() const { return rangeY; }
+	const DiscreteRange &getRangeY() const { return rangeY; }
 
 	/**
 	 * Returns a new Exploration instance with cloned, not shared memory.

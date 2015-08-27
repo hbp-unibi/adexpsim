@@ -120,7 +120,8 @@ double ExplorationWidgetInvalidOverlay::selectTest(const QPointF &pos,
 	return -1.0;
 }
 
-void ExplorationWidgetInvalidOverlay::setMask(Range rangeDimX, Range rangeDimY,
+void ExplorationWidgetInvalidOverlay::setMask(DiscreteRange rangeDimX,
+                                              DiscreteRange rangeDimY,
                                               const MatrixBase<bool> &mask)
 {
 	this->rangeDimX = rangeDimX;

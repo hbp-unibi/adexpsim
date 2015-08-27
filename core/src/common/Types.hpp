@@ -242,9 +242,26 @@ constexpr double MIN_TIME_DELTA = TIME_TO_SEC;
 using TimeVec = std::vector<Time>;
 
 /**
- * Range type, represents a range from a minimum to a maximum value in N steps.
+ * Range type, represents a range from a minimum to a maximum value.
  */
 struct Range {
+	Val min;
+	Val max;
+
+	Range() : min(0), max(0) {}
+
+	Range(Val min, Val max) : min(min), max(max) {}
+
+	bool contains(Val v) const { return (v >= min) && (v <= max); }
+
+	Val clamp(Val v) const { return v > max ? max : (v < min ? min : v); };
+};
+
+/**
+ * Same as the Range class but with a discrete number of steps in between.
+ * Provides means to iterate over all values in the range.
+ */
+struct DiscreteRange : public Range {
 	class Iterator {
 	private:
 		size_t i;
@@ -272,19 +289,14 @@ struct Range {
 		bool operator!=(const Iterator &rhs) { return i != rhs.i; }
 	};
 
-	Val min;
-	Val max;
 	size_t steps;
 
-	Range() : min(0), max(0), steps(1) {}
+	DiscreteRange() : Range(), steps(1) {}
 
-	Range(Val min, Val max, size_t steps = 1) : min(min), max(max), steps(steps)
+	DiscreteRange(Val min, Val max, size_t steps = 1)
+	    : Range(min, max), steps(steps)
 	{
 	}
-
-	bool contains(Val v) const { return (v >= min) && (v <= max); }
-
-	Val clamp(Val v) const { return v > max ? max : (v < min ? min : v); }
 
 	Val value(size_t i) const { return getOffs() + getScale() * i; }
 

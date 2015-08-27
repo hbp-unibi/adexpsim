@@ -35,7 +35,7 @@ class ExplorationWidgetInvalidOverlay : public QCPAbstractItem {
 
 private:
 	QPen mPen;
-	Range rangeDimX, rangeDimY;
+	DiscreteRange rangeDimX, rangeDimY;
 	MatrixBase<bool> mask;
 	QImage buffer;
 
@@ -57,7 +57,7 @@ public:
 	double selectTest(const QPointF &pos, bool onlySelectable,
 	                  QVariant *details = 0) const override;
 
-	void setMask(Range rangeDimX, Range rangeDimY,
+	void setMask(DiscreteRange rangeDimX, DiscreteRange rangeDimY,
 	             const MatrixBase<bool> &mask);
 };
 }

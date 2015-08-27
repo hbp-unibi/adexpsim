@@ -377,8 +377,8 @@ void ExplorationWidget::updateInfo(QMouseEvent *event)
 		// value can be found in the current exploration
 		QPointF p = plotToWorkingParameters(x, y);
 		if (exploration->valid()) {
-			Range rX = exploration->getRangeX();
-			Range rY = exploration->getRangeY();
+			DiscreteRange rX = exploration->getRangeX();
+			DiscreteRange rY = exploration->getRangeY();
 			int iX = floor(rX.index(p.x()));
 			int iY = floor(rY.index(p.y()));
 			if (iX >= 0 && iX < (int)rX.steps && iY >= 0 &&
@@ -519,10 +519,10 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 		const size_t HW_RES = showHWOverlay ? RES : 0;
 		MatrixBase<bool> mask(RES, RES);
 		MatrixBase<bool> maskHW(HW_RES, HW_RES);
-		const Range &rX = exploration->getRangeX();
-		const Range &rY = exploration->getRangeY();
-		const Range rEX(rX.min, rX.max, RES);
-		const Range rEY(rY.min, rY.max, RES);
+		const DiscreteRange &rX = exploration->getRangeX();
+		const DiscreteRange &rY = exploration->getRangeY();
+		const DiscreteRange rEX(rX.min, rX.max, RES);
+		const DiscreteRange rEY(rY.min, rY.max, RES);
 		const size_t dimX = getDimX();
 		const size_t dimY = getDimY();
 		WorkingParameters wp(params->params);
@@ -541,14 +541,14 @@ void ExplorationWidget::updateInvalidRegionsOverlay()
 		// Update the overlay
 		QPointF min = workingParametersToPlot(rX.min, rY.min);
 		QPointF max = workingParametersToPlot(rX.max, rY.max);
-		overlay->setMask(Range(min.x(), max.x(), RES),
-		                 Range(min.y(), max.y(), RES), mask);
-		overlayHW->setMask(Range(min.x(), max.x(), HW_RES),
-		                   Range(min.y(), max.y(), HW_RES), maskHW);
+		overlay->setMask(DiscreteRange(min.x(), max.x(), RES),
+		                 DiscreteRange(min.y(), max.y(), RES), mask);
+		overlayHW->setMask(DiscreteRange(min.x(), max.x(), HW_RES),
+		                   DiscreteRange(min.y(), max.y(), HW_RES), maskHW);
 	} else {
-		overlay->setMask(Range(0, 0, 0), Range(0, 0, 0),
+		overlay->setMask(DiscreteRange(0, 0, 0), DiscreteRange(0, 0, 0),
 		                 MatrixBase<bool>(0, 0));
-		overlayHW->setMask(Range(0, 0, 0), Range(0, 0, 0),
+		overlayHW->setMask(DiscreteRange(0, 0, 0), DiscreteRange(0, 0, 0),
 		                   MatrixBase<bool>(0, 0));
 	}
 }
@@ -566,8 +566,8 @@ void ExplorationWidget::refresh()
 	// Plot the exploration data
 	if (exploration->valid()) {
 		// Fetch the X and Y range
-		Range rX = exploration->getRangeX();
-		Range rY = exploration->getRangeY();
+		const DiscreteRange &rX = exploration->getRangeX();
+		const DiscreteRange &rY = exploration->getRangeY();
 
 		// Transform the range
 		QPointF min = workingParametersToPlot(rX.min, rY.min);
