@@ -36,9 +36,9 @@
 #include <simulation/HardwareParameters.hpp>
 
 #include "ExplorationWidget.hpp"
-#include "ExplorationWidgetCrosshair.hpp"
 #include "ExplorationWidgetGradients.hpp"
 #include "ExplorationWidgetInvalidOverlay.hpp"
+#include "PlotMarker.hpp"
 
 namespace AdExpSim {
 
@@ -160,11 +160,14 @@ ExplorationWidget::ExplorationWidget(
 
 	pltExploration->addLayer("crosshair");
 
-	crosshair = new ExplorationWidgetCrosshair(pltExploration);
-	crosshairHW1 = new ExplorationWidgetCrosshair(pltExploration);
+	crosshair = new PlotMarker(pltExploration,
+	                           PlotMarker::Type::CROSSHAIR_WITH_OUTLINE, 11);
+	crosshairHW1 = new PlotMarker(pltExploration,
+	                              PlotMarker::Type::CROSSHAIR_WITH_OUTLINE, 11);
 	crosshairHW1->setPen(QPen(Qt::gray, 1));
 	crosshairHW1->setVisible(false);
-	crosshairHW2 = new ExplorationWidgetCrosshair(pltExploration);
+	crosshairHW2 = new PlotMarker(pltExploration,
+	                              PlotMarker::Type::CROSSHAIR_WITH_OUTLINE, 11);
 	crosshairHW2->setPen(QPen(Qt::gray, 1));
 	crosshairHW2->setVisible(false);
 

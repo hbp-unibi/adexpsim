@@ -63,7 +63,6 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/ExplorationWidget
 	src/view/ExplorationWidgetInvalidOverlay
 	src/view/ExplorationWidgetGradients
-	src/view/ExplorationWidgetCrosshair
 	src/view/NeuronSimulationWidget
 	src/view/OptimizationWidget
 	src/view/ParameterWidget

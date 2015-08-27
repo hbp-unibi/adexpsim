@@ -24,15 +24,19 @@
 namespace AdExpSim {
 class PlotMarker : public QCPAbstractItem {
 	Q_OBJECT
+public:
+	enum class Type { POINT, CROSSHAIR, CROSSHAIR_WITH_OUTLINE };
+
 protected:
 	QPen mPen;
 	QBrush mBrush;
 	int mSize;
+	Type mType;
 
 	void draw(QCPPainter *painter) override;
 
 public:
-	PlotMarker(QCustomPlot *parentPlot, int size = 5);
+	PlotMarker(QCustomPlot *parentPlot, Type type = Type::POINT, int size = 5);
 	virtual ~PlotMarker();
 
 	// getters:
@@ -44,6 +48,7 @@ public:
 	void setPen(const QPen &pen) { mPen = pen; }
 	void setBrush(const QBrush &brush) { mBrush = brush; }
 	void setSize(int size) { mSize = size; }
+	void setType(Type type) { mType = type; }
 
 	QCPItemPosition *const center;
 

@@ -69,9 +69,9 @@ private:
 	QLabel *lblPFalseNegative;
 	QLabel *lblPSoft;
 	QCustomPlot *pltExploration;
-	ExplorationWidgetCrosshair *crosshair;
-	ExplorationWidgetCrosshair *crosshairHW1;
-	ExplorationWidgetCrosshair *crosshairHW2;
+	PlotMarker *crosshair;
+	PlotMarker *crosshairHW1;
+	PlotMarker *crosshairHW2;
 	ExplorationWidgetInvalidOverlay *overlay;
 	ExplorationWidgetInvalidOverlay *overlayHW;
 	std::shared_ptr<ParameterCollection> params;
