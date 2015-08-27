@@ -99,6 +99,11 @@ private:
 
 public:
 	/**
+	 * Default constructor. Creates an empty matrix.
+	 */
+	MatrixBase() : MatrixBase(0, 0) {}
+
+	/**
 	 * Constructor of the Matrix type, creates a new matrix with the given
 	 * extent.
 	 */
@@ -137,7 +142,19 @@ public:
 	size_t getHeight() const { return h; }
 
 	/**
-	 * Returns a posize_ter at the raw data buffer.
+	 * Resizes the matrix, flushes all previously stored data, does nothing if
+	 * the dimensions do not change.
+	 */
+	void resize(size_t w, size_t h) {
+		if (w != this->w || h != this->h) {
+			buf = std::make_shared<Buffer>(w, h);
+			this->w = w;
+			this->h = h;
+		}
+	}
+
+	/**
+	 * Returns a pointer at the raw data buffer.
 	 */
 	T *data()
 	{
@@ -196,7 +213,7 @@ public:
 };
 
 /**
- * Matrix class storing floating posize_t values.
+ * Matrix class storing floating point values.
  */
 class Matrix : public MatrixBase<Val> {
 	using MatrixBase<Val>::MatrixBase;
