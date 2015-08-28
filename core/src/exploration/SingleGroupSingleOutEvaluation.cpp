@@ -22,7 +22,7 @@
 #include <simulation/DormandPrinceIntegrator.hpp>
 #include <simulation/Model.hpp>
 
-#include "SingleGroupEvaluation.hpp"
+#include "SingleGroupSingleOutEvaluation.hpp"
 
 namespace AdExpSim {
 
@@ -58,7 +58,7 @@ static constexpr Val TAU_RANGE = 0.002;    // 2mV
 static constexpr Val TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
 static const LogisticFunction<true> sigmaV(TAU_RANGE, TAU_RANGE_VAL);
 
-EvaluationResult SingleGroupEvaluation::evaluate(
+EvaluationResult SingleGroupSingleOutEvaluation::evaluate(
     const WorkingParameters &params) const
 {
 	// Do not record any result
@@ -73,22 +73,22 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 	// Simulate for both the sXi and the sXiM1 input spike train
 	if (useIfCondExp) {
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
-		    sN, n, cN, iN, params, Time(-1), spikeData.T);
+		    sN, n, cN, iN, params, Time(-1), env.T);
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
-		    sNM1, n, cNM1, iNM1, params, Time(-1), spikeData.T);
+		    sNM1, n, cNM1, iNM1, params, Time(-1), env.T);
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
-		    sN, n, cNS, iNS, params, Time(-1), spikeData.T,
+		    sN, n, cNS, iNS, params, Time(-1), env.T,
 		    State(params.eReset()));
 	} else {
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sN, n, cN, iN, params, Time(-1),
-		                                 spikeData.T);
+		                                 env.T);
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sNM1, n, cNM1, iNM1, params, Time(-1),
-		                                 spikeData.T);
+		                                 env.T);
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sN, n, cNS, iNS, params, Time(-1),
-		                                 spikeData.T, State(params.eReset()));
+		                                 env.T, State(params.eReset()));
 	}
 
 	const Val th = params.eSpikeEff(useIfCondExp);
@@ -106,8 +106,8 @@ EvaluationResult SingleGroupEvaluation::evaluate(
 	return EvaluationResult({pSoft, pOk, pTruePositive, pTrueNegative, pReset});
 }
 
-const EvaluationResultDescriptor SingleGroupEvaluation::descr =
-    EvaluationResultDescriptor(EvaluationType::SINGLE_GROUP)
+const EvaluationResultDescriptor SingleGroupSingleOutEvaluation::descr =
+    EvaluationResultDescriptor(EvaluationType::SINGLE_GROUP_SINGLE_OUT)
         .add("Soft", "pSoft", "", 0.0, Range(0.0, 1.0), true)
         .add("Binary", "pBin", "", 0.0, Range(0.0, 1.0))
         .add("True Pos.", "pTPos", "", 0.0, Range(0.0, 1.0))

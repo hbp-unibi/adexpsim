@@ -128,42 +128,62 @@ static void deserializeEnum(const std::string &s,
 	}
 }
 
+static Json::Value serializeSpikeTrainEnvironment(
+    const SpikeTrainEnvironment &env)
+{
+	Json::Value res;
+	res["bundleSize"] = int(env.bundleSize);
+	res["T"] = env.T.sec();
+	res["sigmaT"] = env.sigmaT.sec();
+	res["deltaT"] = env.deltaT.sec();
+	res["sigmaW"] = env.sigmaW;
+	return res;
+}
+
+static SpikeTrainEnvironment deserializeSpikeTrainEnvironment(
+    const Json::Value &value,
+    const SpikeTrainEnvironment &defaultValues = SpikeTrainEnvironment())
+{
+	return SpikeTrainEnvironment(
+	    value.get("bundleSize", int(defaultValues.bundleSize)).asUInt(),
+	    Time::sec(value.get("T", defaultValues.T.sec()).asDouble()),
+	    Time::sec(value.get("sigmaT", defaultValues.sigmaT.sec()).asDouble()),
+	    Time::sec(value.get("deltaT", defaultValues.deltaT.sec()).asDouble()),
+	    value.get("sigmaW", defaultValues.sigmaW).asDouble());
+}
+
 static Json::Value serializeSpikeTrainDescriptors(
-    const std::vector<SpikeTrain::Descriptor> &descrs)
+    const std::vector<GenericGroupDescriptor> &descrs)
 {
 	const int n = descrs.size();
 	Json::Value res(Json::arrayValue);
 	res.resize(n);
 	for (int i = 0; i < n; i++) {
 		Json::Value descr;
-		descr["nE"] = descrs[i].nE;
-		descr["nI"] = descrs[i].nI;
-		descr["nOut"] = descrs[i].nOut;
-		descr["sigmaT"] = descrs[i].sigmaT;
+		descr["nE"] = int(descrs[i].nE);
+		descr["nI"] = int(descrs[i].nI);
+		descr["nOut"] = int(descrs[i].nOut);
 		descr["wE"] = descrs[i].wE;
 		descr["wI"] = descrs[i].wI;
-		descr["sigmaW"] = descrs[i].sigmaW;
 		res[i] = descr;
 	}
 	return res;
 }
 
-static std::vector<SpikeTrain::Descriptor> deserializeSpikeTrainDescriptors(
+static std::vector<GenericGroupDescriptor> deserializeSpikeTrainDescriptors(
     const Json::Value &value)
 {
-	const SpikeTrain::Descriptor DEFAULT_DESCR;
+	const GenericGroupDescriptor DEFAULT_DESCR;
 
-	std::vector<SpikeTrain::Descriptor> descrs;
+	std::vector<GenericGroupDescriptor> descrs;
 	if (value.isArray()) {
 		for (int i = 0; i < int(value.size()); i++) {
 			descrs.emplace_back(
 			    value[i].get("nE", int(DEFAULT_DESCR.nE)).asUInt(),
 			    value[i].get("nI", int(DEFAULT_DESCR.nI)).asUInt(),
 			    value[i].get("nOut", int(DEFAULT_DESCR.nOut)).asUInt(),
-			    value[i].get("sigmaT", DEFAULT_DESCR.sigmaT).asDouble(),
 			    value[i].get("wE", DEFAULT_DESCR.wE).asDouble(),
-			    value[i].get("wI", DEFAULT_DESCR.wI).asDouble(),
-			    value[i].get("sigmaW", DEFAULT_DESCR.sigmaW).asDouble());
+			    value[i].get("wI", DEFAULT_DESCR.wI).asDouble());
 		}
 	}
 	return descrs;
@@ -176,49 +196,42 @@ static Json::Value serializeSpikeTrain(const SpikeTrain &train)
 	res["n"] = int(train.getN());
 	res["sorted"] = train.isSorted();
 	res["equidistant"] = train.isEquidistant();
-	res["T"] = train.getT().sec();
-	res["sigmaT"] = train.getSigmaT();
 	return res;
 }
 
 static SpikeTrain deserializeSpikeTrain(
-    const Json::Value &value, const SpikeTrain &defaultValues = SpikeTrain(
-                                  std::vector<SpikeTrain::Descriptor>{}))
+    const Json::Value &value, const SpikeTrainEnvironment &env,
+    const SpikeTrain &defaultValues =
+        SpikeTrain(std::vector<GenericGroupDescriptor>{}))
 {
 	return SpikeTrain(
 	    value.isMember("descrs")
 	        ? deserializeSpikeTrainDescriptors(value["descrs"])
 	        : defaultValues.getDescrs(),
-	    value.get("n", int(defaultValues.getN())).asUInt(),
+	    value.get("n", int(defaultValues.getN())).asUInt(), env,
 	    value.get("sorted", defaultValues.isSorted()).asBool(),
-	    Time::sec(value.get("T", defaultValues.getT().sec()).asDouble()),
-	    value.get("sigmaT", defaultValues.getSigmaT()).asDouble(),
 	    value.get("equidistant", defaultValues.isEquidistant()).asBool());
 }
 
 static Json::Value serializeSingleGroup(
-    const SingleGroupMultiOutSpikeData &singleGroup)
+    const SingleGroupMultiOutDescriptor &singleGroup)
 {
 	Json::Value res;
-	res["n"] = singleGroup.n;
-	res["nM1"] = singleGroup.nM1;
-	res["nOut"] = singleGroup.nOut;
-	res["deltaT"] = singleGroup.deltaT.sec();
-	res["T"] = singleGroup.T.sec();
+	res["n"] = int(singleGroup.n);
+	res["nM1"] = int(singleGroup.nM1);
+	res["nOut"] = int(singleGroup.nOut);
 	return res;
 }
 
-static SingleGroupMultiOutSpikeData deserializeSingleGroup(
+static SingleGroupMultiOutDescriptor deserializeSingleGroup(
     const Json::Value &value,
-    const SingleGroupMultiOutSpikeData &defaultValues =
-        SingleGroupMultiOutSpikeData())
+    const SingleGroupMultiOutDescriptor &defaultValues =
+        SingleGroupMultiOutDescriptor())
 {
-	return SingleGroupMultiOutSpikeData(
-	    value.get("n", defaultValues.n).asDouble(),
-	    value.get("nM1", defaultValues.nM1).asDouble(),
-	    value.get("nOut", defaultValues.nOut).asDouble(),
-	    Time::sec(value.get("deltaT", defaultValues.deltaT.sec()).asDouble()),
-	    Time::sec(value.get("T", defaultValues.T.sec()).asDouble()));
+	return SingleGroupMultiOutDescriptor(
+	    value.get("n", int(defaultValues.n)).asUInt(),
+	    value.get("nM1", int(defaultValues.nM1)).asUInt(),
+	    value.get("nOut", int(defaultValues.nOut)).asUInt());
 }
 
 template <typename Arr>
@@ -254,6 +267,7 @@ void JsonIo::storeParameters(std::ostream &os,
 	res["model"] = serializeEnum(params.model, ParameterCollection::modelNames);
 	res["evaluation"] =
 	    serializeEnum(params.evaluation, ParameterCollection::evaluationNames);
+	res["environment"] = serializeSpikeTrainEnvironment(params.environment);
 	res["spikeTrain"] = serializeSpikeTrain(params.train);
 	res["singleGroup"] = serializeSingleGroup(params.singleGroup);
 	res["parameters"] = serializeArray(params.params, Parameters::nameIds);
@@ -283,9 +297,14 @@ static void loadParametersFromValue(const Json::Value &value,
 		                params.evaluation);
 	}
 
+	if (value.isMember("environment")) {
+		params.environment = deserializeSpikeTrainEnvironment(
+		    value["environment"], DEFAULT_COLLECTION.environment);
+	}
+
 	if (value.isMember("spikeTrain")) {
-		params.train = deserializeSpikeTrain(value["spikeTrain"],
-		                                     DEFAULT_COLLECTION.train);
+		params.train = deserializeSpikeTrain(
+		    value["spikeTrain"], params.environment, DEFAULT_COLLECTION.train);
 	}
 
 	if (value.isMember("singleGroup")) {

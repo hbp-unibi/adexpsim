@@ -69,13 +69,13 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 
 	// Build the table widget
 	tableWidget = new QTableWidget(this);
-	tableWidget->setColumnCount(7);
+	tableWidget->setColumnCount(5);
 	tableWidget->horizontalHeader()->setSectionResizeMode(
 	    QHeaderView::ResizeToContents);
 	tableWidget->verticalHeader()->setSectionResizeMode(
 	    QHeaderView::ResizeToContents);
 	tableWidget->setHorizontalHeaderLabels(
-	    {"#E", "#I", "#Out", "σT [ms]", "wE [%]", "wI [%]", "σW [%]"});
+	    {"#E", "#I", "#Out", "wE [%]", "wI [%]"});
 	connect(tableWidget, SIGNAL(cellChanged(int, int)), this,
 	        SLOT(handleCellChanged(int, int)));
 
@@ -90,21 +90,12 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	paramN = new ParameterWidget(this, "N", 2, 1, 1000, "", "N");
 	paramN->setIntOnly(true);
 	paramN->setMinMaxEnabled(false);
-	paramT = new ParameterWidget(this, "T", 33.0, 1.0, 200.0, "ms", "T");
-	paramT->setMinMaxEnabled(false);
-	paramSigmaT =
-	    new ParameterWidget(this, "σT", 0.0, 0.0, 100.0, "ms", "sigmaT");
-	paramSigmaT->setMinMaxEnabled(false);
 
 	connect(paramSorted, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramEquidistant, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramN, SIGNAL(update(Val, const QVariant &)),
-	        SLOT(handleParameterUpdate(Val, const QVariant &)));
-	connect(paramT, SIGNAL(update(Val, const QVariant &)),
-	        SLOT(handleParameterUpdate(Val, const QVariant &)));
-	connect(paramSigmaT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 
 	// Add all widgets to the main layout
@@ -113,8 +104,6 @@ SpikeTrainWidget::SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
 	layout->addWidget(paramSorted);
 	layout->addWidget(paramEquidistant);
 	layout->addWidget(paramN);
-	layout->addWidget(paramT);
-	layout->addWidget(paramSigmaT);
 	setLayout(layout);
 
 	// Set the widgets to the correct values
@@ -133,10 +122,10 @@ void SpikeTrainWidget::handleCellChanged(int row, int column)
 	}
 
 	// Copy the current descriptors
-	std::vector<SpikeTrain::Descriptor> descrs = params->train.getDescrs();
+	std::vector<GenericGroupDescriptor> descrs = params->train.getDescrs();
 
 	// Make sure the coordinates are in range
-	if (row < 0 || size_t(row) >= descrs.size() || column < 0 || column >= 7) {
+	if (row < 0 || size_t(row) >= descrs.size() || column < 0 || column >= 5) {
 		return;
 	}
 
@@ -153,24 +142,15 @@ void SpikeTrainWidget::handleCellChanged(int row, int column)
 			descrs[row].nOut = std::max(0.0, value);
 			break;
 		case 3:
-			descrs[row].sigmaT = std::max(0.0, value / 1000.0);
-			break;
-		case 4:
 			descrs[row].wE = value / 100.0;
 			break;
-		case 5:
+		case 4:
 			descrs[row].wI = value / 100.0;
-			break;
-		case 6:
-			descrs[row].sigmaW = std::max(0.0, value / 100.0);
 			break;
 	}
 
 	// Make sure there is at least one spike
-	if (descrs[row].nE + descrs[row].nI == 0) {
-		descrs[row].nE = 1;
-		descrs[row].wE = 0;
-	}
+	descrs[row].adjust();
 
 	// Copy the updated descriptors back to the spike train instance
 	params->train.setDescrs(descrs);
@@ -193,10 +173,6 @@ void SpikeTrainWidget::handleParameterUpdate(Val value, const QVariant &data)
 		params->train.setEquidistant(value != 0.0);
 	} else if (s == "N") {
 		params->train.setN(size_t(value));
-	} else if (s == "T") {
-		params->train.setT(Time::sec(value / 1000.0));
-	} else if (s == "sigmaT") {
-		params->train.setSigmaT(value / 1000.0);
 	}
 
 	// Wait 100ms with triggering the update
@@ -212,17 +188,13 @@ void SpikeTrainWidget::refresh()
 	tableWidget->setRowCount(descrs.size());
 	for (size_t i = 0; i < descrs.size(); i++) {
 		QTableWidgetItem *itmNE = new QTableWidgetItem();
-		itmNE->setData(Qt::DisplayRole, QVariant(descrs[i].nE));
+		itmNE->setData(Qt::DisplayRole, QVariant(int(descrs[i].nE)));
 
 		QTableWidgetItem *itmNI = new QTableWidgetItem();
-		itmNI->setData(Qt::DisplayRole, QVariant(descrs[i].nI));
+		itmNI->setData(Qt::DisplayRole, QVariant(int(descrs[i].nI)));
 
 		QTableWidgetItem *itmNOut = new QTableWidgetItem();
-		itmNOut->setData(Qt::DisplayRole, QVariant(descrs[i].nOut));
-
-		QTableWidgetItem *itmSigmaT = new QTableWidgetItem();
-		itmSigmaT->setData(Qt::DisplayRole,
-		                   QVariant(double(descrs[i].sigmaT * 1000.0)));
+		itmNOut->setData(Qt::DisplayRole, QVariant(int(descrs[i].nOut)));
 
 		QTableWidgetItem *itmWE = new QTableWidgetItem();
 		itmWE->setData(Qt::DisplayRole, QVariant(double(descrs[i].wE) * 100.0));
@@ -230,25 +202,17 @@ void SpikeTrainWidget::refresh()
 		QTableWidgetItem *itmWI = new QTableWidgetItem();
 		itmWI->setData(Qt::DisplayRole, QVariant(double(descrs[i].wI) * 100.0));
 
-		QTableWidgetItem *itmSigmaW = new QTableWidgetItem();
-		itmSigmaW->setData(Qt::DisplayRole,
-		                   QVariant(double(descrs[i].sigmaW * 100.0)));
-
 		tableWidget->setItem(i, 0, itmNE);
 		tableWidget->setItem(i, 1, itmNI);
 		tableWidget->setItem(i, 2, itmNOut);
-		tableWidget->setItem(i, 3, itmSigmaT);
-		tableWidget->setItem(i, 4, itmWE);
-		tableWidget->setItem(i, 5, itmWI);
-		tableWidget->setItem(i, 6, itmSigmaW);
+		tableWidget->setItem(i, 3, itmWE);
+		tableWidget->setItem(i, 4, itmWI);
 	}
 
 	// Update the parameter sliders
 	paramSorted->setValue(params->train.isSorted());
 	paramEquidistant->setValue(params->train.isEquidistant());
 	paramN->setValue(params->train.getN());
-	paramT->setValue(params->train.getT().sec() * 1000.0);
-	paramSigmaT->setValue(params->train.getSigmaT() * 1000.0);
 
 	blockSignals(false);
 }
@@ -256,10 +220,10 @@ void SpikeTrainWidget::refresh()
 void SpikeTrainWidget::handleAddGroup()
 {
 	// Copy the current descriptors
-	std::vector<SpikeTrain::Descriptor> descrs = params->train.getDescrs();
+	std::vector<GenericGroupDescriptor> descrs = params->train.getDescrs();
 
 	// Add a new descriptor
-	descrs.emplace_back(1.0, 0.0, 1e-3);
+	descrs.emplace_back(1, 0, 1);
 
 	// Set the new descriptors
 	params->train.setDescrs(descrs);
@@ -274,7 +238,7 @@ void SpikeTrainWidget::handleAddGroup()
 void SpikeTrainWidget::handleDeleteGroups()
 {
 	// Copy the current descriptors
-	std::vector<SpikeTrain::Descriptor> descrs = params->train.getDescrs();
+	std::vector<GenericGroupDescriptor> descrs = params->train.getDescrs();
 
 	// Fetch all currently selected rows
 	std::set<int> selectedRows;
@@ -283,7 +247,7 @@ void SpikeTrainWidget::handleDeleteGroups()
 	}
 
 	// Copy all but the selected rows to a new descriptor list
-	std::vector<SpikeTrain::Descriptor> newDescrs;
+	std::vector<GenericGroupDescriptor> newDescrs;
 	for (size_t i = 0; i < descrs.size(); i++) {
 		if (selectedRows.count(i) == 0) {
 			newDescrs.emplace_back(descrs[i]);
@@ -303,7 +267,7 @@ void SpikeTrainWidget::handleDeleteGroups()
 void SpikeTrainWidget::triggerUpdateParameters()
 {
 	// Rebuild the spike train
-	params->train.rebuild(true);
+	params->train.rebuild();
 
 	// Emit the update event
 	emit updateParameters(std::set<size_t>{});

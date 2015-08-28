@@ -37,7 +37,8 @@ static void run(const SpikeVec &spikes, const WorkingParameters &params,
 {
 	MaxValueController maxValueController;
 	auto controller = createMaxOutputSpikeCountController(
-	    [&recorder]() { return recorder.count(); }, maxSpikeCount, maxValueController);
+	    [&recorder]() { return recorder.count(); }, maxSpikeCount,
+	    maxValueController);
 	DormandPrinceIntegrator integrator(eTar);
 	Model::simulate<Model::FAST_EXP | Model::PROCESS_SPECIAL>(
 	    useIfCondExp, spikes, recorder, controller, integrator, params);

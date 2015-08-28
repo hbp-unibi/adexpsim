@@ -17,18 +17,21 @@
  */
 
 /**
- * @file SingleGroupMultiOutEvaluation.hpp
+ * @file SingleGroupEvaluation.hpp
  *
- * Variant of the SingleGroupEvaluation method which additionally allows the
- * specification of the number of output spikes.
+ * Contains the implementation of the SingleGroupEvaluation which evaluates the
+ * ability of the neuron to fulfill the heaviside condition and the reset
+ * condition.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_
-#define _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_
+#ifndef _ADEXPSIM_SINGLE_GROUP_SINGLE_OUT_EVALUATION_HPP_
+#define _ADEXPSIM_SINGLE_GROUP_SINGLE_OUT_EVALUATION_HPP_
 
 #include <simulation/Parameters.hpp>
+#include <simulation/SpikeTrain.hpp>
+#include <common/Types.hpp>
 
 #include "EvaluationResult.hpp"
 #include "SingleGroupEvaluationBase.hpp"
@@ -38,21 +41,20 @@ namespace AdExpSim {
  * The evaluation class can be used for the evalutation of the behaviour of a
  * single neuron for the given SpikeTrain.
  */
-class SingleGroupMultiOutEvaluation
-    : public SingleGroupEvaluationBase<SingleGroupMultiOutDescriptor> {
+class SingleGroupSingleOutEvaluation
+    : public SingleGroupEvaluationBase<SingleGroupSingleOutDescriptor> {
 private:
 	static const EvaluationResultDescriptor descr;
 
 public:
 	using SingleGroupEvaluationBase<
-	    SingleGroupMultiOutDescriptor>::SingleGroupEvaluationBase;
+	    SingleGroupSingleOutDescriptor>::SingleGroupEvaluationBase;
 
 	/**
 	 * Evaluates the given parameter set.
 	 *
 	 * @param params is a reference at the parameter set that should be
 	 * evaluated. Automatically updates the derived values of the parameter set.
-	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
 	EvaluationResult evaluate(const WorkingParameters &params) const;
 
@@ -64,5 +66,5 @@ public:
 };
 }
 
-#endif /* _ADEXPSIM_SINGLE_GROUP_MULTI_OUT_EVALUATION_HPP_ */
+#endif /* _ADEXPSIM_SINGLE_GROUP_SINGLE_OUT_EVALUATION_HPP_ */
 

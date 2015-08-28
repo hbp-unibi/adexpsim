@@ -28,7 +28,7 @@
 
 #include "Exploration.hpp"
 
-#include "SingleGroupEvaluation.hpp"
+#include "SingleGroupSingleOutEvaluation.hpp"
 #include "SingleGroupMultiOutEvaluation.hpp"
 #include "SpikeTrainEvaluation.hpp"
 
@@ -138,8 +138,9 @@ bool Exploration::run(const Evaluation &evaluation,
 /* Specializations of the "run" method. */
 template bool Exploration::run<SpikeTrainEvaluation>(
     const SpikeTrainEvaluation &evaluation, const ProgressCallback &progress);
-template bool Exploration::run<SingleGroupEvaluation>(
-    const SingleGroupEvaluation &evaluation, const ProgressCallback &progress);
+template bool Exploration::run<SingleGroupSingleOutEvaluation>(
+    const SingleGroupSingleOutEvaluation &evaluation,
+    const ProgressCallback &progress);
 template bool Exploration::run<SingleGroupMultiOutEvaluation>(
     const SingleGroupMultiOutEvaluation &evaluation,
     const ProgressCallback &progress);

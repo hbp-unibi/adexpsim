@@ -18,7 +18,7 @@
 
 #include <QThreadPool>
 
-#include <exploration/SingleGroupEvaluation.hpp>
+#include <exploration/SingleGroupSingleOutEvaluation.hpp>
 #include <exploration/SingleGroupMultiOutEvaluation.hpp>
 #include <exploration/SpikeTrainEvaluation.hpp>
 #include <utils/ParameterCollection.hpp>
@@ -83,16 +83,16 @@ void OptimizationJobRunner::run()
 			                         params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
 			break;
-		case EvaluationType::SINGLE_GROUP:
+		case EvaluationType::SINGLE_GROUP_SINGLE_OUT:
 			res = optimization.optimize(
-			    input,
-			    SingleGroupEvaluation(params->singleGroup,
-			                          params->model == ModelType::IF_COND_EXP),
+			    input, SingleGroupSingleOutEvaluation(
+			               params->environment, params->singleGroup,
+			               params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
 		case EvaluationType::SINGLE_GROUP_MULTI_OUT:
 			res = optimization.optimize(
 			    input, SingleGroupMultiOutEvaluation(
-			               params->singleGroup,
+			               params->environment, params->singleGroup,
 			               params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
 	}

@@ -16,9 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Spike.hpp"
+#include "SingleGroupEvaluationBase.hpp"
 
 namespace AdExpSim {
 // Do nothing here, just make sure the header compiles
 }
-

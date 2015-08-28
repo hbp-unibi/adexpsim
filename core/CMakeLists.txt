@@ -51,7 +51,8 @@ ADD_LIBRARY(AdExpSimCore
 	src/exploration/FractionalSpikeCount
 	src/exploration/Optimization
 	src/exploration/Simplex
-	src/exploration/SingleGroupEvaluation
+	src/exploration/SingleGroupEvaluationBase
+	src/exploration/SingleGroupSingleOutEvaluation
 	src/exploration/SingleGroupMultiOutEvaluation
 	src/exploration/SpikeTrainEvaluation
 	src/simulation/Controller
@@ -62,6 +63,7 @@ ADD_LIBRARY(AdExpSimCore
 	src/simulation/Parameters
 	src/simulation/Recorder
 	src/simulation/Spike
+	src/simulation/SpikeTrain
 	src/simulation/State
 	src/utils/ParameterCollection
 )

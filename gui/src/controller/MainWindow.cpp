@@ -41,6 +41,7 @@
 #include <view/ParametersWidget.hpp>
 #include <view/PresetsWidget.hpp>
 #include <view/SingleGroupWidget.hpp>
+#include <view/SpikeTrainEnvironmentWidget.hpp>
 #include <view/SpikeTrainWidget.hpp>
 
 #include "MainWindow.hpp"
@@ -188,16 +189,24 @@ void MainWindow::createWidgets()
 	tools->addItem(presetsWidget, "Parameter Presets");
 
 	// Create the spike train panel and add it to the toolbox
+	spikeTrainEnvironmentWidget = new SpikeTrainEnvironmentWidget(params, this);
+	connect(spikeTrainEnvironmentWidget,
+	        SIGNAL(updateParameters(std::set<size_t>)), this,
+	        SLOT(handleUpdateParameters(std::set<size_t>)));
+	tools->addItem(spikeTrainEnvironmentWidget,
+	               "Spike Train Environment Setup");
+
+	// Create the spike train panel and add it to the toolbox
 	spikeTrainWidget = new SpikeTrainWidget(params, this);
 	connect(spikeTrainWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
-	tools->addItem(spikeTrainWidget, "Spike Train");
+	tools->addItem(spikeTrainWidget, "Spike Train Setup");
 
 	// Create the spike train panel and add it to the toolbox
 	singleGroupWidget = new SingleGroupWidget(params, this);
 	connect(singleGroupWidget, SIGNAL(updateParameters(std::set<size_t>)), this,
 	        SLOT(handleUpdateParameters(std::set<size_t>)));
-	tools->addItem(singleGroupWidget, "Single Group Parameters");
+	tools->addItem(singleGroupWidget, "Single Group Setup");
 
 	// Create the optimization widget and add it to the toolbox
 	optimizationWidget = new OptimizationWidget(params, this);
@@ -252,6 +261,7 @@ void MainWindow::handleUpdateParameters(std::set<size_t> dims)
 	evaluationComboBox->setCurrentIndex(int(params->evaluation));
 
 	// Forward the event to the SpikeTrain and ParametersWidget instance
+	spikeTrainEnvironmentWidget->refresh();
 	spikeTrainWidget->refresh();
 	singleGroupWidget->refresh();
 	parametersWidget->handleUpdateParameters(dims);

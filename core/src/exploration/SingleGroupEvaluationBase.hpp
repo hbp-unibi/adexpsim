@@ -17,23 +17,18 @@
  */
 
 /**
- * @file SingleGroupEvaluation.hpp
+ * @file SingleGroupEvaluationBase.hpp
  *
- * Contains the implementation of the SingleGroupEvaluation which evaluates the
- * ability of the neuron to fulfill the heaviside condition and the reset
- * condition.
+ * Contains the base class for SingleGroupMultiOutEvaluation and
+ * SingleGroupSingleOutEvaluation.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_
-#define _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_
+#ifndef _ADEXPSIM_SINGLE_GROUP_EVALUATION_BASE_HPP_
+#define _ADEXPSIM_SINGLE_GROUP_EVALUATION_BASE_HPP_
 
-#include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
-#include <common/Types.hpp>
-
-#include "EvaluationResult.hpp"
+#include <simulation/SpikeTrain.hpp>
 
 namespace AdExpSim {
 
@@ -56,6 +51,11 @@ protected:
 	bool useIfCondExp;
 
 	/**
+	 * Common SpikeTrain parameters.
+	 */
+	SpikeTrainEnvironment env;
+
+	/**
 	 * Arguments passed to the evaluation describing
 	 */
 	SpikeData spikeData;
@@ -75,45 +75,19 @@ public:
 	 * linear integrate and fire model with conductive synapses.
 	 * @param eTar is the target error used in the adaptive stepsize controller.
 	 */
-	SingleGroupEvaluationBase(const SpikeData &spikeData,
+	SingleGroupEvaluationBase(const SpikeTrainEnvironment &env,
+	                          const SpikeData &spikeData,
 	                          bool useIfCondExp = false, Val eTar = 0.1e-3)
-	    : sN(spikeData.spikes(spikeData.n)),
-	      sNM1(spikeData.spikes(spikeData.nM1)),
+	    : sN(spikeData.build(SpikeData::Type::N)),
+	      sNM1(spikeData.build(SpikeData::Type::NM1)),
 	      useIfCondExp(useIfCondExp),
+	      env(env),
 	      spikeData(spikeData),
 	      eTar(eTar)
 	{
 	}
 };
-
-/**
- * The evaluation class can be used for the evalutation of the behaviour of a
- * single neuron for the given SpikeTrain.
- */
-class SingleGroupEvaluation
-    : public SingleGroupEvaluationBase<SingleGroupSpikeData> {
-private:
-	static const EvaluationResultDescriptor descr;
-
-public:
-	using SingleGroupEvaluationBase<
-	    SingleGroupSpikeData>::SingleGroupEvaluationBase;
-
-	/**
-	 * Evaluates the given parameter set.
-	 *
-	 * @param params is a reference at the parameter set that should be
-	 * evaluated. Automatically updates the derived values of the parameter set.
-	 */
-	EvaluationResult evaluate(const WorkingParameters &params) const;
-
-	/**
-	 * Returns the evaluation result descriptor for the SingleGroupEvaluation
-	 * class.
-	 */
-	static const EvaluationResultDescriptor &descriptor() { return descr; }
-};
 }
 
-#endif /* _ADEXPSIM_SINGLE_GROUP_EVALUATION_HPP_ */
+#endif /* _ADEXPSIM_SINGLE_GROUP_EVALUATION_BASE_HPP_ */
 

@@ -22,10 +22,10 @@
 #include <fstream>
 #include <limits>
 
-#include <simulation/Model.hpp>
-#include <simulation/Recorder.hpp>
 #include <exploration/Exploration.hpp>
 #include <exploration/SpikeTrainEvaluation.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
 #include <common/Terminal.hpp>
 
 using namespace AdExpSim;
@@ -74,7 +74,8 @@ int main(int argc, char *argv[])
 	WorkingParameters params;
 
 	// Exploration meta-parameters
-	SpikeTrain train({{4, 1, 1e-3}, {3, 0, 1e-3}}, 4, true, 0.1_s);
+	SpikeTrainEnvironment env;
+	SpikeTrain train({{4, 1}, {3, 1}}, 4, env);
 
 	// Setup the exploration
 	const size_t dimX(WorkingParameters::idx_lL);

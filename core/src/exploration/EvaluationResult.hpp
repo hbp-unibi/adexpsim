@@ -49,7 +49,7 @@ enum class EvaluationType : int {
      * Only uses a single spike group for the evaluation and checks it for
      * fulfilling the binary threshold and reset condition.
      */
-	SINGLE_GROUP = 1,
+	SINGLE_GROUP_SINGLE_OUT = 1,
 
 	/**
      * Same as SINGLE_GROUP, but allows multiple output spikes. Internally uses

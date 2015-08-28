@@ -45,10 +45,6 @@ SingleGroupWidget::SingleGroupWidget(
 	layout->setSpacing(0);
 
 	// Create the toolbar and the corresponding actions
-	actCopyFromSpikeTrain =
-	    new QAction(QIcon::fromTheme("go-down"), "From SpikeTrain", this);
-	actCopyFromSpikeTrain->setToolTip(
-	    "Copy parameters from Spike Train settings");
 	actCopyToSpikeTrain =
 	    new QAction(QIcon::fromTheme("go-up"), "To SpikeTrain", this);
 	actCopyToSpikeTrain->setToolTip("Copy parameters to Spike Train settings");
@@ -58,13 +54,10 @@ SingleGroupWidget::SingleGroupWidget(
 	actLockNM1->setChecked(true);
 
 	toolbar = new QToolBar();
-	toolbar->addAction(actCopyFromSpikeTrain);
 	toolbar->addAction(actCopyToSpikeTrain);
 	toolbar->addSeparator();
 	toolbar->addAction(actLockNM1);
 
-	connect(actCopyFromSpikeTrain, SIGNAL(triggered()), this,
-	        SLOT(copyFromSpikeTrain()));
 	connect(actCopyToSpikeTrain, SIGNAL(triggered()), this,
 	        SLOT(copyToSpikeTrain()));
 
@@ -75,39 +68,22 @@ SingleGroupWidget::SingleGroupWidget(
 	paramNM1 = new ParameterWidget(this, "n-1", 2, 0, 9, "", "nM1");
 	paramNM1->setIntOnly(true);
 	paramNM1->setMinMaxEnabled(false);
-	paramNPatch = new ParameterWidget(this, "nPatch", 1, 1, 20, "", "nPatch");
-	paramNPatch->setIntOnly(true);
-	paramNPatch->setMinMaxEnabled(false);
 	paramNOut = new ParameterWidget(this, "nOut", 1, 0, 100, "", "nOut");
 	paramNOut->setIntOnly(true);
 	paramNOut->setMinMaxEnabled(false);
-	paramDeltaT =
-	    new ParameterWidget(this, "Δt", 1.0, 0.0, 20.0, "ms", "deltaT");
-	paramDeltaT->setMinMaxEnabled(false);
-	paramT = new ParameterWidget(this, "T", 33.0, 1.0, 200.0, "ms", "T");
-	paramT->setMinMaxEnabled(false);
 
 	connect(paramN, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramNM1, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
-	connect(paramNPatch, SIGNAL(update(Val, const QVariant &)),
-	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramNOut, SIGNAL(update(Val, const QVariant &)),
-	        SLOT(handleParameterUpdate(Val, const QVariant &)));
-	connect(paramDeltaT, SIGNAL(update(Val, const QVariant &)),
-	        SLOT(handleParameterUpdate(Val, const QVariant &)));
-	connect(paramT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 
 	// Add all widgets to the main layout
 	layout->addWidget(toolbar);
 	layout->addWidget(paramN);
 	layout->addWidget(paramNM1);
-	layout->addWidget(paramNPatch);
 	layout->addWidget(paramNOut);
-	layout->addWidget(paramDeltaT);
-	layout->addWidget(paramT);
 	setLayout(layout);
 
 	// Set the widgets to the correct values
@@ -138,16 +114,9 @@ void SingleGroupWidget::handleParameterUpdate(Val value, const QVariant &data)
 			params->singleGroup.n = value + 1;
 			paramN->setValue(value + 1);
 		}
-	} else if (s == "nPatch") {
-		params->singleGroup.nPatch = value;
 	} else if (s == "nOut") {
 		params->singleGroup.nOut = value;
-	} else if (s == "deltaT") {
-		params->singleGroup.deltaT = Time::sec(value / 1000.0);
-	} else if (s == "T") {
-		params->singleGroup.T = Time::sec(value / 1000.0);
 	}
-
 	// Wait 100ms with triggering the update
 	updateTimer->start(100);
 }
@@ -157,22 +126,12 @@ void SingleGroupWidget::refresh()
 	blockSignals(true);
 	paramN->setValue(params->singleGroup.n);
 	paramNM1->setValue(params->singleGroup.nM1);
-	paramNPatch->setValue(params->singleGroup.nPatch);
 	paramNOut->setValue(params->singleGroup.nOut);
-	paramDeltaT->setValue(params->singleGroup.deltaT.sec() * 1000.0);
-	paramT->setValue(params->singleGroup.T.sec() * 1000.0);
 	blockSignals(false);
 }
 
 void SingleGroupWidget::triggerUpdateParameters()
 {
-	emit updateParameters(std::set<size_t>{});
-}
-
-void SingleGroupWidget::copyFromSpikeTrain()
-{
-	params->singleGroup = params->train.toSingleGroupSpikeData();
-	refresh();
 	emit updateParameters(std::set<size_t>{});
 }
 

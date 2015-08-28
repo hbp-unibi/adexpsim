@@ -71,6 +71,7 @@ ADD_EXECUTABLE(AdExpSimGui
 	src/view/PresetsWidget
 	src/view/SingleGroupWidget
 	src/view/SpikeTrainWidget
+	src/view/SpikeTrainEnvironmentWidget
 	src/view/SpikeWidget
 	src/main
 )

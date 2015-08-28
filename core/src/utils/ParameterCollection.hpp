@@ -35,7 +35,7 @@
 #include <exploration/EvaluationResult.hpp>
 #include <simulation/Model.hpp>
 #include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
+#include <simulation/SpikeTrain.hpp>
 
 namespace AdExpSim {
 /**
@@ -78,9 +78,15 @@ struct ParameterCollection {
 	EvaluationType evaluation;
 
 	/**
-	 * Holds the setup used in the SingleGroupSpikeData evaluation.
+	 * Additional data used by all evaluations. Specifies basic properties of
+	 * the spike train.
 	 */
-	SingleGroupMultiOutSpikeData singleGroup;
+	SpikeTrainEnvironment environment;
+
+	/**
+	 * Holds the setup used in the SingleGroup evaluations.
+	 */
+	SingleGroupMultiOutDescriptor singleGroup;
 
 	/**
 	 * Holds the current SpikeTrain setup. The SpikeTrain defines the input

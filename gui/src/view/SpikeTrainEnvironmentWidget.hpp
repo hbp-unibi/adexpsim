@@ -17,23 +17,21 @@
  */
 
 /**
- * @file SpikeTrainWidget.hpp
+ * @file SpikeTrainEnvironmentWidget.hpp
  *
- * Widget used to interactively create a SpikeTrain instance.
+ * Widget used to interactively create a SpikeTrainEnvironment instance.
  *
  * @author Andreas Stöckel
  */
 
-#ifndef _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_
-#define _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_
+#ifndef _ADEXPSIM_SPIKE_TRAIN_ENVIRONMENT_WIDGET_HPP_
+#define _ADEXPSIM_SPIKE_TRAIN_ENVIRONMENT_WIDGET_HPP_
 
 #include <memory>
 #include <set>
 
 #include <QWidget>
 
-class QAction;
-class QTableWidget;
 class QTimer;
 
 namespace AdExpSim {
@@ -42,11 +40,11 @@ class ParameterCollection;
 class ParameterWidget;
 
 /**
- * The SpikeTrainWidget allows to edit all properties of the SpikeTrain class
- * and informs its controller about changes in the SpikeTrain instance by
- * emitting the "updateParameters" signal.
+ * The SpikeTrainEnvironmentWidget allows to edit all properties of the
+ * SpikeTrainEnvironment structure which stores evaluation-independent
+ * properties that define the way in which the input spike train is generated.
  */
-class SpikeTrainWidget : public QWidget {
+class SpikeTrainEnvironmentWidget : public QWidget {
 	Q_OBJECT
 private:
 	/**
@@ -55,24 +53,17 @@ private:
 	 */
 	std::shared_ptr<ParameterCollection> params;
 
-	/* Actions */
-	QAction *actAddGroup;
-	QAction *actDeleteGroup;
-	QAction *actRebuild;
-
 	/* Widgets */
 	QTimer *updateTimer;
-	QTableWidget *tableWidget;
-	ParameterWidget *paramSorted;
-	ParameterWidget *paramEquidistant;
-	ParameterWidget *paramN;
+	ParameterWidget *paramBundleSize;
+	ParameterWidget *paramT;
+	ParameterWidget *paramSigmaT;
+	ParameterWidget *paramDeltaT;
+	ParameterWidget *paramSigmaW;
 
 private slots:
 	void triggerUpdateParameters();
-	void handleCellChanged(int row, int column);
 	void handleParameterUpdate(Val value, const QVariant &data);
-	void handleAddGroup();
-	void handleDeleteGroups();
 
 public slots:
 	/**
@@ -85,18 +76,18 @@ public:
 	/**
 	 * Costructor of the SpikeTrainWidget class.
 	 */
-	SpikeTrainWidget(std::shared_ptr<ParameterCollection> params,
-	                 QWidget *parent = nullptr);
+	SpikeTrainEnvironmentWidget(std::shared_ptr<ParameterCollection> params,
+	                            QWidget *parent = nullptr);
 
 	/**
 	 * Destructor of the SpikeTrainWidget class.
 	 */
-	~SpikeTrainWidget();
+	~SpikeTrainEnvironmentWidget();
 
 signals:
 	void updateParameters(std::set<size_t> dims);
 };
 }
 
-#endif /* _ADEXPSIM_SPIKE_TRAIN_WIDGET_HPP_ */
+#endif /* _ADEXPSIM_SPIKE_TRAIN_ENVIRONMENT_WIDGET_HPP_ */
 

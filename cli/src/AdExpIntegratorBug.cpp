@@ -20,8 +20,9 @@
 
 #include <iostream>
 
-#include <simulation/Model.hpp>
 #include <simulation/DormandPrinceIntegrator.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/SpikeTrain.hpp>
 
 using namespace AdExpSim;
 

@@ -57,7 +57,6 @@ private:
 	std::shared_ptr<ParameterCollection> params;
 
 	/* Actions */
-	QAction *actCopyFromSpikeTrain;
 	QAction *actCopyToSpikeTrain;
 	QAction *actLockNM1;
 
@@ -66,15 +65,11 @@ private:
 	QToolBar *toolbar;
 	ParameterWidget *paramN;
 	ParameterWidget *paramNM1;
-	ParameterWidget *paramNPatch;
 	ParameterWidget *paramNOut;
-	ParameterWidget *paramDeltaT;
-	ParameterWidget *paramT;
 
 private slots:
 	void triggerUpdateParameters();
 	void handleParameterUpdate(Val value, const QVariant &data);
-	void copyFromSpikeTrain();
 	void copyToSpikeTrain();
 
 public slots:

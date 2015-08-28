@@ -28,7 +28,7 @@ const std::vector<std::string> ParameterCollection::evaluationNames = {
 
 ParameterCollection::ParameterCollection()
     : model(ModelType::IF_COND_EXP),
-      evaluation(EvaluationType::SINGLE_GROUP),
+      evaluation(EvaluationType::SINGLE_GROUP_SINGLE_OUT),
       singleGroup(),
       min({MIN_HZ, MIN_HZ, MIN_HZ, MIN_HZ, MIN_SEC, MIN_V, MIN_V, MIN_V, MIN_V,
            MIN_V, MIN_V, MIN_HZ,

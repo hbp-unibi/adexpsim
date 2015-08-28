@@ -42,7 +42,7 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
     const WorkingParameters &params) const
 {
 	// Calculate the fractional spike count
-	const Val nOut = spikeData.nOut;
+	const Val nOut = spikeData.nOut * env.bundleSize;
 	FractionalSpikeCount eval(useIfCondExp, eTar, nOut * 10);
 	auto resN = eval.calculate(sN, params);
 	auto resNM1 = eval.calculate(sNM1, params);
@@ -54,7 +54,7 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 	Model::simulate<Model::FAST_EXP | Model::DISABLE_SPIKING |
 	                Model::CLAMP_ITH>(useIfCondExp, sN, recorder, controller,
 	                                  integrator, params, Time(-1),
-	                                  spikeData.T);
+	                                  env.T);
 
 	// Calculate the
 	const State sRescale = State(100.0, 0.1, 0.1, 0.1);

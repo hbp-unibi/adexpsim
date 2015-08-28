@@ -240,7 +240,7 @@ EvaluationResult SpikeTrainEvaluation::evaluateInternal(
 	size_t nGroups = 1;
 	for (size_t rangeIdx = 0; rangeIdx < ranges.size() - 1; rangeIdx++) {
 		// Fetch some information about the current spike
-		size_t nSpikesExpected = ranges[rangeIdx].nSpikes;
+		size_t nSpikesExpected = ranges[rangeIdx].nOut;
 		const Time rangeStart = ranges[rangeIdx].start;
 		const Time rangeEnd = ranges[rangeIdx + 1].start;
 		const size_t rangeGroup = ranges[rangeIdx].group;

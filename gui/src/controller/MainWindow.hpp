@@ -47,6 +47,7 @@ class ParameterCollection;
 class ParametersWidget;
 class PresetsWidget;
 class SingleGroupWidget;
+class SpikeTrainEnvironmentWidget;
 class SpikeTrainWidget;
 class AbstractViewerWindow;
 
@@ -77,6 +78,7 @@ private:
 
 	/* Parameter widgets */
 	SingleGroupWidget *singleGroupWidget;
+	SpikeTrainEnvironmentWidget *spikeTrainEnvironmentWidget;
 	SpikeTrainWidget *spikeTrainWidget;
 	OptimizationWidget *optimizationWidget;
 	ParametersWidget *parametersWidget;

@@ -19,7 +19,7 @@
 #include <simulation/HardwareParameters.hpp>
 #include <simulation/Model.hpp>
 #include <simulation/Recorder.hpp>
-#include <exploration/SingleGroupEvaluation.hpp>
+#include <exploration/SingleGroupSingleOutEvaluation.hpp>
 #include <exploration/Optimization.hpp>
 #include <common/Terminal.hpp>
 #include <io/JsonIo.hpp>
@@ -54,8 +54,10 @@ int main(int argc, char *argv[])
 	// Create the initial parameters and the evaluation
 	WorkingParameters params;
 	ModelType model = ModelType::IF_COND_EXP;
-	SingleGroupSpikeData data;  // Default SingleGroupSpikeData (n = 3)
-	SingleGroupEvaluation eval(data, model == ModelType::IF_COND_EXP);
+	SpikeTrainEnvironment env;
+	SingleGroupSingleOutDescriptor data;  // Default (n = 3)
+	SingleGroupSingleOutEvaluation eval(env, data,
+	                                    model == ModelType::IF_COND_EXP);
 
 	// Parameter dimensions to optimize (exclude the inhibitory channel
 	// parameters)

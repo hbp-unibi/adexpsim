@@ -16,17 +16,18 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <simulation/DormandPrinceIntegrator.hpp>
-#include <simulation/Model.hpp>
-#include <simulation/Recorder.hpp>
-#include <common/Timer.hpp>
-
 #include <algorithm>
 #include <iostream>
 #include <iomanip>
 #include <limits>
 #include <sstream>
 #include <vector>
+
+#include <simulation/DormandPrinceIntegrator.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+#include <simulation/SpikeTrain.hpp>
+#include <common/Timer.hpp>
 
 using namespace AdExpSim;
 using Recorder = VectorRecorder<std::vector<double>, SIPrefixTrafo>;
@@ -485,10 +486,11 @@ void benchmark()
 	Parameters p;
 
 	// Create a vector containing all input spikes
-	SpikeTrain train({{4, 0, 1, 1e-3, 1.0, -1.0, 0.0},
-	                  {4, 2, 1, 1e-3, 1.0, -1.0, 0.0},
-	                  {3, 0, 0, 1e-3, 1.0, -1.0, 0.0}},
-	                 100, false, 0.1_s, 0.01);
+	SpikeTrainEnvironment env;
+	SpikeTrain train({{4, 0, 1, 1.0, 1.0},
+	                  {4, 2, 1, 1.0, 1.0},
+	                  {3, 0, 0, 1.0, 1.0}},
+	                 100, env, false);
 
 	// Generate the reference data
 	std::cout << "Generating reference data..." << std::endl;

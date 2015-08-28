@@ -29,7 +29,7 @@
 #define _ADEXPSIM_SPIKE_TRAIN_EVALUATION_HPP_
 
 #include <simulation/Parameters.hpp>
-#include <simulation/Spike.hpp>
+#include <simulation/SpikeTrain.hpp>
 #include <common/Types.hpp>
 
 #include "EvaluationResult.hpp"
@@ -164,7 +164,7 @@ public:
 		 * @param start is the start time.
 		 * @param end is the end time.
 		 * @param descrIdx is the index of the corresponding
-		 *SpikeTrainDescriptor.
+		 * GenericGroupDescriptor.
 		 * @param ok specifies whether all conditions were fulfilled for this
 		 * group.
 		 */

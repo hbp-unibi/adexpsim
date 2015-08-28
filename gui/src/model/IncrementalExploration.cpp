@@ -23,7 +23,7 @@
 
 #include <exploration/Exploration.hpp>
 #include <exploration/SpikeTrainEvaluation.hpp>
-#include <exploration/SingleGroupEvaluation.hpp>
+#include <exploration/SingleGroupSingleOutEvaluation.hpp>
 #include <exploration/SingleGroupMultiOutEvaluation.hpp>
 #include <utils/ParameterCollection.hpp>
 
@@ -62,15 +62,15 @@ void IncrementalExplorationRunner::run()
 			                         params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
 			break;
-		case EvaluationType::SINGLE_GROUP:
-			ok = exploration.run(
-			    SingleGroupEvaluation(params->singleGroup,
-			                          params->model == ModelType::IF_COND_EXP),
-			    progressCallback);
+		case EvaluationType::SINGLE_GROUP_SINGLE_OUT:
+			ok = exploration.run(SingleGroupSingleOutEvaluation(
+			                         params->environment, params->singleGroup,
+			                         params->model == ModelType::IF_COND_EXP),
+			                     progressCallback);
 			break;
 		case EvaluationType::SINGLE_GROUP_MULTI_OUT:
 			ok = exploration.run(SingleGroupMultiOutEvaluation(
-			                         params->singleGroup,
+			                         params->environment, params->singleGroup,
 			                         params->model == ModelType::IF_COND_EXP),
 			                     progressCallback);
 			break;
@@ -147,13 +147,12 @@ void IncrementalExploration::start()
 {
 	// Create a new Exploration instance
 	const size_t res = 1 << level;
-	exploration = Exploration(params->params, dimX, dimY,
-	                                     DiscreteRange(minX, maxX, res),
-	                                     DiscreteRange(minY, maxY, res));
+	exploration =
+	    Exploration(params->params, dimX, dimY, DiscreteRange(minX, maxX, res),
+	                DiscreteRange(minY, maxY, res));
 
 	// Create a new IncrementExplorationRunner and connect all signals
-	currentRunner =
-	    new IncrementalExplorationRunner(exploration, params);
+	currentRunner = new IncrementalExplorationRunner(exploration, params);
 	connect(currentRunner, SIGNAL(progress(float)), this,
 	        SLOT(runnerProgress(float)));
 	connect(currentRunner, SIGNAL(done(bool)), this, SLOT(runnerDone(bool)));

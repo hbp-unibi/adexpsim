@@ -17,7 +17,8 @@
  */
 
 #include <exploration/FractionalSpikeCount.hpp>
-#include <simulation/Spike.hpp>
+#include <simulation/Parameters.hpp>
+#include <simulation/SpikeTrain.hpp>
 
 #include <iostream>
 
