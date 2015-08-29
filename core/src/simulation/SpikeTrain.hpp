@@ -127,23 +127,25 @@ struct GenericGroupDescriptor {
 	 * The type parameter allows to choose whether the excitatory spikes or the
 	 * inhibitory spikes should be generated.
 	 */
-	SpikeVec &build(SpikeVec &spikes, Spike::Type type = Spike::Type::EXCITATORY,
-	                Time t0 = Time(),
+	SpikeVec &build(SpikeVec &spikes,
+	                Spike::Type type = Spike::Type::EXCITATORY,
 	                const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-	                bool equidistant = false, Time *tMin = nullptr,
-	                Time *tMax = nullptr, size_t *seed = nullptr) const;
+	                bool equidistant = false, Time t0 = Time(),
+	                Time *tMin = nullptr, Time *tMax = nullptr,
+	                size_t *seed = nullptr) const;
 
 	/**
 	 * Returns a list of spikes generated according to the parameters stored in
 	 * this structure.
 	 */
-	SpikeVec build(Spike::Type type = Spike::Type::EXCITATORY, Time t0 = Time(),
+	SpikeVec build(Spike::Type type = Spike::Type::EXCITATORY,
 	               const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-	               bool equidistant = false, Time *tMin = nullptr,
-	               Time *tMax = nullptr, size_t *seed = nullptr) const
+	               bool equidistant = false, Time t0 = Time(),
+	               Time *tMin = nullptr, Time *tMax = nullptr,
+	               size_t *seed = nullptr) const
 	{
 		SpikeVec res;
-		return build(res, type, t0, env, equidistant, tMin, tMax, seed);
+		return build(res, type, env, equidistant, t0, tMin, tMax, seed);
 	}
 };
 
@@ -182,20 +184,22 @@ struct SingleGroupSingleOutDescriptor {
 	 * The type parameter allows to choose whether the excitatory spikes or the
 	 * inhibitory spikes should be generated.
 	 */
-	SpikeVec &build(SpikeVec &spikes, Type type = Type::N, Time t0 = Time(),
+	SpikeVec &build(SpikeVec &spikes, Type type = Type::N,
 	                const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-	                Time *tMin = nullptr, Time *tMax = nullptr) const;
+	                Time t0 = Time(), Time *tMin = nullptr,
+	                Time *tMax = nullptr) const;
 
 	/**
 	 * Returns a list of spikes generated according to the parameters stored in
 	 * this structure.
 	 */
-	SpikeVec build(Type type = Type::N, Time t0 = Time(),
+	SpikeVec build(Type type = Type::N,
 	               const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-	               Time *tMin = nullptr, Time *tMax = nullptr) const
+	               Time t0 = Time(), Time *tMin = nullptr,
+	               Time *tMax = nullptr) const
 	{
 		SpikeVec res;
-		return build(res, type, t0, env, tMin, tMax);
+		return build(res, type, env, t0, tMin, tMax);
 	}
 };
 
@@ -484,10 +488,10 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * given properties. Adds the spikes to the given SpikeVec instance and returns
  * a reference to it.
  *
- * @param spikes is a reference at the SpikeVec to which the new spikes should be
+ * @param spikes is a reference at the SpikeVec to which the new spikes should
+ *be
  * added. Note that the vector will be sorted by this function in order ot
  * maintain the time order of the spikes.
- * @param t0 is the time at which the spike group should be inserted.
  * @param w is the weight of the newly creates spikes.
  * @param nBundles is the number of spike bundles that should happen at the same
  * time. The size of a bundle is stored in the SpikeTrainEnvironment passed in
@@ -496,6 +500,7 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * the noise descriptor.
  * @param equidistant if true, time noise is approximated by distributing the
  * spikes of all bundles equidistantly.
+ * @param t0 is the time at which the spike group should be inserted.
  * @param tMin if not nullptr, the time of the first spike is written to this
  * value.
  * @param tMax if not nullptr, the time of the last spike is written to this
@@ -506,10 +511,10 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * seed value.
  */
 SpikeVec &buildSpikeGroup(
-    SpikeVec &spikes, Time t0, Val w, size_t nBundles,
+    SpikeVec &spikes, Val w, size_t nBundles,
     const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-    bool equidistant = false, Time *tMin = nullptr, Time *tMax = nullptr,
-    size_t *seed = nullptr);
+    bool equidistant = false, Time t0 = Time(), Time *tMin = nullptr,
+    Time *tMax = nullptr, size_t *seed = nullptr);
 
 /**
  * The buildSpikeGroup class can be used to build a input spike group with the
@@ -534,10 +539,10 @@ SpikeVec &buildSpikeGroup(
  * seed value.
  */
 SpikeVec buildSpikeGroup(
-    Time t0, Val w, size_t nBundles = 1,
+    Val w, size_t nBundles = 1,
     const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
-    bool equidistant = false, Time *tMin = nullptr, Time *tMax = nullptr,
-    size_t *seed = nullptr);
+    bool equidistant = false, Time t0 = Time(), Time *tMin = nullptr,
+    Time *tMax = nullptr, size_t *seed = nullptr);
 }
 
 #endif /* _ADEXPSIM_SPIKE_TRAIN_HPP_ */

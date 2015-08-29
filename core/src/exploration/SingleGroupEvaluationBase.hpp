@@ -78,8 +78,8 @@ public:
 	SingleGroupEvaluationBase(const SpikeTrainEnvironment &env,
 	                          const SpikeData &spikeData,
 	                          bool useIfCondExp = false, Val eTar = 0.1e-3)
-	    : sN(spikeData.build(SpikeData::Type::N)),
-	      sNM1(spikeData.build(SpikeData::Type::NM1)),
+	    : sN(spikeData.build(SpikeData::Type::N, env)),
+	      sNM1(spikeData.build(SpikeData::Type::NM1, env)),
 	      useIfCondExp(useIfCondExp),
 	      env(env),
 	      spikeData(spikeData),

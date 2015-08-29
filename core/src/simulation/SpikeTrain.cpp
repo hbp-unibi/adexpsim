@@ -98,9 +98,9 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 	return res;
 }
 
-SpikeVec &buildSpikeGroup(SpikeVec &spikes, Time t0, Val w, size_t nBundles,
+SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBundles,
                           const SpikeTrainEnvironment &env, bool equidistant,
-                          Time *tMin, Time *tMax, size_t *seed)
+                          Time t0, Time *tMin, Time *tMax, size_t *seed)
 {
 	// Calculate the deltaT for equidistant distribution
 	const Time deltaTEqn =
@@ -136,29 +136,28 @@ SpikeVec &buildSpikeGroup(SpikeVec &spikes, Time t0, Val w, size_t nBundles,
 	return spikes;
 }
 
-SpikeVec buildSpikeGroup(Time t0, Val w, size_t nBundles,
+SpikeVec buildSpikeGroup(Val w, size_t nBundles,
                          const SpikeTrainEnvironment &env, bool equidistant,
-                         Time *tMin, Time *tMax, size_t *seed)
+                         Time t0, Time *tMin, Time *tMax, size_t *seed)
 {
 	SpikeVec res;  // Result spike vector
-	return buildSpikeGroup(res, t0, w, nBundles, env, equidistant, tMin, tMax,
+	return buildSpikeGroup(res, w, nBundles, env, equidistant, t0, tMin, tMax,
 	                       seed);
 }
 
 /* Class GenericGroupDescriptor */
 
 SpikeVec &GenericGroupDescriptor::build(SpikeVec &spikes, Spike::Type type,
-                                        Time t0,
                                         const SpikeTrainEnvironment &env,
-                                        bool equidistant, Time *tMin,
+                                        bool equidistant, Time t0, Time *tMin,
                                         Time *tMax, size_t *seed) const
 {
 	switch (type) {
 		case Spike::Type::EXCITATORY:
-			return buildSpikeGroup(spikes, t0, wE, nE, env, equidistant, tMin,
+			return buildSpikeGroup(spikes, wE, nE, env, equidistant, t0, tMin,
 			                       tMax, seed);
 		case Spike::Type::INHIBITORY:
-			return buildSpikeGroup(spikes, t0, -wI, nI, env, equidistant, tMin,
+			return buildSpikeGroup(spikes, -wI, nI, env, equidistant, t0, tMin,
 			                       tMax, seed);
 	}
 	return spikes;
@@ -167,11 +166,11 @@ SpikeVec &GenericGroupDescriptor::build(SpikeVec &spikes, Spike::Type type,
 /* Class SingleGroupSingleOutDescriptor */
 
 SpikeVec &SingleGroupSingleOutDescriptor::build(
-    SpikeVec &spikes, SingleGroupSingleOutDescriptor::Type type, Time t0,
-    const SpikeTrainEnvironment &env, Time *tMin, Time *tMax) const
+    SpikeVec &spikes, SingleGroupSingleOutDescriptor::Type type,
+    const SpikeTrainEnvironment &env, Time t0, Time *tMin, Time *tMax) const
 {
-	return buildSpikeGroup(spikes, t0, 1.0, type == Type::N ? n : nM1, env, true,
-	                       tMin, tMax);
+	return buildSpikeGroup(spikes, 1.0, type == Type::N ? n : nM1, env, true,
+	                       t0, tMin, tMax);
 }
 
 /* Class SpikeTrain */
@@ -207,15 +206,16 @@ void SpikeTrain::rebuild()
 
 		// Generate the inhibitory and the excitatory spikes
 		Time tMin = MAX_TIME, tMax = MIN_TIME;
-		descr.build(spikes, Spike::Type::EXCITATORY, t, env, equidistant, &tMin,
+		descr.build(spikes, Spike::Type::EXCITATORY, env, equidistant, t, &tMin,
 		            &tMax);
-		descr.build(spikes, Spike::Type::INHIBITORY, t, env, equidistant, &tMin,
+		descr.build(spikes, Spike::Type::INHIBITORY, env, equidistant, t, &tMin,
 		            &tMax);
 
 		// Remember the first spike as a "range start spike", add a range for
 		// the group
 		rangeStartSpikes.emplace_back(idx);
-		ranges.emplace_back(std::max(lastStart, tMin), i, descrIdx, descr.nOut * env.bundleSize);
+		ranges.emplace_back(std::max(lastStart, tMin), i, descrIdx,
+		                    descr.nOut * env.bundleSize);
 
 		// Go to the next timestamp and increment the total spike index
 		lastStart = tMin;
