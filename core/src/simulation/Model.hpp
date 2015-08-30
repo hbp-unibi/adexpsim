@@ -106,8 +106,8 @@ public:
 	static constexpr uint8_t IF_COND_EXP = (1 << 5);
 
 	/**
-	 * Enables processing of "Special" input spikes as created using the
-	 * SpecialSpike class.
+	 * Enables processing of "Special" input spikes. These spikes can be created
+	 * using the SpecialSpike class.
 	 */
 	static constexpr uint8_t PROCESS_SPECIAL = (1 << 6);
 
