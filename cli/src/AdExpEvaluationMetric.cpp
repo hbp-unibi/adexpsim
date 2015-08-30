@@ -20,70 +20,68 @@
 #include <simulation/Parameters.hpp>
 #include <simulation/SpikeTrain.hpp>
 
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 
 using namespace AdExpSim;
 
-int main(int argc, char *argv[])
+static void progress(Val x, Val min, Val max, Val step)
 {
-	// Use the default parameters
-	Parameters params;
+	const int w = 50;
+	const Val p = std::min(
+	    100.0f, std::max(.0f, (100.0f * (x - min) / (max - step - min))));
+	std::cerr << std::fixed << std::setprecision(2) << std::setw(6) << p
+	          << "% [";
+	const int j = p * float(w) / 100.0;
+	for (int i = 0; i < w; i++) {
+		std::cerr << (i > j ? ' ' : (i == j ? '>' : '='));
+	}
+	std::cerr << "]\r";
+}
 
-	bool useIfCondExp = false;
+static void sweep(bool useIfCondExp, size_t dim, Val min, Val max, Val step,
+                  Val w = DefaultParameters::w)
+{
+	std::cerr << "AdExpEvaluationMetric: Performing sweep on parameter "
+	          << Parameters::names[dim] << " ("
+	          << (useIfCondExp ? "lif" : "adex") << ")" << std::endl;
+
 	SpikeVec train = buildInputSpikes(5, 5e-3_s);
 	FractionalSpikeCount eval(useIfCondExp);
 
-	std::cerr << "AdExpEvaluationMetric: Performing sweep..." << std::endl;
+	std::ofstream of("sweep_" + Parameters::nameIds[dim] +
+	                 (useIfCondExp ? "_lif" : "_adex") + ".csv");
 
-	// Vary the eTh parameter and record the results
-	/*for (Val eTh = params.eL() + 2.1e-3; eTh < 0.0; eTh += 0.01e-3) {
-	    params.eTh() = eTh;
-	    const WorkingParameters p(params);
-	    if (p.valid()) {
-	        auto res = eval.calculate(train, p);
-	        Val th = p.eSpikeEff(useIfCondExp);
-	        std::cout << params.eTh() << "\t" << res.spikeCount << "\t"
-	                  << res.eReq << "\t" << res.eRel << "\t" << th
-	                  << std::endl;
-	    }
-	}*/
-	/*for (Val tauE = 1e-3; tauE < 100e-3; tauE += 0.01e-3) {
-	        params.tauE() = tauE;
-	        const WorkingParameters p(params);
-	        if (p.valid()) {
-	            auto res = eval.calculate(train, p);
-	            Val th = p.eSpikeEff(useIfCondExp);
-	            std::cout << params.tauE() << "\t" << res.spikeCount << "\t"
-	                      << res.eReq << "\t" << res.eRel << "\t" << th
-	                      << std::endl;
-	        }
-	    }*/
-	/*params.w() = 9e-8;
-	for (Val gL = 1e-9; gL < 1e-6; gL += 1e-9) {
-	    params.gL() = gL;
-	    const WorkingParameters p(params);
-	    if (p.valid()) {
-	        auto res = eval.calculate(train, p);
-	        Val th = p.eSpikeEff(useIfCondExp);
-	        std::cout << params.gL() << "\t" << res.spikeCount << "\t"
-	                  << res.eReq << "\t" << res.eRel << "\t" << th
-	                  << std::endl;
-	    }
-	}*/
-	params.w() = 1e-6;
-	for (Val tauRef = 0; tauRef < 2e-3; tauRef += 0.001e-3) {
-		params.tauRef() = tauRef;
-		const WorkingParameters p(params);
-		if (p.valid()) {
-			auto res = eval.calculate(train, p);
-			Val th = p.eSpikeEff(useIfCondExp);
-			std::cout << params.tauRef() << "\t" << res.spikeCount << "\t"
-			          << res.eReq << "\t" << res.eRel << "\t" << th
-			          << std::endl;
+	Parameters params;
+	params[Parameters::idx_w] = w;
+	for (Val x = min; x < max; x += step) {
+		progress(x, min, max, step);
+		params[dim] = x;
+		const WorkingParameters wp(params);
+		if (wp.valid()) {
+			Val th = wp.eSpikeEff(useIfCondExp);
+			auto res = eval.calculate(train, wp);
+			of << x << "\t" << res.fracSpikeCount() << "\t" << res.spikeCount
+			   << "\t" << res.eReq << "\t" << res.pReq << "\t" << res.eMax
+			   << "\t" << res.pMax << "\t" << th << std::endl;
 		}
 	}
 
-	std::cerr << "Done!" << std::endl;
+	std::cerr << std::endl << "Done." << std::endl;
+}
+
+int main(int argc, char *argv[])
+{
+	// sweep(false, Parameters::idx_eL, DefaultParameters::eL + 2.1e-3, 0.0,
+	//      0.1e-3);
+	// sweep(true, Parameters::idx_eL, DefaultParameters::eL + 2.1e-3, 0.0,
+	//      0.1e-3);
+	sweep(false, Parameters::idx_tauE, 0.01e-3, 10e-3, 0.01e-3);
+	sweep(true, Parameters::idx_tauE, 0.01e-3, 10e-3, 0.01e-3);
+	//	sweep(Parameters::idx_gL, 1e-3, 100e-3, 0.1e-3, 9e-8);
+	// sweep(false, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
+	// sweep(true, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
 	return 0;
 }
 
