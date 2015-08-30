@@ -73,15 +73,16 @@ static void sweep(bool useIfCondExp, size_t dim, Val min, Val max, Val step,
 
 int main(int argc, char *argv[])
 {
-	// sweep(false, Parameters::idx_eL, DefaultParameters::eL + 2.1e-3, 0.0,
-	//      0.1e-3);
-	// sweep(true, Parameters::idx_eL, DefaultParameters::eL + 2.1e-3, 0.0,
-	//      0.1e-3);
+	sweep(false, Parameters::idx_eTh, DefaultParameters::eL + 2.1e-3, 0.0,
+	      0.1e-3);
+	sweep(true, Parameters::idx_eTh, DefaultParameters::eL + 2.1e-3, 0.0,
+	      0.1e-3);
 	sweep(false, Parameters::idx_tauE, 0.01e-3, 10e-3, 0.01e-3);
 	sweep(true, Parameters::idx_tauE, 0.01e-3, 10e-3, 0.01e-3);
-	//	sweep(Parameters::idx_gL, 1e-3, 100e-3, 0.1e-3, 9e-8);
-	// sweep(false, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
-	// sweep(true, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
+	sweep(false, Parameters::idx_gL, 100e-9, 2000e-9, 10e-9, 9e-8);
+	sweep(true, Parameters::idx_gL, 100e-9, 2000e-9, 10e-9, 9e-8);
+	sweep(false, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
+	sweep(true, Parameters::idx_tauRef, 0, 2e-3, 0.1e-3, 1e-6);
 	return 0;
 }
 
