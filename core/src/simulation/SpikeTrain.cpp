@@ -57,33 +57,6 @@ static void updateMinMax(T val, T *min, T *max)
 
 /* Global functions */
 
-SpikeVec sliceSpikes(const SpikeVec &spikes, Time t)
-{
-	SpikeVec res;
-	for (const Spike &spike : spikes) {
-		if (spike.t > t) {
-			res.emplace_back(spike.t - t, spike.w);
-		}
-	}
-	return res;
-}
-
-SpikeVec &shiftSpikes(SpikeVec &spikes, Time t)
-{
-	for (Spike &spike : spikes) {
-		spike.t -= t;
-	}
-	return spikes;
-}
-
-SpikeVec &offsetSpikes(SpikeVec &spikes)
-{
-	if (!spikes.empty()) {
-		return shiftSpikes(spikes, -spikes[0].t);
-	}
-	return spikes;
-}
-
 SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 {
 	// Calculate the number of spikes

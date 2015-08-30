@@ -452,26 +452,6 @@ public:
 };
 
 /**
- * Returns a subset of spikes from the given spikes list containing those whose
- * spike time is larger than the given t.
- *
- * @param spikes is the list from which a subset of spikes should be extracted.
- * @param t is the lower, non-inclusive boundary the spikes have to surpass.
- */
-SpikeVec sliceSpikes(const SpikeVec &spikes, Time t);
-
-/**
- * Adds the given amout of time to all spikes in the spike vector.
- */
-SpikeVec &shiftSpikes(SpikeVec &spikes, Time t);
-
-/**
- * Makes sure the first spike in the list is at zero. The input list must be
- * sorted.
- */
-SpikeVec &offsetSpikes(const SpikeVec &spikes);
-
-/**
  * Method used to build a set of n input spikes with uniform spacing.
  *
  * @param n is the number of input spikes. If a fractional number is given, an
