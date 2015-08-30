@@ -902,6 +902,21 @@ public:
 	}
 
 	/**
+	 * Returns the global maximum (ignoring spikes). If there were no maxima
+	 * recorded, returns the last state. If the simulation did not run yet
+	 * returns the initial state.
+	 */
+	Maximum global() {
+		Maximum res(lastTime, lastState);
+		for (size_t i = 0; i < maxima.size(); i++) {
+			if (maxima[i].s.v() > res.s.v()) {
+				res = maxima[i];
+			}
+		}
+		return res;
+	}
+
+	/**
 	 * Returns true if a last state is available.
 	 */
 	bool hasLastState() { return validLast; }
