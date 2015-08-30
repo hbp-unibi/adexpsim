@@ -31,20 +31,6 @@
 
 namespace AdExpSim {
 
-template <uint8_t Flags, typename Recorder, typename CountFun>
-static void run(const SpikeVec &spikes, const WorkingParameters &params,
-                Recorder &recorder, bool useIfCondExp, Val eTar,
-                size_t maxSpikeCount, CountFun countFun,
-                const State &s0 = State())
-{
-	MaxValueController maxValueController;
-	auto controller = createMaxOutputSpikeCountController(
-	    countFun, maxSpikeCount, maxValueController);
-	DormandPrinceIntegrator integrator(eTar);
-	Model::simulate<Flags>(useIfCondExp, spikes, recorder, controller,
-	                       integrator, params, Time(-1), MAX_TIME, s0);
-}
-
 /**
  * Copies all spikes from "spikes" to the result which occur later than "t" and
  * inserts a control spike at tCtrl, returning its index.
@@ -82,7 +68,8 @@ static std::pair<SpikeVec, size_t> rebuildInput(const SpikeVec &spikes, Time t,
 uint16_t FractionalSpikeCount::minPerturbation(const RecordedSpike &spike,
                                                const SpikeVec &spikes,
                                                const WorkingParameters &params,
-                                               uint16_t vMin, size_t spikeCount)
+                                               uint16_t vMin,
+                                               size_t expectedSpikeCount)
 {
 	// Create a new input spike vector containing a new special
 	// "SET_VOLTAGE" input spike
@@ -108,13 +95,21 @@ uint16_t FractionalSpikeCount::minPerturbation(const RecordedSpike &spike,
 		input[iCtrl].w =
 		    SpecialSpike::encode(SpecialSpike::Kind::SET_VOLTAGE, curV);
 
+		OutputSpikeCountRecorder recorder;
+		{
+			MaxValueController maxValueController;
+			auto controller = createMaxOutputSpikeCountController(
+			    [&recorder]() { return recorder.count(); },
+			    expectedSpikeCount, maxValueController);
+			DormandPrinceIntegrator integrator(eTar);
+			Model::simulate<Model::PROCESS_SPECIAL | Model::FAST_EXP>(
+			    useIfCondExp, input, recorder, controller, integrator, params,
+			    Time(-1), MAX_TIME, spike.state, Time(0));
+		}
+
 		// Run the simulation, restrict binary search area according to the
 		// result
-		OutputSpikeCountRecorder recorder;
-		run<Model::PROCESS_SPECIAL | Model::FAST_EXP>(
-		    input, params, recorder, useIfCondExp, eTar, spikeCount + 1,
-		    [&recorder]() { return recorder.count(); }, spike.state);
-		if (recorder.count() > spikeCount) {
+		if (recorder.count() > expectedSpikeCount) {
 			curVMax = curV;
 		} else {
 			curVMin = curV;
@@ -127,45 +122,51 @@ uint16_t FractionalSpikeCount::minPerturbation(const RecordedSpike &spike,
 }
 
 FractionalSpikeCount::Result FractionalSpikeCount::calculate(
-    const SpikeVec &spikes, const WorkingParameters &params)
+    const SpikeVec &input, const WorkingParameters &params)
 {
-	// Perform an initial run with just the given input spikes
+	// Fetch some required constants from the parameters
+	const Val eSpikeEff = params.eSpikeEff(useIfCondExp);
+	const Time tRef = Time::sec(params.tauRef()) + Time(1);
+
+	// Initial run with the given input spikes. Record both local maxima and the
+	// output spikes. Use the MaxValueController to abort once the the neuron
+	// has processed all input spikes and settled down on its last maximum.
 	LocalMaximumRecorder maximumRecorder;
 	OutputSpikeRecorder spikeRecorder;
-	auto recorder = makeMultiRecorder(maximumRecorder, spikeRecorder);
-	run<Model::FAST_EXP>(spikes, params, recorder, useIfCondExp, eTar,
-	                     maxSpikeCount,
-	                     [&spikeRecorder] { return spikeRecorder.count(); });
-	RecordedSpikeVec outputSpikes = spikeRecorder.spikes;
+	{
+		MaxValueController maxValueController;
+		auto recorder = makeMultiRecorder(maximumRecorder, spikeRecorder);
+		auto controller = createMaxOutputSpikeCountController(
+		    [&spikeRecorder]() { return spikeRecorder.count(); }, maxSpikeCount,
+		    maxValueController);
+		DormandPrinceIntegrator integrator(eTar);
+		Model::simulate<Model::FAST_EXP>(useIfCondExp, input, recorder,
+		                                 controller, integrator, params);
 
-	const size_t spikeCount = outputSpikes.size();
-	const Val eSpikeEff = params.eSpikeEff(useIfCondExp);
-	if (spikeCount == maxSpikeCount) {
-		return Result(spikeCount);
+		// Abort if the MaxOutputSpikeCount controller has tripped
+		if (controller.tripped()) {
+			return Result(spikeRecorder.count());
+		}
 	}
 
-	// Add an virtual output spike at -tauRefrac in order to be able to control
-	// the initial membrane potential
-	outputSpikes.insert(
-	    outputSpikes.begin(),
-	    RecordedSpike(Time::sec(-params.tauRef()) - Time(1), State()));
-
-	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.vMin(),
-	                                                 params.vMax());
+	// Fetch the recorded output spikes and add an virtual output spike at -
+	// tauRefrac in order to be able to control the initial membrane potential
+	RecordedSpikeVec output = spikeRecorder.spikes;
+	const size_t outputCount = output.size();
+	output.insert(output.begin(), RecordedSpike(tRef));
 
 	// Note: outputSpikes.size() = spikeCount + 1
-	for (ssize_t i = spikeCount; i >= 0; i--) {
-		vMin = minPerturbation(outputSpikes[i], spikes, params, vMin,
-		                       spikeCount - i);
+	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.vMin(),
+	                                                 params.vMax());
+	for (ssize_t i = outputCount; i >= 0; i--) {
+		vMin = minPerturbation(output[i], input, params, vMin, outputCount - i);
 	}
 
-	// Return the actual spike count and the minimum voltage needed to induce
-	// a new spike
+	// Convert vMin into an actual membrane potential
 	const Val eReq =
 	    SpecialSpike::decodeSpikeVoltage(vMin, params.vMin(), params.vMax());
-	const Val eNorm = (spikeCount == 0) ? 0.0 : params.eReset();
+	const Val eNorm = (outputCount == 0) ? 0.0 : params.eReset();
 	const Val eMax = maximumRecorder.global().s.v();
-
-	return Result(spikeCount, eReq, eMax, eNorm, eSpikeEff);
+	return Result(outputCount, eReq, eMax, eNorm, eSpikeEff);
 }
 }
