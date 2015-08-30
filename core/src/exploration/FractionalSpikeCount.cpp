@@ -31,6 +31,176 @@
 
 namespace AdExpSim {
 
+namespace {
+/**
+ * Structure used to store the results of the binary search. Contains a
+ * time and a state as upper and lower boundary.
+ */
+struct PerturbationAnalysisResult {
+	/**
+	 * Result of a comparison between an instance of PerturbationAnalysisResult
+	 * and a current state.
+	 */
+	enum class ComparisonResult {
+		/**
+		 * There will be n + 1 output spikes.
+		 */
+		NP1,
+
+		/**
+		 * There will be n output spikes.
+		 */
+		N,
+
+		/**
+		 * There will be at most n output spikes.
+		 */
+		AT_MOST_N,
+
+		/**
+		 * There will be at least n output spikes, might also be n + 1.
+		 */
+		AT_LEAST_N,
+
+		/**
+		 * There may be any number of output spikes following.
+		 */
+		UNKNOWN
+	};
+
+	/**
+	 * Value used to mark invalid/not set limits.
+	 */
+	static constexpr Val INVALID_LIMIT = std::numeric_limits<Val>::max();
+
+	/**
+	 * Point in time for which this analysis result was generated.
+	 */
+	Time t;
+
+	/**
+	 * Adaptation current at this point.
+	 */
+	Val w;
+
+	/**
+	 * Membrane potential which -- if surpassed by the current state -- means
+	 * that at least one additional spike will be generated.
+	 */
+	Val vUpper;
+
+	/**
+	 * Membrane potential which -- if larger than the current state -- means
+	 * that no additional spikes will be produced beyond this point in time.
+	 */
+	Val vLower;
+
+	/**
+	 * Returns true if a valid upper limit is set.
+	 */
+	bool hasUpper() const {
+		return vUpper < INVALID_LIMIT;
+	}
+
+	/**
+	 * Returns true if a valid lower limit is set.
+	 */
+	bool hasLower() const {
+		return vLower < INVALID_LIMIT;
+	}
+
+	/**
+	 * Compares the given current state to this PerturbationAnalysisResult
+	 * instance.
+	 */
+	ComparisonResult compare(const State &s) const {
+		// First case: We have a lower boundary and the current voltage is
+		// smaller than the voltage of that lower boundary
+		if (hasLower() && s.v() <= vLower) {
+			if (s.dvW() > w) {
+				// The adaptation current is larger than last time, preventing
+				// any new spikes. So we're surly not going to see more than N 
+				// spikes.
+				return ComparisonResult::AT_MOST_N;
+			} else if (s.dvW() < w) {
+				// The adapation current is smaller. We might also get more
+				// than N spikes!
+				return ComparisonResult::AT_LEAST_N;
+			}
+			// The adapation current stayed the same. We'll get exactly N
+			// output spikes
+			return ComparisonResult::N;
+		}
+
+		// Second case: The current voltage is larger than the 
+		if (hasUpper() && s.v() >= vUpper) {
+		
+		}
+
+		// Third case: We're neither in the upper, nor the lower boundary.
+		if (hasLower() && s.v() >= vLower) {
+			if (s.dvW() > w) {
+				
+			} else {
+				// Adapation current is larger than s.w(), there will be at
+				// least N output spikes
+				return ComparisonResult::AT_LEAST_N;
+			}
+		}
+		return ComparisonResult::UNKNOWN;
+	}
+};
+
+/**
+ * Both a recorder and controller used inside the FractionalSpikeCount class.
+ * Allows to abort the simulation once a certain count of output spikes have
+ * been reached or a previously simulated state is reached for which the
+ * remaining number of output spikes is known.
+ */
+class PerturbationAnalysisManager {
+private:
+	/**
+	 * List containing the perturbation analysis results for upcomming time
+	 * points. Latest results are at the beginning, earliest results are at the
+	 * end of the list.
+	 */
+	const std::vector<PerturbationAnalysisResult> &results;
+
+public:
+
+
+	void record(Time, const State &, const AuxiliaryState &, bool)
+	{
+		// Discard everything
+	}
+
+	void inputSpike(Time, const State &)
+	{
+		// Discard everything
+	}
+
+	void outputSpike(Time t, const State &)
+	{
+		// Discard everything
+	}
+
+	/**
+	 * Resets the recorder to its initial state. Nothing to do in this
+	 * implementation.
+	 */
+	void reset()
+	{
+		// Nothing to reset.
+	}
+
+	static ControllerResult control(Time, const State &, const AuxiliaryState &,
+	                                const WorkingParameters &, bool)
+	{
+		return ControllerResult::CONTINUE;
+	}
+};
+}
+
 /**
  * Copies all spikes from "spikes" to the result which occur later than "t" and
  * inserts a control spike at tCtrl, returning its index.
