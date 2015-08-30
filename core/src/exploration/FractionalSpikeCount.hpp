@@ -34,6 +34,7 @@
 #include <common/Types.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/Spike.hpp>
+#include <simulation/Recorder.hpp>
 
 namespace AdExpSim {
 /**
@@ -61,6 +62,14 @@ private:
 	 */
 	size_t maxSpikeCount;
 
+	/**
+	 * Function performing a binary search in order ot find the minimum
+	 * perturbation membrane potential which causes another spike.
+	 */
+	uint16_t minPerturbation(const RecordedSpike &spike, const SpikeVec &spikes,
+	                        const WorkingParameters &params, uint16_t vMin,
+	                        size_t spikeCount);
+
 public:
 	/**
 	 * Result structure containing both the fractional spike counter and other
@@ -82,20 +91,45 @@ public:
 		/**
 		 * Required voltage boost relative to the available voltage range.
 		 */
-		Val eRel;
+		Val pReq;
+
+		/**
+		 * Largest local maximum (aside from spikes).
+		 */
+		Val eMax;
+
+		/**
+		 * Largest local maximum relative to the available voltage range.
+		 */
+		Val pMax;
+
+		/**
+		 * Constructor for a non-fractional spike count.
+		 */
+		Result(size_t spikeCount)
+		    : spikeCount(spikeCount), eReq(0.0), pReq(1.0), eMax(0.0), pMax(0.0)
+		{
+		}
 
 		/**
 		 * Constructor of the Result struct, allows to set all members.
 		 */
-		Result(size_t spikeCount, Val eReq, Val eRel)
-		    : spikeCount(spikeCount), eReq(eReq), eRel(eRel)
+		Result(size_t spikeCount, Val eReq, Val eMax, Val eNorm, Val eSpikeEff)
+		    : spikeCount(spikeCount),
+		      eReq(eReq),
+		      pReq((eReq - eNorm) / (eSpikeEff - eNorm)),
+		      eMax(eMax),
+		      pMax((eMax - eNorm) / (eSpikeEff - eNorm))
 		{
 		}
 
 		/**
 		 * Converts the internal values into the actual fractional spike count.
 		 */
-		Val fracSpikeCount() { return spikeCount + 1.0 - eRel; }
+		Val fracSpikeCount()
+		{
+			return (spikeCount == 0) ? pMax : (spikeCount + 1.0 - pReq);
+		}
 	};
 
 	/**
