@@ -38,6 +38,11 @@ static Val dist(Val x, Val mu, Val nu)
 	return std::pow(1.0 + d * d / nu, -(nu + 1.0) * 0.5);
 }
 
+static Val correct(Val x)
+{
+	return x < 1.0 ? std::pow(x, 5.0f) : x;
+}
+
 EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
     const WorkingParameters &params) const
 {
@@ -63,8 +68,8 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
 
 	// Convert the fractional spike counts to a value between 0 and 1
 	static constexpr Val nu = 1;
-	const Val pN = dist(resN.fracSpikeCount(), nOut + 0.3, nu);
-	const Val pNM1 = dist(resNM1.fracSpikeCount(), 0, nu);
+	const Val pN = dist(correct(resN.fracSpikeCount()), nOut + 0.3, nu);
+	const Val pNM1 = dist(correct(resNM1.fracSpikeCount()), 0.0, nu);
 	const Val pBin = ((resN.spikeCount == nOut) && (resNM1.spikeCount == 0));
 	return EvaluationResult({pN * pNM1 * pReset, pBin, pN, pNM1, pReset,
 	                         resN.fracSpikeCount(), resNM1.fracSpikeCount()});
