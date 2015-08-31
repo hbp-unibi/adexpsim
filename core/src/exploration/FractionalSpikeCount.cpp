@@ -33,128 +33,6 @@ namespace AdExpSim {
 
 namespace {
 /**
- * Structure used to store the results of the binary search. Contains a
- * time and a state as upper and lower boundary.
- */
-struct PerturbationAnalysisResult {
-	/**
-	 * Result of a comparison between an instance of PerturbationAnalysisResult
-	 * and a current state.
-	 */
-	enum class ComparisonResult {
-		/**
-	     * There will be at most n + 1 output spikes. Might also be less than
-	     * n.
-	     */
-		AT_MOST_NP1,
-
-		/**
-	     * There will be at least n + 1 output spikes.
-	     */
-		AT_LEAST_NP1,
-
-		/**
-	     * There will be n output spikes.
-	     */
-		N,
-
-		/**
-	     * There will be at most n output spikes.
-	     */
-		AT_MOST_N,
-
-		/**
-	     * There will be at least n output spikes, might also be n + 1.
-	     */
-		AT_LEAST_N
-	};
-
-	/**
-	 * Point in time for which this analysis result was generated.
-	 */
-	Time t;
-
-	/**
-	 * Membrane potential which -- if surpassed by the current state -- means
-	 * that at least one additional spike will be generated.
-	 */
-	Val vUpper;
-
-	/**
-	 * Membrane potential which -- if larger than the current state -- means
-	 * that no additional spikes will be produced beyond this point in time.
-	 */
-	Val vLower;
-
-	/**
-	 * Adaptation current at this point.
-	 */
-	Val w;
-
-	/**
-	 * Default constructor, makes sure "compare" always returns AT_MOST_NP1,
-	 * which is the most general result.
-	 */
-	PerturbationAnalysisResult()
-	    : vUpper(std::numeric_limits<Val>::max()),
-	      vLower(std::numeric_limits<Val>::lowest()),
-	      w(std::numeric_limits<Val>::lowest())
-	{
-	}
-
-	/**
-	 * Constructor of PerturbationAnalysisResult, allows to set all values.
-	 */
-	PerturbationAnalysisResult(Time t, Val vUpper, Val vLower, Val w)
-	    : t(t), vUpper(vUpper), vLower(vLower), w(w)
-	{
-	}
-
-	/**
-	 * Compares the given current state to this PerturbationAnalysisResult
-	 * instance.
-	 */
-	ComparisonResult compare(const State &s) const
-	{
-		// First case: We have a lower boundary and the current voltage is
-		// smaller than the voltage of that lower boundary
-		if (s.v() <= vLower) {
-			if (s.dvW() > w) {
-				// The adaptation current is larger than last time, preventing
-				// any new spikes. So we're surly not going to see more than N
-				// spikes.
-				return ComparisonResult::AT_MOST_N;
-			} else if (s.dvW() < w) {
-				// The adapation current is smaller. We might also get more
-				// than N spikes!
-				return ComparisonResult::AT_LEAST_N;
-			}
-			// We'll get N spikes as output
-			return ComparisonResult::N;
-		}
-
-		// Second case: The current voltage is larger than the uper boundary,
-		// there can be potentially n + 1 spikes. Same cases as above.
-		if (s.v() >= vUpper) {
-			if (s.dvW() > w) {
-				return ComparisonResult::AT_MOST_NP1;
-			}
-			return ComparisonResult::AT_LEAST_NP1;
-		}
-
-		// Third case: s.v() > vLower && s.v() < vUpper
-		if (s.dvW() > w) {
-			// s.v > vLower, but the adapation current is larger. So there
-			// might be n + 1 spikes, but more likely fewer.
-			return ComparisonResult::AT_MOST_NP1;
-		}
-		// The current adapation current is smaller than s.dvW there
-		// will be at least N output spikes
-		return ComparisonResult::AT_LEAST_N;
-	}
-};
-
-/**
  * Both a recorder and controller used inside the FractionalSpikeCount class.
  * Allows to abort the simulation once a certain count of output spikes have
  * been reached or a previously simulated state is reached for which the
@@ -175,6 +53,11 @@ private:
 	ssize_t idx;
 
 	/**
+	 * Time offset relative to the values stored in the "results" list.
+	 */
+	Time offs;
+
+	/**
 	 * Original number of output spikes beyond the point at which the simulation
 	 * was started. As soon as one of the elements in "results" is passed, this
 	 * value has to be decreased.
@@ -186,58 +69,138 @@ private:
 	 */
 	size_t outputSpikeCount;
 
-	/**
-	 * Expected number of spikes up to this point.
-	 */
-	size_t expectedSpikeCount;
-
 public:
-	/*	PerturbationAnalysisManager(const
-	   std::vector<PerturbationAnalysisResult> &results, size_t maxSpikeCount) :
-	   results(results), idx(results.size() - 1), maxSpikeCount(maxSpikeCount),
-	   expectedSpikeCount(1) {
+	PerturbationAnalysisManager(
+	    const std::vector<PerturbationAnalysisResult> &results, Time offs,
+	    size_t maxSpikeCount)
+	    : results(results), offs(offs), maxSpikeCount(maxSpikeCount)
+	{
+		reset();
+	}
 
-	    }
+	void outputSpike(Time t, const State &) { outputSpikeCount++; }
 
-	    void outputSpike(Time t, const State &)
-	    {
-	        outputSpikeCount++;
-	    }
+	void reset()
+	{
+		idx = results.size() - 1;
+		outputSpikeCount = 0;
+	}
 
-	    static ControllerResult control(Time t, const State &s, const
-	   AuxiliaryState &,
-	                                    const WorkingParameters &, bool)
-	    {
-	        if (idx >= 0 && t >= results[idx].t) {
-	            const ssize_t n =
-	            switch (results[idx].compare(s)) {
-	                case
-	   PerturbationAnalysisResult::ComparisonResult::AT_LEAST_NP1:
-	                    outputSpikeCount += (remainingSpikeCount + 1);
-	                    break;
-	                case
-	   PerturbationAnalysisResult::ComparisonResult::AT_LEAST_N:
-	                    outputSpikeCount += remainingSpikeCount;
-	                    break;
-	                case
-	   PerturbationAnalysisResult::ComparisonResult::AT_MOST_N:
+	/**
+	 * Returns the number of recorded output spike counts.
+	 */
+	size_t count() const { return outputSpikeCount; }
 
-	                    break;
-	                case
-	   PerturbationAnalysisResult::ComparisonResult::AT_MOST_NP1:
-	                    break;
-	            }
+	/**
+	 * Actual control function. Tries to abort the simulation as early as
+	 * possible, whenever it is clear that maxSpikeCount will not be surpassed
+	 * or will be surpassed.
+	 */
+	ControllerResult control(Time t, const State &s, const AuxiliaryState &as,
+	                         const WorkingParameters &, bool inRefrac)
+	{
+		if (idx >= 0 && t + offs >= results[idx].t) {
+			// Number of spikes that have been expected up to this point in time
+			const size_t expectedSpikeCount = results.size() - idx;
 
-	            // Go to the next element in the list
-	            idx--;
-	        }
+			// Number of spikes that are to be expected beyond this point in
+			// time
+			const size_t n = idx;
 
-	        if (outputSpikeCount > expectedSpikeCount) {
-	            return ControllerResult::ABORT;
-	        }
-	        return ControllerResult::CONTINUE;
-	    }*/
+			// Compare the current state to the value stored in results[idx].
+			switch (results[idx].compare(s)) {
+				case PerturbationAnalysisResult::ComparisonResult::AT_LEAST_NP1:
+					// There will be more than n + 1 spikes following. This is
+					// all we need to know. Abort.
+					outputSpikeCount += n + 1;
+					return ControllerResult::ABORT;
+				case PerturbationAnalysisResult::ComparisonResult::AT_LEAST_N:
+					// If the current spike count already exceeds the expected
+					// spike count, then we can abort, as we know that at least
+					// n spikes will follow. Otherwise we cannot abort, since we
+					// don't know whether n or n + 1 spikes will follow.
+					if (outputSpikeCount > expectedSpikeCount) {
+						outputSpikeCount += n;
+						return ControllerResult::ABORT;
+					}
+					break;
+				case PerturbationAnalysisResult::ComparisonResult::N:
+					// There will be exactly N spikes following. Abort.
+					outputSpikeCount += n;
+					return ControllerResult::ABORT;
+				case PerturbationAnalysisResult::ComparisonResult::AT_MOST_N:
+					// There will be at most N spikes following. If the current
+					// spike count is smaller or equal to the expected spike
+					// count, then there will be no chance of getting more than
+					// maxSpikeCount. Abort.
+					if (outputSpikeCount == expectedSpikeCount) {
+						outputSpikeCount += n;
+						return ControllerResult::ABORT;
+					}
+					// In the other case there could still be a chance of
+					// getting maxSpikeCount output spikes.
+					break;
+				case PerturbationAnalysisResult::ComparisonResult::AT_MOST_NP1:
+					// Well, this case is stupid. It means that there could
+					// still be n + 1 spikes comming, but it might also be less.
+					// Nothing we can do about that. Continue simulating.
+					break;
+			}
+
+			// Go to the next element in the list
+			idx--;
+		}
+
+		// Abort if the maximum spike count has been surpassed.
+		if (outputSpikeCount > maxSpikeCount) {
+			return ControllerResult::ABORT;
+		}
+
+		// Use the MaxValueController to abort whenever it is clear that no
+		// larger values can be reached.
+		return MaxValueController::control(s, as, inRefrac);
+	}
 };
+}
+
+PerturbationAnalysisResult::ComparisonResult
+PerturbationAnalysisResult::compare(const State &s) const
+{
+	// First case: We have a lower boundary and the current voltage is
+	// smaller than the voltage of that lower boundary
+	if (s.v() <= vLower) {
+		if (s.dvW() > w) {
+			// The adaptation current is larger than last time, preventing
+			// any new spikes. So we're surly not going to see more than N
+			// spikes.
+			return ComparisonResult::AT_MOST_N;
+		} else if (s.dvW() < w) {
+			// The adapation current is smaller. We might also get more
+			// than N spikes!
+			return ComparisonResult::AT_LEAST_N;
+		}
+		// We'll get N spikes as output
+		return ComparisonResult::N;
+	}
+
+	// Second case: The current voltage is larger than the uper boundary,
+	// there can be potentially n + 1 spikes. Same cases as above.
+	if (s.v() >= vUpper) {
+		if (s.dvW() > w) {
+			return ComparisonResult::AT_MOST_NP1;
+		}
+		return ComparisonResult::AT_LEAST_NP1;
+	}
+
+	// Third case: s.v() > vLower && s.v() < vUpper
+	if (s.dvW() > w) {
+		// s.v > vLower, but the adapation current is larger. So there
+		// might be n + 1 spikes, but more likely fewer.
+		return ComparisonResult::AT_MOST_NP1;
+	}
+	// The current adapation current is smaller than s.dvW there
+	// will be at least N output spikes
+	return ComparisonResult::AT_LEAST_N;
 }
 
 /**
@@ -274,11 +237,10 @@ static std::pair<SpikeVec, size_t> rebuildInput(const SpikeVec &spikes, Time t,
 	return std::make_pair(res, iCtrl);
 }
 
-uint16_t FractionalSpikeCount::minPerturbation(const RecordedSpike &spike,
-                                               const SpikeVec &spikes,
-                                               const WorkingParameters &params,
-                                               uint16_t vMin,
-                                               size_t expectedSpikeCount)
+uint16_t FractionalSpikeCount::minPerturbation(
+    const RecordedSpike &spike, const SpikeVec &spikes,
+    const WorkingParameters &params, uint16_t vMin, size_t expectedSpikeCount,
+    std::vector<PerturbationAnalysisResult> &results)
 {
 	// Create a new input spike vector containing a new special
 	// "SET_VOLTAGE" input spike
@@ -304,27 +266,34 @@ uint16_t FractionalSpikeCount::minPerturbation(const RecordedSpike &spike,
 		input[iCtrl].w =
 		    SpecialSpike::encode(SpecialSpike::Kind::SET_VOLTAGE, curV);
 
-		OutputSpikeCountRecorder recorder;
-		{
-			MaxValueController maxValueController;
-			auto controller = createMaxOutputSpikeCountController(
-			    [&recorder]() { return recorder.count(); }, expectedSpikeCount,
-			    maxValueController);
-			DormandPrinceIntegrator integrator(eTar);
-			Model::simulate<Model::PROCESS_SPECIAL | Model::FAST_EXP>(
-			    useIfCondExp, input, recorder, controller, integrator, params,
-			    Time(-1), MAX_TIME, spike.state, Time(0));
-		}
+		// Run the actual simulation
+		PerturbationAnalysisManager manager(results, spike.t,
+		                                    expectedSpikeCount);
+		DormandPrinceIntegrator integrator(eTar);
+		Model::simulate<Model::PROCESS_SPECIAL | Model::FAST_EXP>(
+		    useIfCondExp, input, manager, manager, integrator, params, Time(-1),
+		    MAX_TIME, spike.state, Time(0));
 
 		// Run the simulation, restrict binary search area according to the
 		// result
-		if (recorder.count() > expectedSpikeCount) {
+		if (manager.count() > expectedSpikeCount) {
 			curVMax = curV;
 		} else {
 			curVMin = curV;
 		}
 		first = false;
 	}
+
+	// Add a new entry to the results list. In case curVMin <= curVMax (e.g.
+	// because in the first step vMin was not found to produce another spike)
+	// set the upper bound to some large value.
+	results.emplace_back(
+	    spike.t,
+	    (curVMax > curVMin) ? SpecialSpike::decodeSpikeVoltage(
+	                              curVMax, params.vMin(), params.vMax())
+	                        : params.vMax(),
+	    SpecialSpike::decodeSpikeVoltage(curVMin, params.vMin(), params.vMax()),
+	    spike.state.dvW());
 
 	// Return the new minimum voltage needed to trigger a spike
 	return std::min(vMin, curVMax);
@@ -365,10 +334,12 @@ FractionalSpikeCount::Result FractionalSpikeCount::calculate(
 	output.insert(output.begin(), RecordedSpike(tRef));
 
 	// Note: outputSpikes.size() = spikeCount + 1
+	std::vector<PerturbationAnalysisResult> results;
 	uint16_t vMin = SpecialSpike::encodeSpikeVoltage(eSpikeEff, params.vMin(),
 	                                                 params.vMax());
 	for (ssize_t i = outputCount; i >= 0; i--) {
-		vMin = minPerturbation(output[i], input, params, vMin, outputCount - i);
+		vMin = minPerturbation(output[i], input, params, vMin, outputCount - i,
+		                       results);
 	}
 
 	// Convert vMin into an actual membrane potential

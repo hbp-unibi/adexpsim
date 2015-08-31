@@ -29,6 +29,7 @@
 #ifndef _ADEXPSIM_FRACTIONAL_SPIKE_COUNT_HPP_
 #define _ADEXPSIM_FRACTIONAL_SPIKE_COUNT_HPP_
 
+#include <limits>
 #include <vector>
 
 #include <common/Types.hpp>
@@ -37,6 +38,92 @@
 #include <simulation/Recorder.hpp>
 
 namespace AdExpSim {
+
+/**
+ * Used internally by the FractionalSpikeCount measure to perform the min
+ * perturbation analysis.
+ */
+struct PerturbationAnalysisResult {
+	/**
+	 * Result of a comparison between an instance of PerturbationAnalysisResult
+	 * and a current state.
+	 */
+	enum class ComparisonResult {
+		/**
+	     * There will be at most n + 1 output spikes. Might also be less than
+	     * n.
+	     */
+		AT_MOST_NP1,
+
+		/**
+	     * There will be at least n + 1 output spikes.
+	     */
+		AT_LEAST_NP1,
+
+		/**
+	     * There will be n output spikes.
+	     */
+		N,
+
+		/**
+	     * There will be at most n output spikes.
+	     */
+		AT_MOST_N,
+
+		/**
+	     * There will be at least n output spikes, might also be n + 1.
+	     */
+		AT_LEAST_N
+	};
+
+	/**
+	 * Point in time for which this analysis result was generated.
+	 */
+	Time t;
+
+	/**
+	 * Membrane potential which -- if surpassed by the current state -- means
+	 * that at least one additional spike will be generated.
+	 */
+	Val vUpper;
+
+	/**
+	 * Membrane potential which -- if the current voltage is smaller -- means
+	 * that no additional spikes will be produced beyond this point in time.
+	 */
+	Val vLower;
+
+	/**
+	 * Adaptation current at this point.
+	 */
+	Val w;
+
+	/**
+	 * Default constructor, makes sure "compare" always returns AT_MOST_NP1,
+	 * which is the most general result.
+	 */
+	PerturbationAnalysisResult()
+	    : vUpper(std::numeric_limits<Val>::max()),
+	      vLower(std::numeric_limits<Val>::lowest()),
+	      w(std::numeric_limits<Val>::lowest())
+	{
+	}
+
+	/**
+	 * Constructor of PerturbationAnalysisResult, allows to set all values.
+	 */
+	PerturbationAnalysisResult(Time t, Val vUpper, Val vLower, Val w)
+	    : t(t), vUpper(vUpper), vLower(vLower), w(w)
+	{
+	}
+
+	/**
+	 * Compares the given current state to this PerturbationAnalysisResult
+	 * instance.
+	 */
+	ComparisonResult compare(const State &s) const;
+};
+
 /**
  * Can be used to measure the number of output spikes of a neuron given a
  * certain parameter set and an input spike train. In contrast to just counting
@@ -67,8 +154,9 @@ private:
 	 * perturbation membrane potential which causes another spike.
 	 */
 	uint16_t minPerturbation(const RecordedSpike &spike, const SpikeVec &spikes,
-	                        const WorkingParameters &params, uint16_t vMin,
-	                        size_t spikeCount);
+	                         const WorkingParameters &params, uint16_t vMin,
+	                         size_t spikeCount,
+	                         std::vector<PerturbationAnalysisResult> &results);
 
 public:
 	/**

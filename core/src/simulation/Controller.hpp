@@ -99,6 +99,10 @@ public:
 /**
  * The MaxValueController class is used to abort the model calculation once the
  * maximum voltage is reached and to record this maximum voltage.
+ *
+ * TODO: Better split this into a "MaxValueRecorder" and a "MaxValueController",
+ * where the latter only consists of the static version of the "control"
+ * function.
  */
 class MaxValueController {
 public:
@@ -147,16 +151,30 @@ public:
 	}
 
 	/**
+	 * Static version of the control rule which determines when no larger
+	 * membrane potentials or even spikes can be produced. This rule can be
+	 * incorporated into other controllers.
+	 */
+	static ControllerResult control(const State &s, const AuxiliaryState &aux,
+	                                bool inRefrac)
+	{
+		// Calculate the total current (voltage change rate, without dvL)
+		const Val dvSum = aux.dvTh() + aux.dvE() + aux.dvI() + s.dvW();
+
+		return (s.lE() > MIN_RATE || inRefrac ||
+		        (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV))
+		           ? ControllerResult::CONTINUE
+		           : ControllerResult::MAY_CONTINUE;
+	}
+
+	/**
 	 * The control function is responsible for aborting the simulation. The
 	 * default controller aborts the simulation once the neuron has settled,
 	 * so there are no inhibitory or excitatory currents and the membrane
 	 * potential is near its resting potential.
-	 *
-	 * @param s is the current neuron state.
-	 * @return true if the neuron should continue, false otherwise.
 	 */
 	ControllerResult control(Time t, const State &s, const AuxiliaryState &aux,
-	                         const WorkingParameters &p, bool inRefrac)
+	                         const WorkingParameters p, bool inRefrac)
 	{
 		// Track the maximum voltage
 		if (s.v() > vMax) {
@@ -169,15 +187,9 @@ public:
 			tSpike = t;
 		}
 
-		// Calculate the total current (voltage change rate, without dvL)
-		Val dvSum = aux.dvTh() + aux.dvE() + aux.dvI() + s.dvW();
-
 		// Do not abort as long as lE is larger than the minimum rate and the
 		// current is negative (charges the neuron)
-		return (s.lE() > MIN_RATE || inRefrac ||
-		        (dvSum < MAX_DV && dvSum + aux.dvL() < MAX_DV))
-		           ? ControllerResult::CONTINUE
-		           : ControllerResult::MAY_CONTINUE;
+		return control(s, aux, inRefrac);
 	}
 };
 
@@ -202,9 +214,8 @@ public:
 	ControllerResult control(Time t, const State &s, const AuxiliaryState &as,
 	                         const WorkingParameters &p, bool inRefrac) const
 	{
-		return tripped()
-		           ? ControllerResult::ABORT
-		           : parent.control(t, s, as, p, inRefrac);
+		return tripped() ? ControllerResult::ABORT
+		                 : parent.control(t, s, as, p, inRefrac);
 	}
 
 	bool tripped() const { return countFun() > maxCount; }
@@ -224,9 +235,10 @@ createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount,
 
 template <typename CountFun>
 static MaxOutputSpikeCountController<CountFun, DefaultController>
-createMaxOutputSpikeCountControllerWithDefault(CountFun countFun, size_t maxCount)
+createMaxOutputSpikeCountControllerWithDefault(CountFun countFun,
+                                               size_t maxCount)
 {
-	DefaultController controller; // DefaultController.control is static
+	DefaultController controller;  // DefaultController.control is static
 	return createMaxOutputSpikeCountController(countFun, maxCount, controller);
 }
 
@@ -234,7 +246,7 @@ template <typename CountFun>
 static MaxOutputSpikeCountController<CountFun, NullController>
 createMaxOutputSpikeCountController(CountFun countFun, size_t maxCount)
 {
-	NullController controller; // NullController.control is static
+	NullController controller;  // NullController.control is static
 	return createMaxOutputSpikeCountController(countFun, maxCount, controller);
 }
 }
