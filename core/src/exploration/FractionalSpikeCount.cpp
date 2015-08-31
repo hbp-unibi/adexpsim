@@ -133,7 +133,7 @@ public:
 					// spike count is smaller or equal to the expected spike
 					// count, then there will be no chance of getting more than
 					// maxSpikeCount. Abort.
-					if (outputSpikeCount == expectedSpikeCount) {
+					if (outputSpikeCount <= expectedSpikeCount) {
 						outputSpikeCount += n;
 						return ControllerResult::ABORT;
 					}
