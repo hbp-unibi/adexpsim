@@ -103,6 +103,12 @@ struct GenericGroupDescriptor {
 
 	/**
 	 * Constructor, allows to set all struct members.
+	 *
+	 * @param nE is the number of excitatory input bursts.
+	 * @param nI is the number of inhibitory input bursts.
+	 * @param nOut is the number of expected output bursts.
+	 * @param wE is the weight factor of the excitatory input bursts.
+	 * @param wI is the weight factor of the inhibitory input bursts.
 	 */
 	GenericGroupDescriptor(size_t nE, size_t nI, size_t nOut, Val wE, Val wI)
 	    : nE(nE), nI(nI), nOut(nOut), wE(wE), wI(wI)
@@ -469,8 +475,7 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * a reference to it.
  *
  * @param spikes is a reference at the SpikeVec to which the new spikes should
- *be
- * added. Note that the vector will be sorted by this function in order ot
+ * be added. Note that the vector will be sorted by this function in order to
  * maintain the time order of the spikes.
  * @param w is the weight of the newly creates spikes.
  * @param nBundles is the number of spike bundles that should happen at the same
