@@ -49,11 +49,11 @@ template <typename T>
 class MatrixBase {
 private:
 	/**
-	 * size_ternal type representing the two-dimensional buffer.
+	 * Internal type representing the two-dimensional buffer.
 	 */
 	struct Buffer {
 		/**
-		 * Posize_ter at the buffer memory.
+		 * Pointer at the buffer memory.
 		 */
 		T *buf;
 
@@ -163,7 +163,7 @@ public:
 	}
 
 	/**
-	 * Returns a const posize_ter at the raw data.
+	 * Returns a const pointer at the raw data.
 	 */
 	const T *data() const { return buf->buf; }
 
