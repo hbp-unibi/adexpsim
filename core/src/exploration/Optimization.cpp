@@ -24,7 +24,7 @@
 #include <iostream>
 
 #include "Optimization.hpp"
-#include "Simplex.hpp"
+#include "SimplexPool.hpp"
 #include "SingleGroupMultiOutEvaluation.hpp"
 #include "SingleGroupSingleOutEvaluation.hpp"
 #include "SpikeTrainEvaluation.hpp"
@@ -277,26 +277,23 @@ void Optimization::optimizationThread(const Optimization &optimization,
 
 		// Create the simplex algorithm instance, fetch the to-be-optimized
 		// dimensions
-		SimplexStepResult res;
-		Simplex<WorkingParameters> simplex(
-		    params, optimization.getDims(curMf != 0.0), f);
+		SimplexPool<WorkingParameters> simplex(
+		    params, optimization.getDims(curMf != 0.0));
 
-		// Run, abort after MAX_IT iterations or if the simplex indicates it is
-		// done or if the process is manually aborted
-		size_t it = 0;
-		do {
-			// Perform a simplex step
-			res = simplex.step(f);
+		// Run the actual optimization, increment the iteration counter and
+		// abort if the abort flag is read.
+		size_t oldIt = 0;
+		const WorkingParameters optimizedParams =
+		    simplex.run(f, [&oldIt, &abort](size_t nIt, size_t,
+		                                    Val) mutable -> bool {
+			                nIt += (nIt - oldIt);
+			                oldIt = nIt;
+			                return !abort.load();
+			            }).best;
 
-			// Increment the local and global iteration counter
-			it++;
-			nIt++;
-		} while (!res.done && !abort.load() && it < MAX_IT);
-
-		// If a hardware limitation is present, map the optimized values to the
-		// hardware -- then remap them to WorkingParameters. If there is no
-		// HW limitation just add the optimized params.
-		const WorkingParameters optimizedParams = simplex.getBest();
+		// If a hardware limitation is present, map the optimized values to
+		// the hardware -- then remap them to WorkingParameters. If there is
+		// no HW limitation just add the optimized params.
 		std::vector<WorkingParameters> finalParams;
 		if (hasHw) {
 			std::vector<Parameters> mapped =
