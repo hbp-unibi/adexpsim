@@ -26,7 +26,7 @@
  */
 
 #ifndef _ADEXPSIM_SIMPLEX_HPP_
-#define _ADEXPSIM_SIMPLEX_CPP_
+#define _ADEXPSIM_SIMPLEX_HPP_
 
 #include <cstdlib>
 
