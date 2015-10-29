@@ -74,3 +74,11 @@ ADD_EXECUTABLE(AdExpIntegratorBug
 TARGET_LINK_LIBRARIES(AdExpIntegratorBug
 	AdExpSimCore
 )
+
+ADD_EXECUTABLE(AdExpFit
+	src/AdExpFit
+)
+
+TARGET_LINK_LIBRARIES(AdExpFit
+	AdExpSimCore
+)
