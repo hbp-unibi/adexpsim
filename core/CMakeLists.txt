@@ -53,6 +53,7 @@ ADD_LIBRARY(AdExpSimCore
 	src/exploration/FractionalSpikeCount
 	src/exploration/Optimization
 	src/exploration/Simplex
+	src/exploration/SimplexPool
 	src/exploration/SingleGroupEvaluationBase
 	src/exploration/SingleGroupSingleOutEvaluation
 	src/exploration/SingleGroupMultiOutEvaluation
