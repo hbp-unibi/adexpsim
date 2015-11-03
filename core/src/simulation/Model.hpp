@@ -231,21 +231,21 @@ private:
 	                                Time &tLastSpike, Recorder &recorder,
 	                                const WorkingParameters &p)
 	{
-		if (SpecialSpike::isSpecial(spike)) {
-			switch (SpecialSpike::kind(spike)) {
-				case SpecialSpike::Kind::FORCE_OUTPUT_SPIKE: {
-					generateOutputSpike<Flags>(t, s, tLastSpike, recorder, p);
-					break;
-				}
-				case SpecialSpike::Kind::SET_VOLTAGE: {
-					s.v() = SpecialSpike::decodeSpikeVoltage(
-					    SpecialSpike::payload(spike), p.vMin(), p.vMax());
-					break;
-				}
-			}
-			return true;
+		if (!SpecialSpike::isSpecial(spike)) {
+			return false;
 		}
-		return false;
+		switch (SpecialSpike::kind(spike)) {
+			case SpecialSpike::Kind::FORCE_OUTPUT_SPIKE: {
+				generateOutputSpike<Flags>(t, s, tLastSpike, recorder, p);
+				break;
+			}
+			case SpecialSpike::Kind::SET_VOLTAGE: {
+				s.v() = SpecialSpike::decodeSpikeVoltage(
+				    SpecialSpike::payload(spike), p.vMin(), p.vMax());
+				break;
+			}
+		}
+		return true;
 	}
 
 public:
