@@ -23,9 +23,10 @@
 #include <exploration/SimplexPool.hpp>
 
 #include <csignal>
-#include <limits>
+#include <cmath>
 #include <iostream>
 #include <fstream>
+#include <limits>
 #include <string>
 
 using namespace AdExpSim;
@@ -62,6 +63,7 @@ private:
 	VectorRecorder<std::vector<float>> recorder;
 	NullController controller;
 	RungeKuttaIntegrator integrator;
+//	DormandPrinceIntegrator integrator;
 	WorkingParameters wParams;
 	SpikeVec spikes;
 	bool valid_;
@@ -70,7 +72,7 @@ public:
 	Simulation(const Parameters &params, Time max_t)
 	    : recorder(params, 0.1_ms),
 	      wParams(params),
-	      spikes({Spike(1_s, 1.0)}),
+	      spikes({Spike(1002_ms, 1.0)}),
 	      valid_(wParams.valid())
 	{
 		if (valid()) {
@@ -126,9 +128,9 @@ int main(int argc, char *argv[])
 	params.eReset() = -75e-3;
 	params.eL() = -70e-3;
 	params.eTh() = -55e-3;
-	params.w() = 8.0e-9;
+	params.w() = 16.0e-9;
 	params.tauE() = 5e-3;
-	params.gL() = params.cM() / 10.0e-3;
+	params.gL() = params.cM() / 5.0e-3;
 
 	auto f = [&ref, max_t](const Parameters &params) -> float {
 		Simulation sim(params, Time::sec(max_t));
@@ -141,15 +143,14 @@ int main(int argc, char *argv[])
 			float dv = r.v - val.v();
 			err += dv * dv;
 		}
-		//		std::cout << "Err:" << err << std::endl;
-		return err;
+		return sqrt(err / ref.size());
 	};
 
 	// Create the simplex algorithm instance, fetch the to-be-optimized
 	// dimensions
 	std::vector<size_t> dims = {Parameters::idx_tauE,
-	                            /*Parameters::idx_gL,*/ Parameters::idx_eL,
-	                            /*Parameters::idx_w*/};
+	                            /*Parameters::idx_gL, Parameters::idx_eL,*/
+	                            Parameters::idx_w};
 	SimplexPool<Parameters> simplex(params, dims);
 	auto res = simplex.run(f, [](size_t nIt, size_t sample, Val err) -> bool {
 		std::cout << "nIt: " << nIt << ", sample: " << sample
