@@ -76,7 +76,7 @@ private:
 	{
 		static size_t seed = 1241249190;
 		std::default_random_engine generator(seed++);
-		std::uniform_real_distribution<Val> dFactor(1.0, 10.0);
+		std::uniform_real_distribution<Val> dFactor(1.0, 1.1);
 //		std::uniform_int_distribution<int> dDim(0, dims.size() - 1);
 		std::uniform_int_distribution<int> dChoice(0, 1);
 //		size_t dim = dims[dDim(generator)];
