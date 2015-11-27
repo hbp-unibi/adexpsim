@@ -258,7 +258,7 @@ BrainScaleSParameters::BrainScaleSParameters()
 	       cMs[0] / 9e-3f};        // Membrane leak conductance range
 	rTau = {0.5e-3, 5e-3};         // Time constant range
 	rTauW = {20e-3, 780e-3};       // w decay time constant range
-	rTauRef = {0.0e-3, 10e-3};     // Refactory time range
+	rTauRef = {0.0e-3, 20e-3};     // Refractory time range
 	rA = {0e-6, 0.108228e-9};      // Subthreshold adaptation range
 	rB = {0e-12, 86e-12};          // Spike triggered adaptation range
 	rDeltaTh = {0.0e-3, 1.35e-3};  // Slope range
