@@ -26,7 +26,7 @@
  */
 
 #ifndef _ADEXPSIM_SIMPLEX_HPP_
-#define _ADEXPSIM_SIMPLEX_CPP_
+#define _ADEXPSIM_SIMPLEX_HPP_
 
 #include <cstdlib>
 
@@ -165,9 +165,9 @@ private:
 	void restart(Function f)
 	{
 		for (size_t i = 0; i < N; i++) {
-			// Randomly draw a scale factor between 0.5 and 1.5
+			// Randomly draw a scale factor between 0.9 and 1.1
 			const int r = std::rand();
-			const Val range = 0.5;
+			const Val range = 0.1;
 			const Val fac = 1.0 - range + 2.0 * range * (Val(r) / Val(RAND_MAX));
 
 			// Create a version of the x-Vector with the corresponding dimension

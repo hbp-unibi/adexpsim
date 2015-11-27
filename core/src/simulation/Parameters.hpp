@@ -480,7 +480,8 @@ public:
 		    log((eSpike() - eReset()) / (MIN_DELTA_T * deltaTh() * lL()));
 		mESpikeEff = calculateESpikeEff(eTh(), deltaTh());
 		mESpikeEffRed = mESpikeEff - Val(1e-4);
-		mTDelta = Val(0.1) / std::max({lL(), lE(), lI(), lW(), lA()});
+		mTDelta = std::max(Val(1e-7),
+		                   Val(0.1) / std::max({lL(), lE(), lI(), lW(), lA()}));
 		mVMax = std::max({0.0f, eE(), eI(), eSpike(), eTh(), eReset()});
 		mVMin = std::min({0.0f, eE(), eI(), eSpike(), eTh(), eReset()});
 	}
