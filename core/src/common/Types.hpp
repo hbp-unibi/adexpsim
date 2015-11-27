@@ -113,8 +113,20 @@ public:
 
 	/**
 	 * Creates a new instance of the Time structure from a float.
+	 *
+	 * @param t is a time in seconds.
 	 */
 	static constexpr Time sec(double t) { return Time(secondsToTimeType(t)); }
+
+	/**
+	 * Creates a new instance of the Time structure from a float.
+	 *
+	 * @param t is a time in milliseconds.
+	 */
+	static constexpr Time msec(double t)
+	{
+		return Time(secondsToTimeType(t / 1000.0));
+	}
 
 	/**
 	 * Converts the internal integer Time to a floating point time in seconds.
@@ -209,6 +221,13 @@ static constexpr Time operator"" _s(long double t) { return Time::sec(t); }
 static constexpr Time operator"" _s(unsigned long long int t)
 {
 	return Time::sec(t);
+}
+
+static constexpr Time operator"" _ms(long double t) { return Time::msec(t); }
+
+static constexpr Time operator"" _ms(unsigned long long int t)
+{
+	return Time::msec(t);
 }
 
 /**
