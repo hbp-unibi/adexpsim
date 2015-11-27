@@ -34,6 +34,14 @@ TARGET_LINK_LIBRARIES(AdExpSim
 	AdExpSimCore
 )
 
+ADD_EXECUTABLE(AdExpSimDemo
+	src/AdExpSimDemo
+)
+
+TARGET_LINK_LIBRARIES(AdExpSimDemo
+	AdExpSimCore
+)
+
 ADD_EXECUTABLE(AdExploration
 	src/AdExploration
 )
