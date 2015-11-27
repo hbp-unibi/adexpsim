@@ -237,7 +237,7 @@ public:
 	      sep(sep)
 	{
 		if (header) {
-			os << "v" << sep << "gE" << sep << "gI" << sep << "w";
+			os << "t" << sep << "v" << sep << "gE" << sep << "gI" << sep << "w";
 			if (recordAux) {
 				os << sep << "iL" << sep << "iE" << sep << "iI" << sep << "iTh";
 			}
