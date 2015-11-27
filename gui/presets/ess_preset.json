@@ -13,7 +13,8 @@
 		"lI" : false,
 		"lL" : false,
 		"lW" : false,
-		"w" : false
+		"w" : false,
+		"tauRef": false
 	},
 	"optimize" : 
 	{
@@ -29,7 +30,8 @@
 		"lI" : false,
 		"lL" : true,
 		"lW" : true,
-		"w" : true
+		"w" : true,
+		"tauRef": true
 	},
 	"max" : 
 	{
@@ -45,7 +47,8 @@
 		"lI" : 2000,
 		"lL" : 111.1111,
 		"lW" : 50,
-		"w" : 1500
+		"w" : 1500,
+		"tauRef": 0.02
 	},
 	"min" : 
 	{
@@ -61,7 +64,8 @@
 		"lI" : 200,
 		"lL" : 9.0908,
 		"lW" : 1.2821,
-		"w" : 0
+		"w" : 0,
+		"tauRef": 0
 	},
 	"parameters" : 
 	{
@@ -79,6 +83,7 @@
 		"tauE" : 0.00351262,
 		"tauI" : 0.005,
 		"tauW" : 0.144,
-		"w" : 3e-08
+		"w" : 3e-08,
+		"tauRef": 0.02
 	}
 }
