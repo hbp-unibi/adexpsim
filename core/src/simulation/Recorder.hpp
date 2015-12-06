@@ -469,10 +469,10 @@ public:
 
 		// Fetch the next larger and smaller timestamp (it2 and it1)
 		const size_t i2 = std::max<size_t>(
-		    1,
-		    std::min<size_t>(ts.size() - 1,
-		             std::distance(ts.begin(),
-		                           std::upper_bound(ts.begin(), ts.end(), t))));
+		    1, std::min<size_t>(
+		           ts.size() - 1,
+		           std::distance(ts.begin(),
+		                         std::upper_bound(ts.begin(), ts.end(), t))));
 		const size_t i1 = i2 - 1;
 
 		// Calculate the interpolation factor f and perform linear interpolation
@@ -912,7 +912,8 @@ public:
 	 * recorded, returns the last state. If the simulation did not run yet
 	 * returns the initial state.
 	 */
-	Maximum global() {
+	Maximum global()
+	{
 		Maximum res(lastTime, lastState);
 		for (size_t i = 0; i < maxima.size(); i++) {
 			if (maxima[i].s.v() > res.s.v()) {
