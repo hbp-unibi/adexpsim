@@ -316,7 +316,7 @@ void Optimization::optimizationThread(const Optimization &optimization,
 			const Val eval = f(p);
 			const bool hasSubstantialChange =
 			    fabs(initialEval - eval) > MIN_DIFF;
-			if (!hasSubstantialChange && nextMf == 0.0f) {
+			if (abort.load() || (!hasSubstantialChange && nextMf == 0.0f)) {
 				pool.pushOutput(p, -eval);
 			} else {
 				pool.pushInput(p, -eval, nextMf);

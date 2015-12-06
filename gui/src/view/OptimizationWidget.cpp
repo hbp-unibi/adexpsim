@@ -127,7 +127,10 @@ void OptimizationWidget::handleProgress(bool done, size_t nIt, size_t nInput,
 
 	// Copy the output to the optimized parameters
 	optimized = output;
-	if (!updateTimer->isActive()) {
+	if (done) {
+		rebuildTable();
+		updateTimer->stop();
+	} else if (!updateTimer->isActive()) {
 		updateTimer->start(1000);
 	}
 }

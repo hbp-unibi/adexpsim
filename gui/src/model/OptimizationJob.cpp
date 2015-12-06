@@ -89,12 +89,14 @@ void OptimizationJobRunner::run()
 			               params->environment, params->singleGroup,
 			               params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
+			break;
 		case EvaluationType::SINGLE_GROUP_MULTI_OUT:
 			res = optimization.optimize(
 			    input, SingleGroupMultiOutEvaluation(
 			               params->environment, params->singleGroup,
 			               params->model == ModelType::IF_COND_EXP),
 			    progressCallback);
+			break;
 	}
 
 	// Emit the done event
