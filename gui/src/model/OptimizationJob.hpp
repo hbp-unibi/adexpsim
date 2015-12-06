@@ -94,7 +94,7 @@ signals:
 	 * Signal emitted whenever the progress should be updated or when the
 	 * optimization is done.
 	 */
-	void progress(bool done, size_t nIt, size_t nInput,
+	void progress(bool done, size_t nIt, size_t nInput, float eval,
 	              std::vector<OptimizationResult> output);
 };
 
@@ -121,7 +121,7 @@ private:
 	std::unique_ptr<OptimizationJobRunner> currentRunner;
 
 private slots:
-	void handleProgress(bool done, size_t nIt, size_t nInput,
+	void handleProgress(bool done, size_t nIt, size_t nInput, float eval,
 	              std::vector<OptimizationResult> output);
 
 public:
@@ -159,7 +159,7 @@ signals:
 	 * @param show is set to true, if the progress bar should be shown, false
 	 * otherwise.
 	 */
-	void progress(bool done, size_t nIt, size_t nInput,
+	void progress(bool done, size_t nIt, size_t nInput, float eval,
 	              std::vector<OptimizationResult> output);
 };
 }

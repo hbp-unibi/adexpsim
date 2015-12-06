@@ -66,10 +66,10 @@ void OptimizationJobRunner::run()
 	// signal
 	size_t it = 0;
 	auto progressCallback =
-	    [&](size_t nIt, size_t nInput,
+	    [&](size_t nIt, size_t nInput, float eval,
 	        const std::vector<OptimizationResult> &output) -> bool {
 		it = nIt;
-		emit progress(false, nIt, nInput, output);
+		emit progress(false, nIt, nInput, eval, output);
 		return !aborted.load();
 	};
 
@@ -100,7 +100,7 @@ void OptimizationJobRunner::run()
 	}
 
 	// Emit the done event
-	emit progress(true, it, 0, res);
+	emit progress(true, it, 0, 0.0, res);
 }
 
 void OptimizationJobRunner::abort() { aborted.store(true); }
@@ -124,6 +124,7 @@ OptimizationJob::OptimizationJob(std::shared_ptr<ParameterCollection> params,
 OptimizationJob::~OptimizationJob() { abort(); }
 
 void OptimizationJob::handleProgress(bool done, size_t nIt, size_t nInput,
+                                     float eval,
                                      std::vector<OptimizationResult> output)
 {
 	// Reset the currentRunner once the operation is done
@@ -133,7 +134,7 @@ void OptimizationJob::handleProgress(bool done, size_t nIt, size_t nInput,
 	}
 
 	// Relay the progress
-	emit progress(done, nIt, nInput, output);
+	emit progress(done, nIt, nInput, eval, output);
 }
 
 bool OptimizationJob::isActive() const { return currentRunner != nullptr; }
@@ -162,8 +163,8 @@ void OptimizationJob::start(bool limitToHw)
 	    new OptimizationJobRunner(limitToHw, params));
 	connect(
 	    currentRunner.get(),
-	    SIGNAL(progress(bool, size_t, size_t, std::vector<OptimizationResult>)),
-	    this, SLOT(handleProgress(bool, size_t, size_t,
+	    SIGNAL(progress(bool, size_t, size_t, float, std::vector<OptimizationResult>)),
+	    this, SLOT(handleProgress(bool, size_t, size_t, float,
 	                              std::vector<OptimizationResult>)));
 	pool->start(currentRunner.get());
 }

@@ -225,7 +225,8 @@ void Optimization::optimizationThread(const Optimization &optimization,
                                       const Evaluation &eval, Pool &pool,
                                       std::atomic<bool> &abort,
                                       std::atomic<size_t> &nIdle,
-                                      std::atomic<size_t> &nIt)
+                                      std::atomic<size_t> &nIt,
+                                      std::atomic<float> &gErr)
 {
 	// Flag to be passed to the hardware constraints
 	const bool hasHw = optimization.hw;
@@ -278,16 +279,19 @@ void Optimization::optimizationThread(const Optimization &optimization,
 		// Create the simplex algorithm instance, fetch the to-be-optimized
 		// dimensions
 		SimplexPool<WorkingParameters> simplex(
-		    params, optimization.getDims(curMf != 0.0));
+		    params, optimization.getDims(curMf != 0.0), 10);
 
 		// Run the actual optimization, increment the iteration counter and
 		// abort if the abort flag is read.
 		size_t oldIt = 0;
 		const WorkingParameters optimizedParams =
-		    simplex.run(f, [&oldIt, &abort](size_t nIt, size_t,
-		                                    Val) mutable -> bool {
-			                nIt += (nIt - oldIt);
-			                oldIt = nIt;
+		    simplex.run(f, [&](size_t it, size_t, Val err) mutable -> bool {
+			                nIt += (it - oldIt);
+			                oldIt = it;
+			                float prevErr = gErr.load();
+			                while (err < prevErr &&
+			                       !gErr.compare_exchange_weak(prevErr, err)) {
+			                };
 			                return !abort.load();
 			            }).best;
 
@@ -347,13 +351,14 @@ std::vector<OptimizationResult> Optimization::optimize(
 	std::atomic<bool> abort(false);       // Flag used to abort all threads
 	std::atomic<size_t> nIdle(nThreads);  // Number of threads idling
 	std::atomic<size_t> nIt(0);           // Number of iterations performed
+	std::atomic<float> gErr(std::numeric_limits<float>::max());
 
 	// Create a thread for each hardware thread
 	std::vector<std::thread> threads;
 	for (size_t i = 0; i < nThreads; i++) {
 		threads.emplace_back(optimizationThread<Evaluation>, *this, eval,
 		                     std::ref(pool), std::ref(abort), std::ref(nIdle),
-		                     std::ref(nIt));
+		                     std::ref(nIt), std::ref(gErr));
 	}
 
 	// Wait for all threads to be finished
@@ -365,6 +370,7 @@ std::vector<OptimizationResult> Optimization::optimize(
 			if ((nIdle.load() == nThreads && pool.input.empty()) ||
 			    !callback(nIt.load(),
 			              pool.input.size() + nThreads - nIdle.load(),
+			              -gErr.load(),
 			              pool.output)) {
 				abort.store(true);
 				break;

@@ -109,7 +109,8 @@ private:
 	                               const Evaluation &eval, Pool &pool,
 	                               std::atomic<bool> &abort,
 	                               std::atomic<size_t> &nIdle,
-	                               std::atomic<size_t> &nIt);
+	                               std::atomic<size_t> &nIt,
+	                               std::atomic<float> &gErr);
 
 public:
 	/**
@@ -150,7 +151,7 @@ public:
 	 * operation should be aborted (return false), or continued (return true).
 	 */
 	using ProgressCallback = std::function<
-	    bool(size_t, size_t, const std::vector<OptimizationResult> &)>;
+	    bool(size_t, size_t, float, const std::vector<OptimizationResult> &)>;
 
 	/**
 	 * Optimizes the given parameters for the selected model and evaluation

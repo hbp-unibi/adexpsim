@@ -36,9 +36,9 @@ OptimizationWidget::OptimizationWidget(
 {
 	// Create the optimization job
 	job = new OptimizationJob(params, this);
-	connect(job, SIGNAL(progress(bool, size_t, size_t,
+	connect(job, SIGNAL(progress(bool, size_t, size_t, float,
 	                             std::vector<OptimizationResult>)),
-	        this, SLOT(handleProgress(bool, size_t, size_t,
+	        this, SLOT(handleProgress(bool, size_t, size_t, float,
 	                                  std::vector<OptimizationResult>)));
 
 	// Create the update timer
@@ -71,6 +71,7 @@ OptimizationWidget::OptimizationWidget(
 	chkOptimizeHw->setChecked(true);
 	lblNIt = new QLabel("nIt:", this);
 	lblNInput = new QLabel("nInput:", this);
+	lblEval = new QLabel("eval:", this);
 
 	btnOptimize = new QPushButton("Optimize", this);
 	connect(btnOptimize, SIGNAL(clicked()), this,
@@ -82,6 +83,7 @@ OptimizationWidget::OptimizationWidget(
 	layout->addWidget(chkOptimizeHw);
 	layout->addWidget(lblNIt);
 	layout->addWidget(lblNInput);
+	layout->addWidget(lblEval);
 	layout->addWidget(btnOptimize);
 }
 
@@ -111,6 +113,7 @@ void OptimizationWidget::handleOptimizeClicked()
 }
 
 void OptimizationWidget::handleProgress(bool done, size_t nIt, size_t nInput,
+                                        float eval,
                                         std::vector<OptimizationResult> output)
 {
 	// Set the correct button text
@@ -124,6 +127,7 @@ void OptimizationWidget::handleProgress(bool done, size_t nIt, size_t nInput,
 	// Show the progress
 	lblNIt->setText(QString("nIt: ") + QString::number(nIt));
 	lblNInput->setText(QString("nInput: ") + QString::number(nInput));
+	lblEval->setText(QString("eval: ") + QString::number(eval));
 
 	// Copy the output to the optimized parameters
 	optimized = output;

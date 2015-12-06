@@ -66,13 +66,11 @@ int main(int argc, char *argv[])
 	Optimization opt(model, dims, BrainScaleSParameters::inst);
 	std::vector<OptimizationResult> res =
 	    opt.optimize({params}, eval,
-	                 [](size_t nIt, size_t nInput,
+	                 [](size_t nIt, size_t nInput, float eval,
 	                    const std::vector<OptimizationResult> &output) -> bool {
 		    std::cout << "nIt: " << nIt << " nInput: " << nInput
 		              << " nOutput: " << output.size();
-		    if (!output.empty()) {
-			    std::cout << " eval: " << output.back().eval;
-		    }
+		    std::cout << " eval: " << eval;
 		    std::cout << "        \r";
 		    return !cancel;
 		});

@@ -51,13 +51,14 @@ private:
 	QCheckBox *chkOptimizeHw;
 	QLabel *lblNIt;
 	QLabel *lblNInput;
+	QLabel *lblEval;
 	QPushButton *btnOptimize;
 
 private slots:
 	void rebuildTable();
 	void handleCellDoubleClicked(int row, int column);
 	void handleOptimizeClicked();
-	void handleProgress(bool done, size_t nIt, size_t nInput,
+	void handleProgress(bool done, size_t nIt, size_t nInput, float eval,
 	                    std::vector<OptimizationResult> output);
 
 public:
