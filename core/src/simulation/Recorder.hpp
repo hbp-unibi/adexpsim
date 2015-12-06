@@ -216,13 +216,18 @@ private:
 	std::string sep;
 
 	/**
+	 * Time offset.
+	 */
+	Time offs;
+
+	/**
 	 * Actual record function, gets the correctly rescaled state variables and
 	 * prints them to the given output stream.
 	 */
 	void doRecord(Time ts, Val v, Val gE, Val gI, Val w, Val iL, Val iE, Val iI,
 	              Val iTh)
 	{
-		os << ts << sep << v << sep << gE << sep << gI << sep << w;
+		os << (ts + offs) << sep << v << sep << gE << sep << gI << sep << w;
 		if (recordAux) {
 			os << sep << iL << sep << iE << sep << iI << sep << iTh;
 		}
@@ -231,10 +236,11 @@ private:
 
 public:
 	CsvRecorder(const Parameters &params, Time interval, std::ostream &os,
-	            std::string sep = ",", bool header = true)
+	            std::string sep = ",", bool header = true, Time offs = 0_s)
 	    : RecorderBase<CsvRecorder<recordAux>>(params, interval),
 	      os(os),
-	      sep(sep)
+	      sep(sep),
+	      offs(offs)
 	{
 		if (header) {
 			os << "t" << sep << "v" << sep << "gE" << sep << "gI" << sep << "w";
