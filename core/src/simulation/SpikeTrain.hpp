@@ -357,6 +357,19 @@ public:
 	}
 
 	/**
+	 * Allows to build a SpikeTrain instance from the given
+	 * SingleGroupMultiOutDescriptor. All other parameters as above.
+	 */
+	SpikeTrain(const SingleGroupMultiOutDescriptor &data, size_t n = 0,
+	           const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
+	           bool sorted = true, bool equidistant = false)
+	    : n(n), env(env), sorted(sorted), equidistant(equidistant)
+	{
+		fromSingleGroupSpikeData(data);
+		rebuild();
+	}
+
+	/**
 	 * Builds a new spike train using the parameters given in the constructor.
 	 */
 	void rebuild();
