@@ -52,7 +52,8 @@ bool Exploration::run(const Evaluation &evaluation,
 	auto fun = [&](ExplorationMemory &mem, std::atomic<size_t> &counter,
 	               std::atomic<bool> &abort, size_t idx) -> void {
 		// Copy the parameters
-		WorkingParameters p = params();
+		Parameters params = fullParams();
+		WorkingParameters p = params;
 
 		// Variable containing the evaluation result
 		EvaluationResult result(mem.descriptor.size());
@@ -64,8 +65,18 @@ bool Exploration::run(const Evaluation &evaluation,
 			// parameters according to the given range.
 			const size_t x = i % resX();
 			const size_t y = i / resX();
-			p[dimX()] = rangeX().value(x);
-			p[dimY()] = rangeY().value(y);
+
+			// If the full parameter exploration mode is active, update the full
+			// parameter set and convert it to working parameters, otherwise
+			// just use the working parameter set
+			if (useFullParams()) {
+				params[dimX()] = rangeX().value(x);
+				params[dimY()] = rangeY().value(y);
+				p = params;
+			} else {
+				p[dimX()] = rangeX().value(x);
+				p[dimY()] = rangeY().value(y);
+			}
 
 			// Check whether the parameters are valid, if not use the default
 			// evaluation result

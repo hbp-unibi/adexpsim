@@ -160,7 +160,17 @@ private:
 	ExplorationMemory mMem;
 
 	/**
-	 * Base working parameter set.
+	 * Explore working parameters or full parameters?
+	 */
+	bool mUseFullParams;
+
+	/**
+	 * Base parameter set.
+	 */
+	Parameters mFullParams;
+
+	/**
+	 * Base working parameters set.
 	 */
 	WorkingParameters mParams;
 
@@ -210,7 +220,35 @@ public:
 	 */
 	Exploration(const WorkingParameters &params, size_t dimX, size_t dimY,
 	            DiscreteRange rangeX, DiscreteRange rangeY)
-	    : mParams(params),
+	    : mUseFullParams(false),
+	      mFullParams(params.toParameters(DefaultParameters::cM,
+	                                      DefaultParameters::eL)),
+	      mParams(params),
+	      mDimX(dimX),
+	      mDimY(dimY),
+	      mRangeX(rangeX),
+	      mRangeY(rangeY){};
+
+	/**
+	 * Constructor which allows to construct an exploration instance which
+	 * explores the full parameter space instead of the limited, DoF reduced
+	 * working parameter space.
+	 *
+	 * @param useFullParams if true, the full parameter set is used, if false
+	 * the given parameters are converted to the DoF reduced parameter set
+	 * first.
+	 * @param params is the base parameter set.
+	 * @param dimX is the index of the parameter vector entry which is varried
+	 * in x-direction.
+	 * @param dimY is the index of the parameter vector entry which is varried
+	 * @param rangeX is the range descriptor for the X-direction.
+	 * @param rangeY is the range descriptor for the Y-direction.
+	 */
+	Exploration(bool useFullParams, const Parameters &params, size_t dimX,
+	            size_t dimY, DiscreteRange rangeX, DiscreteRange rangeY)
+	    : mUseFullParams(useFullParams),
+	      mFullParams(params),
+	      mParams(params),
 	      mDimX(dimX),
 	      mDimY(dimY),
 	      mRangeX(rangeX),
@@ -253,6 +291,16 @@ public:
 	 * Returns a reference at the base working parameters.
 	 */
 	const WorkingParameters &params() const { return mParams; }
+
+	/**
+	 * Returns a reference at the base working parameters.
+	 */
+	const Parameters &fullParams() const { return mFullParams; }
+
+	/**
+	 * Flag indicating whether the full parameter set should be used.
+	 */
+	bool useFullParams() const { return mUseFullParams; }
 
 	/**
 	 * Returns the resolution in x-direction.
