@@ -48,6 +48,7 @@ ADD_EXECUTABLE(AdExploration
 
 TARGET_LINK_LIBRARIES(AdExploration
 	AdExpSimCore
+	AdExpSimIo
 )
 
 ADD_EXECUTABLE(AdExpIntegratorBenchmark
