@@ -75,6 +75,14 @@ TARGET_LINK_LIBRARIES(AdExpEvaluationMetric
 	AdExpSimCore
 )
 
+ADD_EXECUTABLE(AdExpEvaluationMinApices
+	src/AdExpEvaluationMinApices
+)
+
+TARGET_LINK_LIBRARIES(AdExpEvaluationMinApices
+	AdExpSimCore
+)
+
 ADD_EXECUTABLE(AdExpIntegratorBug
 	src/AdExpIntegratorBug
 )

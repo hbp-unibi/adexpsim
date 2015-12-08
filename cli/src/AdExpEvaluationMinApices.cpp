@@ -15,10 +15,11 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#include <exploration/FractionalSpikeCount.hpp>
 #include <simulation/Parameters.hpp>
 #include <simulation/SpikeTrain.hpp>
+#include <simulation/Model.hpp>
+#include <simulation/Recorder.hpp>
+#include <simulation/DormandPrinceIntegrator.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -40,15 +41,17 @@ static void progress(Val x, Val min, Val max, Val step)
 	std::cerr << "]\r";
 }
 
+static const Val gL0 = 2.00202e-07;
+static const Val gL1 = 2.00602e-07;
+
+static const SpikeVec train = buildInputSpikes(5, 5e-3_s);
+
 static void sweep(bool useIfCondExp, size_t dim, Val min, Val max, Val step,
                   Val w = DefaultParameters::w)
 {
-	std::cerr << "AdExpEvaluationMetric: Performing sweep on parameter "
+	std::cerr << "AdExEvaluationMinApices: Performing sweep on parameter "
 	          << Parameters::names[dim] << " ("
 	          << (useIfCondExp ? "lif" : "adex") << ")" << std::endl;
-
-	SpikeVec train = buildInputSpikes(5, 5e-3_s);
-	FractionalSpikeCount eval(useIfCondExp);
 
 	std::ofstream of("sweep_" + Parameters::nameIds[dim] +
 	                 (useIfCondExp ? "_lif" : "_adex") + ".csv");
@@ -60,27 +63,49 @@ static void sweep(bool useIfCondExp, size_t dim, Val min, Val max, Val step,
 		params[dim] = x;
 		const WorkingParameters wp(params);
 		if (wp.valid()) {
-			Val th = wp.eSpikeEff(useIfCondExp);
-			auto res = eval.calculate(train, wp);
-			of << x << "\t" << res.fracSpikeCount() << "\t" << res.spikeCount
-			   << "\t" << res.eReq << "\t" << res.pReq << "\t" << res.eMax
-			   << "\t" << res.pMax << "\t" << th << std::endl;
+			LocalMaximumRecorder maximumRecorder;
+			OutputSpikeCountRecorder spikeCountRecorder;
+			auto recorder =
+			    makeMultiRecorder(maximumRecorder, spikeCountRecorder);
+			DefaultController controller;
+			RungeKuttaIntegrator integrator;
+			Model::simulate(useIfCondExp, train, recorder, controller,
+			                integrator, wp, 1e-6_s);
+
+			const Val th = wp.eSpikeEff(useIfCondExp);
+			const Val pOut = 1 - (th - maximumRecorder.global().s.v()) / th;
+			const Val nOut = spikeCountRecorder.count();
+			const Val qOut = nOut + pOut;
+			of << x << "\t" << nOut << "\t" << pOut << "\t" << qOut
+			   << std::endl;
 		}
 	}
 
 	std::cerr << std::endl << "Done." << std::endl;
 }
 
+static void record(bool useIfCondExp, size_t dim, Val v,
+                   Val w = DefaultParameters::w)
+{
+	Parameters params;
+	params[Parameters::idx_w] = w;
+	params[dim] = v;
+
+	std::ofstream of("record_" + Parameters::nameIds[dim] + "_" +
+	                 std::to_string(v * 1000.0 * 1000.0) +
+	                 (useIfCondExp ? "_lif" : "_adex") + ".csv");
+	CsvRecorder<> recorder(params, Time(-1), of);
+	DefaultController controller;
+	RungeKuttaIntegrator integrator;
+	Model::simulate(useIfCondExp, train, recorder, controller, integrator,
+	                params, 1e-6_s);
+}
+
 int main(int argc, char *argv[])
 {
-//	sweep(false, Parameters::idx_gL, 10e-9, 1000e-9, 0.1e-9, 9e-8);
-//	sweep(true, Parameters::idx_gL, 10e-9, 1000e-9, 0.1e-9, 9e-8);
-//	sweep(false, Parameters::idx_eTh, DefaultParameters::eL + 2.1e-3, -0.03,
-//	      0.1e-3);
-//	sweep(true, Parameters::idx_eTh, DefaultParameters::eL + 2.1e-3, -0.03,
-//	      0.1e-3);
-	sweep(false, Parameters::idx_tauRef, 0, 4e-3, 10e-6, 0.25e-6);
-	sweep(true, Parameters::idx_tauRef, 0, 4e-3, 10e-6, 0.25e-6);
+//	sweep(true, Parameters::idx_gL, 10e-9, 2000e-9, 0.1e-9, 9e-8);
+	record(true, Parameters::idx_gL, gL0, 9e-8);
+	record(true, Parameters::idx_gL, gL1, 9e-8);
 	return 0;
 }
 
