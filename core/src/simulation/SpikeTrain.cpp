@@ -71,22 +71,23 @@ SpikeVec buildInputSpikes(Val xi, Time T, Time t0, Val w)
 	return res;
 }
 
-SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBundles,
+SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBursts,
                           const SpikeTrainEnvironment &env, bool equidistant,
                           Time t0, Time *tMin, Time *tMax, size_t *seed)
 {
 	// Calculate the deltaT for equidistant distribution
 	const Time deltaTEqn =
-	    Time(2 * env.sigmaT.t / std::max<size_t>(1, nBundles));
+	    Time(2 * env.sigmaT.t / std::max<size_t>(1, nBursts));
 
 	// Random number generator
 	std::default_random_engine gen = initializeRandomEngine(seed);
 	std::normal_distribution<> distT(0, env.sigmaT.sec());
+	std::normal_distribution<> distTOffs(0, env.sigmaTOffs.sec());
 	std::normal_distribution<> distW(w, env.sigmaW);
 
-	// Iterate over each spike in the bundle
-	for (size_t i = 0; i < env.bundleSize; i++) {
-		// Realise each spike nBundles times, either adding some jitter or
+	// Iterate over each spike in the burst
+	for (size_t i = 0; i < env.burstSize; i++) {
+		// Realise each spike nBursts times, either adding some jitter or
 		// distributing them equidistantly
 		const Time tBase = t0 + Time(env.deltaT.t * i);
 		for (size_t j = 0; j < nBundles; j++) {
@@ -109,12 +110,12 @@ SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBundles,
 	return spikes;
 }
 
-SpikeVec buildSpikeGroup(Val w, size_t nBundles,
+SpikeVec buildSpikeGroup(Val w, size_t nBursts,
                          const SpikeTrainEnvironment &env, bool equidistant,
                          Time t0, Time *tMin, Time *tMax, size_t *seed)
 {
 	SpikeVec res;  // Result spike vector
-	return buildSpikeGroup(res, w, nBundles, env, equidistant, t0, tMin, tMax,
+	return buildSpikeGroup(res, w, nBursts, env, equidistant, t0, tMin, tMax,
 	                       seed);
 }
 
@@ -188,7 +189,7 @@ void SpikeTrain::rebuild()
 		// the group
 		rangeStartSpikes.emplace_back(idx);
 		ranges.emplace_back(std::max(lastStart, tMin), i, descrIdx,
-		                    descr.nOut * env.bundleSize);
+		                    descr.nOut * env.burstSize);
 
 		// Go to the next timestamp and increment the total spike index
 		lastStart = tMin;

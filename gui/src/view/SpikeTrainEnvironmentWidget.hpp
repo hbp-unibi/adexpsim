@@ -55,7 +55,7 @@ private:
 
 	/* Widgets */
 	QTimer *updateTimer;
-	ParameterWidget *paramBundleSize;
+	ParameterWidget *paramBurstSize;
 	ParameterWidget *paramT;
 	ParameterWidget *paramSigmaT;
 	ParameterWidget *paramDeltaT;

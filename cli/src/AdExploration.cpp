@@ -97,7 +97,7 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
 	std::cout << std::endl;
 
 	std::cout << "Environment:" << std::endl;
-	std::cout << "burstSize: " << env.bundleSize << std::endl;
+	std::cout << "burstSize: " << env.burstSize << std::endl;
 	std::cout << "T: " << env.T << std::endl;
 	std::cout << "sigmaT: " << env.sigmaT << std::endl;
 	std::cout << "deltaT: " << env.deltaT << std::endl;
