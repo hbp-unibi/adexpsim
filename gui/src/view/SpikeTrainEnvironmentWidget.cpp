@@ -54,6 +54,9 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	paramSigmaT =
 	    new ParameterWidget(this, "σt", 0.0, 0.0, 20.0, "ms", "sigmaT");
 	paramSigmaT->setMinMaxEnabled(false);
+	paramSigmaTOffs =
+	    new ParameterWidget(this, "σtOffs", 0.0, 0.0, 20.0, "ms", "sigmaTOffs");
+	paramSigmaTOffs->setMinMaxEnabled(false);
 	paramDeltaT =
 	    new ParameterWidget(this, "Δt", 5.0, 0.0, 20.0, "ms", "deltaT");
 	paramDeltaT->setMinMaxEnabled(false);
@@ -67,6 +70,8 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramSigmaT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
+	connect(paramSigmaTOffs, SIGNAL(update(Val, const QVariant &)),
+	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramDeltaT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramSigmaW, SIGNAL(update(Val, const QVariant &)),
@@ -76,6 +81,7 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	layout->addWidget(paramBurstSize);
 	layout->addWidget(paramT);
 	layout->addWidget(paramSigmaT);
+	layout->addWidget(paramSigmaTOffs);
 	layout->addWidget(paramDeltaT);
 	layout->addWidget(paramSigmaW);
 	setLayout(layout);
@@ -103,6 +109,8 @@ void SpikeTrainEnvironmentWidget::handleParameterUpdate(Val value,
 		params->environment.T = Time::sec(value / 1000.0);
 	} else if (s == "sigmaT") {
 		params->environment.sigmaT = Time::sec(value / 1000.0);
+	} else if (s == "sigmaTOffs") {
+		params->environment.sigmaTOffs = Time::sec(value / 1000.0);
 	} else if (s == "deltaT") {
 		params->environment.deltaT = Time::sec(value / 1000.0);
 	} else if (s == "sigmaW") {
@@ -118,6 +126,7 @@ void SpikeTrainEnvironmentWidget::refresh()
 	paramBurstSize->setValue(params->environment.burstSize);
 	paramT->setValue(params->environment.T.sec() * 1000.0);
 	paramSigmaT->setValue(params->environment.sigmaT.sec() * 1000.0);
+	paramSigmaTOffs->setValue(params->environment.sigmaTOffs.sec() * 1000.0);
 	paramDeltaT->setValue(params->environment.deltaT.sec() * 1000.0);
 	paramSigmaW->setValue(params->environment.sigmaW * 100.0);
 	blockSignals(false);

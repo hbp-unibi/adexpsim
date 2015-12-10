@@ -49,6 +49,11 @@ struct SpikeTrainEnvironment {
 	Time T;
 
 	/**
+	 * Offset of individual bursts (standard deviation).
+	 */
+	Time sigmaTOffs;
+
+	/**
 	 * Noise in the individual spike times of a burst (standard deviation).
 	 */
 	Time sigmaT;
@@ -68,9 +73,10 @@ struct SpikeTrainEnvironment {
 	 */
 	SpikeTrainEnvironment(size_t burstSize = 1, Time T = 50e-3_s,
 	                      Time sigmaT = 0e-3_s, Time deltaT = 5e-3_s,
-	                      Val sigmaW = 0.0)
+	                      Val sigmaW = 0.0, Time sigmaTOffs = 0.0_s)
 	    : burstSize(burstSize),
 	      T(T),
+	      sigmaTOffs(sigmaTOffs),
 	      sigmaT(sigmaT),
 	      deltaT(deltaT),
 	      sigmaW(sigmaW)

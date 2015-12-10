@@ -89,8 +89,9 @@ SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBursts,
 	for (size_t i = 0; i < env.burstSize; i++) {
 		// Realise each spike nBursts times, either adding some jitter or
 		// distributing them equidistantly
-		const Time tBase = t0 + Time(env.deltaT.t * i);
-		for (size_t j = 0; j < nBundles; j++) {
+		const Time tOffs = equidistant ? 0_s : Time::sec(distTOffs(gen));
+		const Time tBase = t0 + tOffs + Time(env.deltaT.t * i);
+		for (size_t j = 0; j < nBursts; j++) {
 			// Choose a spike time
 			Time t;
 			if (equidistant) {
