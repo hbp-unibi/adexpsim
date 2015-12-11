@@ -47,7 +47,7 @@ EvaluationResult SingleGroupMultiOutEvaluation::evaluate(
     const WorkingParameters &params) const
 {
 	// Calculate the fractional spike count
-	const Val nOut = spikeData.nOut * env.bundleSize;
+	const Val nOut = spikeData.nOut * env.burstSize;
 	FractionalSpikeCount eval(useIfCondExp, eTar, nOut * 10);
 	auto resN = eval.calculate(sN, params);
 	auto resNM1 = eval.calculate(sNM1, params);

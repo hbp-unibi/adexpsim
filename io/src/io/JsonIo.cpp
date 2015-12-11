@@ -132,9 +132,10 @@ static Json::Value serializeSpikeTrainEnvironment(
     const SpikeTrainEnvironment &env)
 {
 	Json::Value res;
-	res["bundleSize"] = int(env.bundleSize);
+	res["burstSize"] = int(env.burstSize);
 	res["T"] = env.T.sec();
 	res["sigmaT"] = env.sigmaT.sec();
+	res["sigmaTOffs"] = env.sigmaTOffs.sec();
 	res["deltaT"] = env.deltaT.sec();
 	res["sigmaW"] = env.sigmaW;
 	return res;
@@ -145,11 +146,12 @@ static SpikeTrainEnvironment deserializeSpikeTrainEnvironment(
     const SpikeTrainEnvironment &defaultValues = SpikeTrainEnvironment())
 {
 	return SpikeTrainEnvironment(
-	    value.get("bundleSize", int(defaultValues.bundleSize)).asUInt(),
+	    value.get("burstSize", int(defaultValues.burstSize)).asUInt(),
 	    Time::sec(value.get("T", defaultValues.T.sec()).asDouble()),
 	    Time::sec(value.get("sigmaT", defaultValues.sigmaT.sec()).asDouble()),
 	    Time::sec(value.get("deltaT", defaultValues.deltaT.sec()).asDouble()),
-	    value.get("sigmaW", defaultValues.sigmaW).asDouble());
+	    value.get("sigmaW", defaultValues.sigmaW).asDouble(),
+	    Time::sec(value.get("sigmaTOffs", defaultValues.sigmaTOffs.sec()).asDouble()));
 }
 
 static Json::Value serializeSpikeTrainDescriptors(

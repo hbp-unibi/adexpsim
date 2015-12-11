@@ -78,7 +78,7 @@ EvaluationResult SingleGroupSingleOutEvaluation::evaluate(
 		    sNM1, n, cNM1, iNM1, params, Time(-1), env.T);
 		Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
 		    sN, n, cNS, iNS, params, Time(-1), env.T,
-		    State(params.eReset()));
+		    State(params.eReset()), Time(0));
 	} else {
 		Model::simulate<Model::CLAMP_ITH | Model::DISABLE_SPIKING |
 		                Model::FAST_EXP>(sN, n, cN, iN, params, Time(-1),

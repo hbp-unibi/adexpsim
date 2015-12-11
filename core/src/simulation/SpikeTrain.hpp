@@ -39,9 +39,9 @@ namespace AdExpSim {
  */
 struct SpikeTrainEnvironment {
 	/**
-	 * Number of spikes in a single spike bundle.
+	 * Number of spikes in a single spike burst.
 	 */
-	size_t bundleSize;
+	size_t burstSize;
 
 	/**
 	 * Length of a spike train group.
@@ -49,12 +49,17 @@ struct SpikeTrainEnvironment {
 	Time T;
 
 	/**
-	 * Noise in the individual spike times of a bundle (standard deviation).
+	 * Offset of individual bursts (standard deviation).
+	 */
+	Time sigmaTOffs;
+
+	/**
+	 * Noise in the individual spike times of a burst (standard deviation).
 	 */
 	Time sigmaT;
 
 	/**
-	 * Inter spike interval of the individual spike times of a bundle.
+	 * Inter spike interval of the individual spike times of a burst.
 	 */
 	Time deltaT;
 
@@ -66,11 +71,12 @@ struct SpikeTrainEnvironment {
 	/**
 	 * Default constructor, allows to set all member variables.
 	 */
-	SpikeTrainEnvironment(size_t bundleSize = 1, Time T = 50e-3_s,
+	SpikeTrainEnvironment(size_t burstSize = 1, Time T = 50e-3_s,
 	                      Time sigmaT = 0e-3_s, Time deltaT = 5e-3_s,
-	                      Val sigmaW = 0.0)
-	    : bundleSize(bundleSize),
+	                      Val sigmaW = 0.0, Time sigmaTOffs = 0.0_s)
+	    : burstSize(burstSize),
 	      T(T),
+	      sigmaTOffs(sigmaTOffs),
 	      sigmaT(sigmaT),
 	      deltaT(deltaT),
 	      sigmaW(sigmaW)
@@ -81,7 +87,7 @@ struct SpikeTrainEnvironment {
 /**
  * The GenericGroupDescriptor is used to describe a generic spike group with
  * both excitatory and inhibitory spikes with a specific weight and an expected
- * number of output spike bundles.
+ * number of output spike bursts.
  */
 struct GenericGroupDescriptor {
 	size_t nE, nI, nOut;
@@ -157,8 +163,8 @@ struct GenericGroupDescriptor {
 
 /**
  * The SingleGroupSingleOutDescriptor describes an experiment for a single
- * expected output spike (not spike bundles). This output spike should occur
- * for n input spikes, but not for nM1 (read "n minus 1") input spike bundles.
+ * expected output spike (not spike bursts). This output spike should occur
+ * for n input spikes, but not for nM1 (read "n minus 1") input spike bursts.
  */
 struct SingleGroupSingleOutDescriptor {
 	enum class Type { N, NM1 };
@@ -211,8 +217,8 @@ struct SingleGroupSingleOutDescriptor {
 
 /**
  * The SingleGroupMultiOutDescriptor describes an experiment, where nOut spike
- * bundles are expected for n input spike bundles, but zero output spikes are
- * expected for nM1 input spike bundles.
+ * bursts are expected for n input spike bursts, but zero output spikes are
+ * expected for nM1 input spike bursts.
  */
 struct SingleGroupMultiOutDescriptor : public SingleGroupSingleOutDescriptor {
 	size_t nOut;
@@ -491,13 +497,13 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * be added. Note that the vector will be sorted by this function in order to
  * maintain the time order of the spikes.
  * @param w is the weight of the newly creates spikes.
- * @param nBundles is the number of spike bundles that should happen at the same
- * time. The size of a bundle is stored in the SpikeTrainEnvironment passed in
+ * @param nBursts is the number of spike bursts that should happen at the same
+ * time. The size of a burst is stored in the SpikeTrainEnvironment passed in
  * the "env" parameter.
  * @param env contains environment parameters like the inter-spike interval and
  * the noise descriptor.
  * @param equidistant if true, time noise is approximated by distributing the
- * spikes of all bundles equidistantly.
+ * spikes of all bursts equidistantly.
  * @param t0 is the time at which the spike group should be inserted.
  * @param tMin if not nullptr, the time of the first spike is written to this
  * value.
@@ -509,7 +515,7 @@ SpikeVec buildInputSpikes(Val n, Time t, Time t0 = Time(0), Val w = 1);
  * seed value.
  */
 SpikeVec &buildSpikeGroup(
-    SpikeVec &spikes, Val w, size_t nBundles,
+    SpikeVec &spikes, Val w, size_t nBursts,
     const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
     bool equidistant = false, Time t0 = Time(), Time *tMin = nullptr,
     Time *tMax = nullptr, size_t *seed = nullptr);
@@ -520,13 +526,13 @@ SpikeVec &buildSpikeGroup(
  *
  * @param t0 is the time at which the spike group should be inserted.
  * @param w is the weight of the newly creates spikes.
- * @param nBundles is the number of spike bundles that should happen at the same
- * time. The size of a bundle is stored in the SpikeTrainEnvironment passed in
+ * @param nBursts is the number of spike bursts that should happen at the same
+ * time. The size of a burst is stored in the SpikeTrainEnvironment passed in
  * the "env" parameter.
  * @param env contains environment parameters like the inter-spike interval and
  * the noise descriptor.
  * @param equidistant if true, time noise is approximated by distributing the
- * spikes of all bundles equidistantly.
+ * spikes of all bursts equidistantly.
  * @param tMin if not nullptr, the time of the first spike is written to this
  * value.
  * @param tMax if not nullptr, the time of the last spike is written to this
@@ -537,7 +543,7 @@ SpikeVec &buildSpikeGroup(
  * seed value.
  */
 SpikeVec buildSpikeGroup(
-    Val w, size_t nBundles = 1,
+    Val w, size_t nBursts = 1,
     const SpikeTrainEnvironment &env = SpikeTrainEnvironment(),
     bool equidistant = false, Time t0 = Time(), Time *tMin = nullptr,
     Time *tMax = nullptr, size_t *seed = nullptr);

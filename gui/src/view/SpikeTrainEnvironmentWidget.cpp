@@ -45,15 +45,18 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	layout->setSpacing(0);
 
 	// Create the other parameter widgets
-	paramBundleSize =
-	    new ParameterWidget(this, "bundle", 1, 1, 30, "", "bundle");
-	paramBundleSize->setIntOnly(true);
-	paramBundleSize->setMinMaxEnabled(false);
+	paramBurstSize =
+	    new ParameterWidget(this, "burst", 1, 1, 30, "", "burst");
+	paramBurstSize->setIntOnly(true);
+	paramBurstSize->setMinMaxEnabled(false);
 	paramT = new ParameterWidget(this, "T", 50.0, 1.0, 200.0, "ms", "T");
 	paramT->setMinMaxEnabled(false);
 	paramSigmaT =
 	    new ParameterWidget(this, "σt", 0.0, 0.0, 20.0, "ms", "sigmaT");
 	paramSigmaT->setMinMaxEnabled(false);
+	paramSigmaTOffs =
+	    new ParameterWidget(this, "σtOffs", 0.0, 0.0, 20.0, "ms", "sigmaTOffs");
+	paramSigmaTOffs->setMinMaxEnabled(false);
 	paramDeltaT =
 	    new ParameterWidget(this, "Δt", 5.0, 0.0, 20.0, "ms", "deltaT");
 	paramDeltaT->setMinMaxEnabled(false);
@@ -61,11 +64,13 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	    new ParameterWidget(this, "σw", 0.0, 0.0, 100.0, "%", "sigmaW");
 	paramSigmaW->setMinMaxEnabled(false);
 
-	connect(paramBundleSize, SIGNAL(update(Val, const QVariant &)),
+	connect(paramBurstSize, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramSigmaT, SIGNAL(update(Val, const QVariant &)),
+	        SLOT(handleParameterUpdate(Val, const QVariant &)));
+	connect(paramSigmaTOffs, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 	connect(paramDeltaT, SIGNAL(update(Val, const QVariant &)),
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
@@ -73,9 +78,10 @@ SpikeTrainEnvironmentWidget::SpikeTrainEnvironmentWidget(
 	        SLOT(handleParameterUpdate(Val, const QVariant &)));
 
 	// Add all widgets to the main layout
-	layout->addWidget(paramBundleSize);
+	layout->addWidget(paramBurstSize);
 	layout->addWidget(paramT);
 	layout->addWidget(paramSigmaT);
+	layout->addWidget(paramSigmaTOffs);
 	layout->addWidget(paramDeltaT);
 	layout->addWidget(paramSigmaW);
 	setLayout(layout);
@@ -97,12 +103,14 @@ void SpikeTrainEnvironmentWidget::handleParameterUpdate(Val value,
 	}
 
 	QString s = data.toString();
-	if (s == "bundle") {
-		params->environment.bundleSize = value;
+	if (s == "burst") {
+		params->environment.burstSize = value;
 	} else if (s == "T") {
 		params->environment.T = Time::sec(value / 1000.0);
 	} else if (s == "sigmaT") {
 		params->environment.sigmaT = Time::sec(value / 1000.0);
+	} else if (s == "sigmaTOffs") {
+		params->environment.sigmaTOffs = Time::sec(value / 1000.0);
 	} else if (s == "deltaT") {
 		params->environment.deltaT = Time::sec(value / 1000.0);
 	} else if (s == "sigmaW") {
@@ -115,9 +123,10 @@ void SpikeTrainEnvironmentWidget::handleParameterUpdate(Val value,
 void SpikeTrainEnvironmentWidget::refresh()
 {
 	blockSignals(true);
-	paramBundleSize->setValue(params->environment.bundleSize);
+	paramBurstSize->setValue(params->environment.burstSize);
 	paramT->setValue(params->environment.T.sec() * 1000.0);
 	paramSigmaT->setValue(params->environment.sigmaT.sec() * 1000.0);
+	paramSigmaTOffs->setValue(params->environment.sigmaTOffs.sec() * 1000.0);
 	paramDeltaT->setValue(params->environment.deltaT.sec() * 1000.0);
 	paramSigmaW->setValue(params->environment.sigmaW * 100.0);
 	blockSignals(false);
