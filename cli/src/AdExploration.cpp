@@ -73,7 +73,7 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
                     const SingleGroupMultiOutDescriptor &singleGroup,
                     ModelType model, EvaluationType evaluation,
                     const DiscreteRange &rangeX, const DiscreteRange &rangeY,
-                    size_t dimX, size_t dimY, size_t spikeTrainN)
+                    size_t dimX, size_t dimY, size_t spikeTrainN = 0)
 {
 	// Run the exploration, write the result matrices to a file
 	std::cout << std::endl;
@@ -109,6 +109,7 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
 	std::cout << "Evaluation: "
 	          << ParameterCollection::evaluationNames[size_t(evaluation)]
 	          << std::endl;
+	std::cout << "SpikeTrainSize: " << spikeTrainN << std::endl;
 
 	const bool useIfCondExp = (model == ModelType::IF_COND_EXP);
 
@@ -144,8 +145,12 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
 	if (ok && !cancel) {
 		const EvaluationResultDescriptor &descr = exploration.descriptor();
 		for (size_t i = 0; i < descr.size(); i++) {
-			const std::string filename =
-			    prefix + "_X" + Parameters::nameIds[dimX] + "_Y" +
+			std::string filename = prefix + "_" +
+			    ParameterCollection::evaluationNames[size_t(evaluation)];
+			if (evaluation == EvaluationType::SPIKE_TRAIN) {
+				filename = filename + "_N" + std::to_string(spikeTrainN);
+			}
+			filename = filename + "_X" + Parameters::nameIds[dimX] + "_Y" +
 			    Parameters::nameIds[dimY] + "_" + descr.id(i) + "_" +
 			    ParameterCollection::evaluationNames[size_t(evaluation)] + "_" +
 			    ParameterCollection::modelNames[size_t(model)] + ".csv";
@@ -163,17 +168,28 @@ bool runExplorations(const std::string &prefix,
                      const SpikeTrainEnvironment &env, const Parameters &params,
                      const SingleGroupMultiOutDescriptor &singleGroup,
                      const DiscreteRange &rangeX, const DiscreteRange &rangeY,
-                     size_t dimX, size_t dimY, size_t spikeTrainN = 100)
+                     size_t dimX, size_t dimY)
 {
-	for (size_t model = 0; model < 1; model++) {
-		for (size_t evaluation = 0; evaluation < 1; evaluation++) {
+	std::vector<size_t> spikeTrainNs = {10, 100};
+	for (size_t model = 0; model < 2; model++) {
+		for (size_t evaluation = 0; evaluation < 3; evaluation++) {
 			if (evaluation == 1 && singleGroup.nOut > 1) {
 				continue;
 			}
-			if (!runExploration(prefix, env, params, singleGroup,
-			                    ModelType(model), EvaluationType(evaluation),
-			                    rangeX, rangeY, dimX, dimY, spikeTrainN)) {
-				return false;
+			if (evaluation == 0) {
+				for (size_t spikeTrainN: spikeTrainNs) {
+					if (!runExploration(prefix, env, params, singleGroup,
+					                    ModelType(model), EvaluationType(evaluation),
+					                    rangeX, rangeY, dimX, dimY, spikeTrainN)) {
+						return false;
+					}
+				}
+			} else {
+				if (!runExploration(prefix, env, params, singleGroup,
+				                    ModelType(model), EvaluationType(evaluation),
+				                    rangeX, rangeY, dimX, dimY)) {
+					return false;
+				}
 			}
 		}
 	}
@@ -188,7 +204,7 @@ int main(int argc, char *argv[])
 	Parameters params;
 
 	// Setup the exploration
-	const size_t resolution = 2048;
+	const size_t resolution = 1024;
 
 	// Scenario 1: single output spike
 	Parameters paramsSc1;  // Just use the default parameters for this scenario
