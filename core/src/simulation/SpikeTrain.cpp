@@ -76,8 +76,8 @@ SpikeVec &buildSpikeGroup(SpikeVec &spikes, Val w, size_t nBursts,
                           Time t0, Time *tMin, Time *tMax, size_t *seed)
 {
 	// Calculate the deltaT for equidistant distribution
-	const Time deltaTEqn =
-	    Time(2 * env.sigmaT.t / std::max<size_t>(1, nBursts));
+	const Time deltaTEqn = Time(2 * (env.sigmaT.t + env.sigmaTOffs.t) /
+	                            std::max<size_t>(1, nBursts));
 
 	// Random number generator
 	std::default_random_engine gen = initializeRandomEngine(seed);
