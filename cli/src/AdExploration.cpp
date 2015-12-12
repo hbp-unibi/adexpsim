@@ -90,6 +90,11 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
 	          << std::endl;
 	std::cout << std::endl;
 
+	std::cout << "Base neuron parameters:" << std::endl;
+	for (size_t i = 0; i < params.size(); i++) {
+		std::cout << Parameters::names[i] << ": " << params[i] << std::endl;
+	}
+
 	std::cout << "Group descriptor:" << std::endl;
 	std::cout << "nIn1: " << singleGroup.n << std::endl;
 	std::cout << "nIn0: " << singleGroup.nM1 << std::endl;
@@ -143,9 +148,12 @@ bool runExploration(const std::string &prefix, const SpikeTrainEnvironment &env,
 
 	// Dump the results
 	if (ok && !cancel) {
+		static size_t idx = 0;
+		idx++;
+
 		const EvaluationResultDescriptor &descr = exploration.descriptor();
 		for (size_t i = 0; i < descr.size(); i++) {
-			std::string filename = prefix + "_" +
+			std::string filename = "i" + std::to_string(idx) + "_" + prefix + "_" +
 			    ParameterCollection::evaluationNames[size_t(evaluation)];
 			if (evaluation == EvaluationType::SPIKE_TRAIN) {
 				filename = filename + "_N" + std::to_string(spikeTrainN);
@@ -170,13 +178,18 @@ bool runExplorations(const std::string &prefix,
                      const DiscreteRange &rangeX, const DiscreteRange &rangeY,
                      size_t dimX, size_t dimY)
 {
-	std::vector<size_t> spikeTrainNs = {10, 100};
-	for (size_t model = 0; model < 2; model++) {
-		for (size_t evaluation = 0; evaluation < 3; evaluation++) {
-			if (evaluation == 1 && singleGroup.nOut > 1) {
+	std::vector<size_t> spikeTrainNs = {10, 10, 100};
+	for (size_t mIdx = 0; mIdx < 2; mIdx++) {
+		for (size_t eIdx = 0; eIdx < 3; eIdx++) {
+			EvaluationType evaluation = EvaluationType(eIdx);
+			ModelType model = ModelType(mIdx);
+
+			if (evaluation == EvaluationType::SINGLE_GROUP_SINGLE_OUT
+					&& singleGroup.nOut > 1) {
 				continue;
 			}
-			if (evaluation == 0) {
+
+			if (evaluation == EvaluationType::SPIKE_TRAIN) {
 				for (size_t spikeTrainN: spikeTrainNs) {
 					if (!runExploration(prefix, env, params, singleGroup,
 					                    ModelType(model), EvaluationType(evaluation),
@@ -206,7 +219,7 @@ int main(int argc, char *argv[])
 	// Setup the exploration
 	const size_t resolution = 1024;
 
-	// Scenario 1: single output spike
+	// Single output spike
 	Parameters paramsSc1;  // Just use the default parameters for this scenario
 	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 2_ms),
 	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
@@ -219,24 +232,6 @@ int main(int argc, char *argv[])
 	                              DefaultParameters::eE, resolution),
 	                DiscreteRange(0.0e-6, 1.0e-6, resolution),
 	                Parameters::idx_eTh, Parameters::idx_w);
-
-	// Scenario 2: Burst
-	//	Parameters paramsSc2; // Use some better starting parameters
-	//	paramsSc2.gL() = 0.525e-6;
-	//	paramsSc2.tauE() = 25.0e-3;
-	//		runExplorations("ex_sc2", SpikeTrainEnvironment(3, 200_ms, 5_ms,
-	//2_ms), paramsSc2,
-	//		                SingleGroupMultiOutDescriptor(3, 2, 1),
-	//		                DiscreteRange(0.01e-6, 0.6e-6, resolution),
-	//		                DiscreteRange(1e-3, 100e-3, resolution),
-	//		                Parameters::idx_gL, Parameters::idx_tauE);
-	//	runExplorations("ex_sc2", SpikeTrainEnvironment(3, 200_ms, 5_ms, 2_ms),
-	//paramsSc2,
-	//	                SingleGroupMultiOutDescriptor(3, 2, 1),
-	//	                DiscreteRange(DefaultParameters::eL + 2.1 / 1000.0,
-	//	                              DefaultParameters::eE, resolution),
-	//	                DiscreteRange(0.0e-6, 1.0e-6, resolution),
-	//	                Parameters::idx_eTh, Parameters::idx_w);
 
 	if (cancel) {
 		std::cout << "Manually aborted exploration" << std::endl;
