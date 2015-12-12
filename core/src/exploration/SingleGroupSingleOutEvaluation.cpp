@@ -55,8 +55,8 @@ struct SingleGroupEvaluationController {
 // Roughly spoken TAU_RANGE is the voltage difference from eSpikeEff
 // needed to get a "good" result in the SOFT measurement
 static constexpr Val TAU_RANGE = 0.002;    // 2mV
-static constexpr Val TAU_RANGE_VAL = 0.1;  // sigma(eEff - TAU_RANGE)
-static const LogisticFunction<true> sigmaV(TAU_RANGE, TAU_RANGE_VAL);
+static constexpr Val TAU_RANGE_VAL = 0.2;  // sigma(eEff - TAU_RANGE)
+static const LongTailSigmoid<true> sigmaV(TAU_RANGE, TAU_RANGE_VAL);
 
 EvaluationResult SingleGroupSingleOutEvaluation::evaluate(
     const WorkingParameters &params) const

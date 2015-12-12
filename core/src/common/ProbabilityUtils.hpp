@@ -40,7 +40,6 @@ namespace AdExpSim {
  */
 template <bool Invert = false>
 struct LogisticFunction {
-
 	static constexpr bool invert = Invert;
 
 	const Val tau;
@@ -69,6 +68,46 @@ struct LogisticFunction {
 	{
 		const Val res = 1.0 / (1.0 + exp(-tau * (x - center)));
 		return invert ? 1.0 - res : res;
+	}
+};
+
+/**
+ * Functional implementing a long-tail sigmoid function with given parameters.
+ *
+ * @tparam Invert if true, substracts the result from 1.0.
+ */
+template <bool Invert = false>
+struct LongTailSigmoid {
+	static constexpr bool invert = Invert;
+
+	const Val tau;
+
+	/**
+	 *
+	 * @param tauRange specifies the steepness of the sigmoid. It defines the
+	 * value for which the the function should return TauRangeVal.
+	 * @param tauRangeVal is the value the function should return at
+	 * the range boundaries. For x = -TauRange the function will return
+	 * TauRangeVal, for x = TauRange the function will return 1.0 - TauRangeVal.
+	 */
+	constexpr LongTailSigmoid(Val tauRange, Val tauRangeVal)
+	    : tau((1.0 - 2.0 * tauRangeVal) / (2.0 * tauRange * tauRangeVal))
+	{
+	}
+
+	/**
+	 * Evaluates the function.
+	 *
+	 * @param x is the value for which the sigmoid should be evaluated.
+	 * @param center is the value at which the function will return
+	 * 0.5.
+	 */
+	Val operator()(Val x, Val center = 0.0) const
+	{
+		const Val res =
+		    0.5f *
+		    (1.0f + tau * (x - center) / (1.0f + tau * fabs(x - center)));
+		return invert ? 1.0f - res : res;
 	}
 };
 }
