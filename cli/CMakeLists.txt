@@ -65,7 +65,6 @@ ADD_EXECUTABLE(AdExpOptimization
 
 TARGET_LINK_LIBRARIES(AdExpOptimization
 	AdExpSimCore
-	AdExpSimIo
 )
 
 ADD_EXECUTABLE(AdExpEvaluationMetric

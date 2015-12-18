@@ -221,12 +221,12 @@ int main(int argc, char *argv[])
 
 	// Single output spike
 	Parameters paramsSc1;  // Just use the default parameters for this scenario
-	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 2_ms),
+	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
 	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
 	                DiscreteRange(0.01e-6, 0.6e-6, resolution),
 	                DiscreteRange(1e-3, 100e-3, resolution), Parameters::idx_gL,
 	                Parameters::idx_tauE);
-	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 2_ms),
+	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
 	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
 	                DiscreteRange(DefaultParameters::eL + 2.1 / 1000.0,
 	                              DefaultParameters::eE, resolution),
