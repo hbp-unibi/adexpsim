@@ -131,6 +131,19 @@ static WorkingParameters run_optimisation(
 	          << sgmo.evaluate(wpOut)[sgmo.descriptor().optimizationDim()]
 	          << std::endl;
 
+	std::cout << "Initial for ST100: "
+	          << st100.evaluate(params)[st100.descriptor().optimizationDim()]
+	          << std::endl;
+	if (env.burstSize == 1 && group.nOut == 1) {
+		std::cout << "Initial for SGSO: "
+		          << sgso.evaluate(params)[sgso.descriptor().optimizationDim()]
+		          << std::endl;
+	}
+	std::cout << "Initial for SGMO: "
+	          << sgmo.evaluate(params)[sgmo.descriptor().optimizationDim()]
+	          << std::endl;
+
+
 	return params;
 }
 
