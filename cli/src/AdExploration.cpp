@@ -217,21 +217,33 @@ int main(int argc, char *argv[])
 	Parameters params;
 
 	// Setup the exploration
-	const size_t resolution = 1024;
+	const size_t resolution = 64;
 
 	// Single output spike
+//	Parameters paramsSc1;  // Just use the default parameters for this scenario
+//	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
+//	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
+//	                DiscreteRange(0.01e-6, 0.6e-6, resolution),
+//	                DiscreteRange(1e-3, 100e-3, resolution), Parameters::idx_gL,
+//	                Parameters::idx_tauE);
+//	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
+//	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
+//	                DiscreteRange(DefaultParameters::eL + 2.1 / 1000.0,
+//	                              DefaultParameters::eE, resolution),
+//	                DiscreteRange(0.0e-6, 1.0e-6, resolution),
+//	                Parameters::idx_eTh, Parameters::idx_w);
 	Parameters paramsSc1;  // Just use the default parameters for this scenario
-	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
+	runExplorations("ex_nm", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
 	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
-	                DiscreteRange(0.01e-6, 0.6e-6, resolution),
-	                DiscreteRange(1e-3, 100e-3, resolution), Parameters::idx_gL,
+	                DiscreteRange(0.01e-6, 0.2e-6, resolution),
+	                DiscreteRange(1e-3, 20e-3, resolution), Parameters::idx_gL,
 	                Parameters::idx_tauE);
-	runExplorations("ex_sc1", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
+	runExplorations("ex_nm", SpikeTrainEnvironment(1, 200_ms, 5_ms, 10_ms),
 	                paramsSc1, SingleGroupMultiOutDescriptor(3, 2, 1),
-	                DiscreteRange(DefaultParameters::eL + 2.1 / 1000.0,
-	                              DefaultParameters::eE, resolution),
+	                DiscreteRange(-0.03, -0.01, resolution),
 	                DiscreteRange(0.0e-6, 1.0e-6, resolution),
 	                Parameters::idx_eTh, Parameters::idx_w);
+
 
 	if (cancel) {
 		std::cout << "Manually aborted exploration" << std::endl;
