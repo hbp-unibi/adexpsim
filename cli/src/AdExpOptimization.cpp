@@ -114,7 +114,7 @@ static WorkingParameters run_optimisation(
 
 	std::cout << "Final parameters: " << std::endl;
 	Parameters pOpt =
-	    params.toParameters(DefaultParameters::cM, DefaultParameters::eL);
+	    wpOut.toParameters(DefaultParameters::cM, DefaultParameters::eL);
 	for (size_t i = 0; i < pOpt.size(); i++) {
 		std::cout << Parameters::names[i] << ": " << pOpt[i] << std::endl;
 	}
@@ -157,9 +157,13 @@ static void optimise_scenario(const SpikeTrainEnvironment &env,
 	}
 	std::cout << std::endl;
 
-	std::vector<size_t> dims{
+	std::vector<size_t> dims({
+	    WorkingParameters::idx_eE,
 	    WorkingParameters::idx_lL, WorkingParameters::idx_lE,
-	    WorkingParameters::idx_eTh, WorkingParameters::idx_w};
+	    WorkingParameters::idx_lW, WorkingParameters::idx_tauRef,
+	    WorkingParameters::idx_eTh, WorkingParameters::idx_deltaTh,
+	    WorkingParameters::idx_lA, WorkingParameters::idx_lB,
+	    WorkingParameters::idx_w});
 
 	std::cout << "Optimising the following dimensions:" << std::endl;
 	for (size_t dim : dims) {
@@ -196,7 +200,7 @@ static void optimise_scenario(const SpikeTrainEnvironment &env,
 		std::cout << "====================" << std::endl;
 		std::cout << std::endl;
 		run_optimisation(dims, params, env, group,
-		                 EvaluationType::SINGLE_GROUP_MULTI_OUT);
+		                 EvaluationType::SINGLE_GROUP_SINGLE_OUT);
 	}
 
 	std::cout << std::endl;
