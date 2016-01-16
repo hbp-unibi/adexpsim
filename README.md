@@ -9,9 +9,9 @@ associative memory and a GUI for interactive design space exploration.
 How to use
 ----------
 
-You need a recent, C++14 capable compiler as well as a development version
-of Qt5 installed. Furthermore, compilation requires a recent version of
-CMake.
+You need a recent, C++14 capable compiler (GCC 5) as well as a development
+version of Qt5 installed. Furthermore, compilation requires a recent version
+(3.3) of CMake.
 
 You can install and build the project with the following set of commands:
 ````bash
