@@ -18,12 +18,8 @@
 # This CMakeLists file builds the AdExpSimIo library used by both GUI and CLI
 #
 
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED (VERSION 3.3)
 PROJECT (AdExpSimCore)
-
-# Enable C++11 and all warnings, enable vector optimizations for this processor
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-	-Wall -pedantic-errors -std=c++11 -march=native -ffast-math")
 
 # Add the src/ and lib/ directory as include directory
 INCLUDE_DIRECTORIES(

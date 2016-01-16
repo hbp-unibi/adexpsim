@@ -19,14 +19,8 @@
 # applications and the GUI
 #
 
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+CMAKE_MINIMUM_REQUIRED (VERSION 3.3)
 PROJECT (AdExpSimCore)
-
-# Enable C++11 and all warnings, enable vector optimizations for this processor,
-# make sure fast aliasing is always enabled
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-	-Wall -pedantic-errors -std=c++11 -march=native -ffast-math \
-	-fstrict-aliasing -Wstrict-aliasing=2")
 
 # Add the src/ and lib/ directory as include directory
 INCLUDE_DIRECTORIES(
