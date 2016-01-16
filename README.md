@@ -17,7 +17,7 @@ You can install and build the project with the following set of commands:
 ````bash
 git clone https://github.com/hbp-sanncs/adexpsim
 cd adexpsim && mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake ..
 make
 ````
 
