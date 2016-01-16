@@ -71,7 +71,7 @@ static void sweep(bool useIfCondExp, size_t dim, Val min, Val max, Val step,
 	std::cerr << std::endl << "Done." << std::endl;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 //	sweep(false, Parameters::idx_gL, 10e-9, 1000e-9, 0.1e-9, 9e-8);
 //	sweep(true, Parameters::idx_gL, 10e-9, 1000e-9, 0.1e-9, 9e-8);

@@ -72,7 +72,7 @@ public:
 	 * @param s is the neuron state after the spike has been issued (the neuron
 	 * has already been reset).
 	 */
-	void outputSpike(Time t, const State &)
+	void outputSpike(Time, const State &)
 	{
 		// Discard everything
 	}
@@ -136,7 +136,7 @@ public:
 	 * @param t is the time at which the input spike has been consumed.
 	 * @param s is the state after the input spike has been consumed.
 	 */
-	void inputSpike(Time t, const State &s)
+	void inputSpike(Time, const State &)
 	{
 		// The default record implementation does not care for spikes
 	}
@@ -148,7 +148,7 @@ public:
 	 * @param s is the neuron state after the spike has been issued (the neuron
 	 * has already been reset).
 	 */
-	void outputSpike(Time t, const State &s)
+	void outputSpike(Time, const State &)
 	{
 		// The default record implementation does not care for spikes
 	}
@@ -745,7 +745,7 @@ private:
 public:
 	OutputSpikeCountRecorder() { reset(); }
 
-	void outputSpike(Time t, const State &s) { mCount++; }
+	void outputSpike(Time, const State &) { mCount++; }
 
 	void reset() { mCount = 0; }
 

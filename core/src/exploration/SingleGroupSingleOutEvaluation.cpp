@@ -41,7 +41,7 @@ struct SingleGroupEvaluationController {
 	}
 
 	ControllerResult control(Time, const State &s, const AuxiliaryState &,
-	                         const WorkingParameters &, bool inRefrac)
+	                         const WorkingParameters &, bool)
 	{
 		vMax = std::max(s.v(), vMax);
 		state = s;

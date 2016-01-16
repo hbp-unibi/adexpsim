@@ -25,7 +25,7 @@
 
 namespace AdExpSim {
 
-void SpikeWidget::paintEvent(QPaintEvent *event)
+void SpikeWidget::paintEvent(QPaintEvent *)
 {
 	// Fetch the widget geometry and calculate some regions
 	const int h = height();

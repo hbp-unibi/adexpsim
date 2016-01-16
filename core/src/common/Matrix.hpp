@@ -80,13 +80,13 @@ private:
 	 */
 	size_t w, h;
 
+#ifndef NDEBUG
 	/**
 	 * Function used to check whether an access at x, y is correct. Disabled
 	 * in release mode.
 	 */
 	void checkRange(size_t x, size_t y) const
 	{
-#ifndef NDEBUG
 		if (x >= w || y >= h) {
 			std::stringstream ss;
 			ss << "[" << x << ", " << y << "] out of range for matrix of size "
@@ -94,8 +94,14 @@ private:
 			   << "h" << std::endl;
 			throw std::out_of_range(ss.str());
 		}
-#endif
 	}
+#else
+	/**
+	 * Function used to check whether an access at x, y is correct. Disabled
+	 * in release mode.
+	 */
+	void checkRange(size_t, size_t) const {}
+#endif
 
 public:
 	/**

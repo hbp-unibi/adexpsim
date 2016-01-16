@@ -78,7 +78,7 @@ public:
 		reset();
 	}
 
-	void outputSpike(Time t, const State &) { outputSpikeCount++; }
+	void outputSpike(Time, const State &) { outputSpikeCount++; }
 
 	void reset()
 	{

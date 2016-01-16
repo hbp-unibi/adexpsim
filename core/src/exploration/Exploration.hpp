@@ -305,12 +305,12 @@ public:
 	/**
 	 * Returns the resolution in x-direction.
 	 */
-	const size_t resX() const { return mRangeX.steps; }
+	size_t resX() const { return mRangeX.steps; }
 
 	/**
 	 * Returns the resolution in y-direction.
 	 */
-	const size_t resY() const { return mRangeY.steps; }
+	size_t resY() const { return mRangeY.steps; }
 
 	/**
 	 * Returns a reference at the x-range.

@@ -204,7 +204,7 @@ public:
 	 * timestep.
 	 */
 	template <typename Deriv>
-	std::pair<State, Time> integrate(Time tDelta, Time tDeltaMax,
+	std::pair<State, Time> integrate(Time, Time tDeltaMax,
 	                                 const State &s, Deriv df)
 	{
 		static constexpr Val S = 0.9;           // Safety factor

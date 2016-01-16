@@ -133,7 +133,7 @@ public:
 	/**
 	 * Returns the maximum timestamp of the recorded data.
 	 */
-	const double getMaxT() const { return getValues().maxTime; }
+	double getMaxT() const { return getValues().maxTime; }
 
 	/**
 	 * Returns references to the recorded values.
@@ -148,7 +148,7 @@ public:
 	/**
 	 * Returns true if a valid result is present.
 	 */
-	const bool valid() const { return mValid; }
+	bool valid() const { return mValid; }
 };
 
 using NeuronSimulationResultVec = QVector<NeuronSimulation>;

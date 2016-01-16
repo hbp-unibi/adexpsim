@@ -101,7 +101,7 @@ static void record(bool useIfCondExp, size_t dim, Val v,
 	                params, 1e-6_s);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 //	sweep(true, Parameters::idx_gL, 10e-9, 2000e-9, 0.1e-9, 9e-8);
 	record(true, Parameters::idx_gL, gL0, 9e-8);

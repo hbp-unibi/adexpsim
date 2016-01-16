@@ -74,7 +74,7 @@ public:
 };
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 	// Raw data as extracted from a GDB memory dump, convert to parameters
 	/*	const uint32_t raw[14] = {0x4064d180, 0x43a663c3, 0x43480000,

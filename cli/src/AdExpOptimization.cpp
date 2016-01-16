@@ -41,7 +41,7 @@ using namespace AdExpSim;
  * even if it is not responsive (the cancel flag is not checked).
  */
 static bool cancel = false;
-void int_handler(int x)
+void int_handler(int)
 {
 	if (cancel) {
 		exit(1);
@@ -214,7 +214,7 @@ static void optimise_scenario(const SpikeTrainEnvironment &env,
 	std::cout << std::endl;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 	signal(SIGINT, int_handler);
 

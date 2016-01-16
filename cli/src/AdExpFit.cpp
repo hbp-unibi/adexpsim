@@ -50,7 +50,7 @@ std::vector<std::string> split(const std::string &text, char sep)
 }
 
 bool cancel = false;
-void int_handler(int x)
+void int_handler(int)
 {
 	if (cancel) {
 		exit(1);
@@ -78,7 +78,7 @@ public:
 		if (valid()) {
 			Model::simulate<Model::IF_COND_EXP | Model::DISABLE_SPIKING>(
 			    spikes, recorder, controller, integrator, wParams, Time(-1),
-			    2_s);
+			    max_t);
 		}
 	}
 

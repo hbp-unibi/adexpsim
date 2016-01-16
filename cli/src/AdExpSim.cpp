@@ -25,7 +25,7 @@
 
 using namespace AdExpSim;
 
-int main(int argc, char *argv[])
+int main()
 {
 	// Use the default parameters
 	Parameters params;
